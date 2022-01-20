@@ -1,0 +1,109 @@
+!****** BLOCK A: PARAMETERS **************************************
+!GENERAL PARAMETERS
+!(epsh_tol) Tolerancia en h | (epsth_tol) Tolerancia en th | (epshsat_tol)
+1.0E-3						 1.0E30			0.001
+!Minimum iterations | (itinc_dt) Iteration to increase dt  | (itdec_dt) Iterations to decrease dt | (maxit) Max iterations for time step (if surpassed restart timestep and decrease dt)
+1	20				40					75
+!(crelax) Relaxation coefficient (updates of values in each iterations equal to: (1-crelax)·hn+(crelax)·hn+1
+1.0
+!(IsMassLump) ¿Use mass lumping in mass matrix? | (erroronnod) ¿Use error on node or error in element?
+.true.										     .false.
+!(quadratureorder) Order of quadrature for integration in element
+40
+!(typesolution) Type of solution used in calcs: 
+!Number	| sparsity | solver | preconditioner
+!	1     dense      gauss    none
+!	2     dense      gauss    jacobi
+!	3     csr        DSS      none
+!	4     csr        DSS      jacobi
+!	5     csr        DSS      ilu0
+!	6     csr        DSS      ilut
+!	7     csr        PARADISO none
+!	8     csr        PARADISO jacobi
+!	9     csr        PARADISO ilu0
+!	10    csr        PARADISO ilut
+!	11    csr        FGMRES   none
+!	12    csr        FGMRES   jacobi
+!	13    csr        FGMRES   ilu0
+!	14    csr        FGMRES   ilut
+!	15    banded     gauss	  none
+!	16    banded     gauss	  jacobi
+1
+!(courant) Coefficient of courant: 2.0 (Use a very high value to avoid limiting stepsize by courant condition)
+1000.0
+!(multksal) Multiplication factor for the permeability at the seepage surface
+1.075
+!(max hsatinc) Max Hsat Increment
+0.01
+!TIME PARAMETERS:
+!(tinit) Initial time | (dtinit) dt at first step | (tmax) t at end of simulation | (dtmin) Min value for dt | (dtmax) Max value for dt 
+0.0			1.0E-3			    7200			     1.0E-4					  5
+!(Cdtinc) Factor to increase time | (Cdtdec) Factor to decrease time
+1.5							       0.75
+!(dtprintinc) time increment to print results
+10
+!Restart at time t?
+.TRUE.
+!Time to restart:
+10000.0
+!nrel min | nrel max
+0.1  1.0
+!coefficient of relaxation for nrel
+1.0
+!Number of repetitions for sat-unsat
+3
+!coefficient of relaxation ofr qent
+1.0
+!Force watertable height to be equal in WF1DSAT and WF1DUNSAT with Dirichlet con constraints
+.false.
+!****** BLOCK B: MATERIALS **************************************
+!(count) Number of different of materials (Ud)
+2
+!(kindmat) Kind of material (1= Mualem-Van Genuchten, 2= Exponential Hydraulic Function)
+1			1			
+!(thsat) Saturated volumetric water content (m3/m3)
+0.43	0.265
+!(thres) Residual volumetric water content (m3/m3)
+0.045	0.049
+!(ksat)	Saturated permeability (m/s) (ballast should be 5.08E-2 but it isnt)
+5.00E-1		5.64e-4	
+!(a)		a parameter of Van Genuchten (m-1) or a parameter of other hydraulic function
+200		3.6	
+!(n)		n parameter of Van Genuchten (-) or n parameter of other hydraulic function
+4.0		1.56		
+!(m)		m parameter of Van Genuchten (-) or m parameter of other hydraulic function
+0.75		0.358	
+!(l)		l parameter of Mualem-Van Genuchten or m parameter of other hydraulic function
+0.5		0.5	
+!
+!****** BLOCK C: LAYERS **************************************
+!(count) Number of layers
+2
+!(width) Witdh of layers
+2.00
+!(height): Height of each layer (at left side) (m) (Heyns: total 35.56in subballast at 6in=0.1524m and ballast at 11in=0.2794 , )
+0.1524		0.03
+!(slope): Slope of the bottom of each layer and the last for the top (m/m) (number=nlayers+1, first one must be 0.0)
+0.00	0.00	0.00
+!(material) Material number on the layer as defined in block B
+2	1
+!ZPHR: Phreatic level (z coordinate) from the top left (m) (bottom layer is at -0.1824)
+-0.1824
+!TOPBOUNDBYH: Is top boundary defined by FLOW1D_BOUND_H.txt?
+.FALSE.
+!TOPBOUNDBYQ: Is top boundary defined by specific flow with: FLOW1D_BOUND_Q.txt?
+.TRUE.
+!BOTTOMBYPHL: (Is the bottom layer at defined phreatic level, otherwise q=0)
+.FALSE.
+!****** BLOCK D: MESH **************************************
+!(nn) Nodes per element | (nc) Class of nodes
+2						 0
+!(vmod_count) Number of vertical modules
+3
+!(nelemh) Number of elements between vertical modules (number=vmod)
+5	5	5
+!(vmod_x) Coord x of each vertical module(first always cero) (3rd was 0.97028 1.7907)
+0.0	0.97028	1.7907
+!(nelemv) Number of elements per layer (number=number of layers)
+20	30
+

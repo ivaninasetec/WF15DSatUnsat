@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectType="typeDynamicLibrary" ProjectCreator="Intel Fortran" Keyword="Dll" Version="11.0" ProjectIdGuid="{72397639-F386-413C-9B5A-B64F7FD7E15C}">
+	<Platforms>
+		<Platform Name="Win32"/>
+		<Platform Name="x64"/></Platforms>
+	<Configurations>
+		<Configuration Name="Debug|Win32" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Debug|x64" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" PreprocessorDefinitions="DEBUG" ErrorLimit="200" WarnDeclarations="true" WarnUndeclaredExternals="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" WarnInterfaces="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" AdditionalOptions="/IGNORE:4217" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|Win32" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|x64" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Parallelization="true" OpenMP="OpenMPParallelCode" F2003Semantics="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" AdditionalOptions="/IGNORE:4217" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="ReleaseAVX512Parallel|Win32" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="ReleaseAVX512Parallel|x64" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" UseProcessorExtensions="codeExclusivelyCoreAVX512" Parallelization="true" PrefetchInsertionOpt="prefetchAggressive" HeapArrays="0" MtuneConstruct="mcArchCSL" OpenMP="OpenMPParallelCode" F2003Semantics="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" AdditionalOptions="/IGNORE:4217" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
+	<Files>
+		<Filter Name="Header Files" Filter="fi;fd;h;inc">
+		<File RelativePath=".\src\inc_legendre_parameters.fi"/>
+		<File RelativePath=".\src\inc_legendre_weights.fi"/>
+		<File RelativePath=".\src\inc_precision.fi"/></Filter>
+		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
+		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+		<Filter Name="FEM">
+		<File RelativePath=".\src\com_mod_fem_basis.f90"/>
+		<File RelativePath=".\src\com_mod_fem_intelement.f90"/>
+		<File RelativePath=".\src\com_mod_fem_quadrature.f90"/>
+		<File RelativePath=".\src\com_mod_fem_shapefunctions.f90"/></Filter>
+		<Filter Name="HYD">
+		<File RelativePath=".\src\com_mod_hyd.f90"/>
+		<File RelativePath=".\src\com_mod_hyd_bc.f90"/>
+		<File RelativePath=".\src\com_mod_hyd_pw.f90"/>
+		<File RelativePath=".\src\com_mod_hyd_vg.f90"/></Filter>
+		<Filter Name="MX">
+		<File RelativePath=".\src\com_mod_mx_datatypes.f90"/>
+		<File RelativePath=".\src\com_mod_mx_solvers.f90"/></Filter>
+		<Filter Name="OTHERS">
+		<File RelativePath=".\src\com_mod_others_custom_functions.f90"/>
+		<File RelativePath=".\src\com_mod_others_external_functions.f90"/>
+		<File RelativePath=".\src\com_mod_others_inputs.f90"/>
+		<File RelativePath=".\src\com_mod_others_linear_interpolation.f90"/></Filter>
+		<Filter Name="TY">
+		<File RelativePath=".\src\com_mod_ty_boundary.f90"/>
+		<File RelativePath=".\src\com_mod_ty_calc.f90"/>
+		<File RelativePath=".\src\com_mod_ty_elements.f90"/>
+		<File RelativePath=".\src\com_mod_ty_layers.f90"/>
+		<File RelativePath=".\src\com_mod_ty_material.f90"/>
+		<File RelativePath=".\src\com_mod_ty_nodes.f90"/>
+		<File RelativePath=".\src\com_mod_ty_parameters.f90"/>
+		<File RelativePath=".\src\com_mod_ty_pointers.f90"/>
+		<File RelativePath=".\src\com_mod_ty_time.f90"/></Filter></Filter></Files>
+	<Globals/></VisualStudioProject>

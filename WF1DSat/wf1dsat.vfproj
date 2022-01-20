@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{40B181CB-7E75-457A-8CF0-0D1AC61A158F}">
+	<Platforms>
+		<Platform Name="Win32"/>
+		<Platform Name="x64"/></Platforms>
+	<Configurations>
+		<Configuration Name="Debug|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" UseProcessorExtensions="codeExclusivelyAVX2" Parallelization="true" PrefetchInsertionOpt="prefetchAggressive" HeapArrays="0" InterproceduralOptimizations="ipoMultiFile" MtuneConstruct="mcArchBWL" OpenMP="OpenMPParallelCode" F2003Semantics="true" WarnDeclarations="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole" OptimizeReferences="optReferences"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Debug|x64">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Parallelization="true" PreprocessorDefinitions="DEBUG" ErrorLimit="200" WarnDeclarations="true" WarnUndeclaredExternals="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" WarnInterfaces="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release|x64">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Parallelization="true" HeapArrays="0" OpenMP="OpenMPParallelCode" F2003Semantics="true" WarnDeclarations="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemConsole" OptimizeReferences="optReferences"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="ReleaseAVX512Parallel|Win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" UseProcessorExtensions="codeExclusivelyAVX2" Parallelization="true" PrefetchInsertionOpt="prefetchAggressive" HeapArrays="0" InterproceduralOptimizations="ipoMultiFile" MtuneConstruct="mcArchBWL" OpenMP="OpenMPParallelCode" F2003Semantics="true" WarnDeclarations="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole" OptimizeReferences="optReferences"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="ReleaseAVX512Parallel|x64">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" UseProcessorExtensions="codeExclusivelyCoreAVX512" Parallelization="true" PrefetchInsertionOpt="prefetchAggressive" HeapArrays="0" MtuneConstruct="mcArchCSL" OpenMP="OpenMPParallelCode" F2003Semantics="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
+				<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemConsole" OptimizeReferences="optReferences"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
+	<Files>
+		<Filter Name="Header Files" Filter="fi;fd;h;inc">
+		<File RelativePath=".\src\inc_precision.fi"/></Filter>
+		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+		<File RelativePath=".\DATA\sat_inputs.wfbound"/>
+		<File RelativePath=".\DATA\sat_inputs.wfinp"/></Filter>
+		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+		<File RelativePath=".\src\wf1dsat.f90"/></Filter></Files>
+	<Globals/></VisualStudioProject>
