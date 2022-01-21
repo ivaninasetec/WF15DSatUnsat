@@ -76,11 +76,6 @@
 		<File RelativePath=".\src\com_mod_fem_intelement.f90"/>
 		<File RelativePath=".\src\com_mod_fem_quadrature.f90"/>
 		<File RelativePath=".\src\com_mod_fem_shapefunctions.f90"/></Filter>
-		<Filter Name="HYD">
-		<File RelativePath=".\src\com_mod_hyd.f90"/>
-		<File RelativePath=".\src\com_mod_hyd_bc.f90"/>
-		<File RelativePath=".\src\com_mod_hyd_pw.f90"/>
-		<File RelativePath=".\src\com_mod_hyd_vg.f90"/></Filter>
 		<Filter Name="MX">
 		<File RelativePath=".\src\com_mod_mx_datatypes.f90"/>
 		<File RelativePath=".\src\com_mod_mx_solvers.f90"/></Filter>
