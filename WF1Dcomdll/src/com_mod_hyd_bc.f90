@@ -186,11 +186,11 @@
 
 	use com_mod_ty_material,only:ty_com_material
 
-	real(kind=dps),intent(in)::h(:)
+	real(kind=dpd),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<0.0_dpd)
 		rout = (h/(-material%a))**(-material%n)
 	elsewhere
 		rout =  1.0_dps

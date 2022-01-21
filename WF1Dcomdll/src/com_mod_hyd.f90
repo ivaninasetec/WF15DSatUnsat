@@ -282,14 +282,19 @@
 	REAL(KIND=dps),INTENT(IN)::h(:)
 	TYPE(TY_COM_MATERIAL),INTENT(IN)::material(:)
 	REAL(KIND=dps)::Rout(SIZE(h))
+	integer::i
 
 	WHERE (material%KindMat==2)
 		Rout = f2_hyd_th_h_PW_vec(h,material)
 	ELSE WHERE (material%KindMat==3)
 		Rout = f2_hyd_th_h_BC_vec(h,material)
-		ELSE WHERE
+	ELSE WHERE
 		Rout = f2_hyd_th_h_VG_vec(h,material)
 	END WHERE
+	!do i=1,size(h)
+	!	Rout(i)=material(i)%get_th_sca(h(i))
+	!end do
+	
 
 	END FUNCTION f2_hyd_th_h_vec
 

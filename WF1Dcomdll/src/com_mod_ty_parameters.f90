@@ -19,8 +19,7 @@
 	!	 |crelax          [real]:           Coeficient of relaxation for Newton Method (>0) (1 means no relaxation)
 	!	 |masslump        [logical]:        If true, then the mass coefficients are lumped in the diagonal, this
 	!  |                                  is convenient to reduce spureus oscillations but can be less accurate.
-	!	 |ErrorOnNode     [logical]:        If true, the Modified Picard is used, if false, the diferential equation
-	!  |                                  is soved in h and the water content error control is done
+	!	 |isModifiedPicard    [logical]:    If true, the Modified Picard is used, if false then Picard (fixed point iteration)
 	!  |                                  on elements with the L2 space-norm.
 	!  |QuadratureOrder [integer]:        Number of points of elements integration for Legendre quadrature. (1-60)
 	!	 |typesolution    [integer]:        Kind of matrix storage, solver and preconditioners used for the solution
@@ -47,7 +46,7 @@
 		integer					::it_max		!< Max number of iterations, over which time step restart decreased
 		real(kind=dps)	::crelax		!< Relaxation coefficient in the update pressure head in each iteration
 		logical					::masslump	!< Mass lumping used? (.true. or .false.)
-		logical					::erroronnode=.true. !< Is used the error on node or error on element? (.true.= error on node)
+		logical					::isModifiedPicard=.true. !< Is used the error on node or error on element? (.true.= error on node)
 		integer					::quadratureorder=5	 !< Quadrature order for integration inside element
 		integer					::typesolution !< Type of matrix solver (0 for dense, 1 csr-dss, 2 csr-fgmres, 3 banded-direct)
 		integer					::typematrixstorage !< Type of matrix sparsity: 1 for dense, 2 sparse csr, 3 banded

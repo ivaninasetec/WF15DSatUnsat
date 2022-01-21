@@ -114,7 +114,7 @@
 	integer::       param_itmax
 	real(kind=dps)::param_crelax
 	logical::       param_masslump
-	logical::       param_erroronnode
+	logical::       param_isModifiedPicard
 	integer::       param_quadratureorder
 	integer::       param_typesolution !0 for dense, 1 csr-dss, 2 csr-fgmres, 3 banded-direct
 	integer::       param_typematrixstorage !type of matrix sparsity: 1 for dense, 2 sparse csr, 3 banded
@@ -149,7 +149,7 @@
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_crelax
 	call s_com_inputs_nextrecord(40,readerror)
-	read(40,*) param_masslump, param_erroronnode
+	read(40,*) param_masslump, param_isModifiedPicard
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_quadratureorder	
 	call s_com_inputs_nextrecord(40,readerror)
@@ -261,7 +261,7 @@
 	parameters%it_max			= PARAM_ITMAX ! Max number of iterations, over which time step restart decreased
 	parameters%crelax			= PARAM_CRELAX ! Relaxation coefficient in the update pressure head in each iteration
 	parameters%masslump		= PARAM_MASSLUMP ! Mass lumping used? (.true. or .false.)
-	parameters%erroronnode				= PARAM_ERRORONNODE ! Is used the error on node or error on element? (.true.= error on node)
+	parameters%isModifiedPicard				= PARAM_ISMODIFIEDPICARD ! Is used the error on node or error on element? (.true.= error on node)
 	parameters%quadratureorder		=	PARAM_QUADRATUREORDER ! Quadrature order for integration inside element
 	parameters%typesolution				= PARAM_TYPESOLUTION ! Type of matrix solver (0 for dense, 1 csr-dss, 2 csr-fgmres, 3 banded-direct)
 	parameters%typematrixstorage	= PARAM_TYPEMATRIXSTORAGE ! Type of matrix sparsity: 1 for dense, 2 sparse csr, 3 banded

@@ -658,10 +658,12 @@
 	call this%update_hnew_from_solution()
 
 	!calculate error in h (in this case error in nodes):
-	!this%epsh = maxval(abs(this%solution-this%nodes%htemp)) 
+	!this%epsh = maxval(abs(this%solution-this%nodes%htemp))
+	
 	this%epsh = maxval(abs(this%nodes%hnew-this%nodes%htemp)) !Chechk (If we are updating hnew to only positive, this is the one that has to be put.
 
 	isconverged = this%epsh<this%parameters%epsh_tol
+	
 
 
 	end subroutine s_com_calc_iteration
