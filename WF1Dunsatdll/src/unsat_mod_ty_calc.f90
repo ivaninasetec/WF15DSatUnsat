@@ -59,7 +59,7 @@
 	procedure,public:: deallocateall 						=> s_unsat_calc_deallocateall
 	procedure,public:: assign_newmann 					=> s_unsat_calc_assign_newmann
 	procedure,public:: get_qnewmann 						=> s_unsat_get_qnewmann
-	procedure,public:: update_th_from_h					=> s_vector_h2th
+	procedure,public:: update_th_from_h					=> s_unsat_calc_update_th_from_h
 	procedure,public:: build_linearsystem 			=> s_unsat_calc_build_linearsystem
 	procedure,public:: estimate_hnew_for_new_timestep	=> s_unsat_calc_estimate_hnew_for_new_timestep !Overriden
 	procedure,public:: estimate_htemp_for_new_iteration	=> s_unsat_calc_estimate_htemp_for_new_iteration !Overriden
@@ -407,9 +407,9 @@
 	!> @param[in] option
 	!---------------------------------------------------------------------------------------------------------------------
 
-	subroutine s_vector_h2th(this,option)
+	subroutine s_unsat_calc_update_th_from_h(this,option)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_vector_h2th" :: s_vector_h2th
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_unsat_calc_update_th_from_h" :: s_unsat_calc_update_th_from_h
 	!DEC$ endif
 	use unsat_mod_ty_nodes,only:ty_unsat_nodes
 	use com_mod_ty_nodes,only:ty_com_nodes
@@ -420,6 +420,7 @@
 	integer,intent(in),optional::option
 	class(ty_com_nodes),pointer::nodescom
 	class(ty_unsat_nodes),pointer::nodes
+	integer,parameter						::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2,CONSIDER_ALL=3
 
 	integer::opt
 
@@ -434,11 +435,11 @@
 	end select
 
 	select case (opt)
-	case(1)	
+	case(CONSIDER_HOLD)	
 		nodes%thold	= f2_hyd_th_h_vec(this%nodes%hold,this%nodes%material)
-	case(2)
+	case(CONSIDER_HTEMP)
 		nodes%thtemp = f2_hyd_th_h_vec(this%nodes%htemp,this%nodes%material)
-	case(3)
+	case(CONSIDER_ALL)
 		nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew,nodes%material)
 		nodes%thtemp = f2_hyd_th_h_vec(nodes%htemp,nodes%material)
 		nodes%thold	= f2_hyd_th_h_vec(nodes%hold,nodes%material)
@@ -446,7 +447,7 @@
 		nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew(:),nodes%material(:))
 	end select
 
-	end subroutine s_vector_h2th
+	end subroutine s_unsat_calc_update_th_from_h
 
 	!---------------------------------------------------------------------------------------------------------------------
 	! ALLOCATE ALL (OVERRIDE)
@@ -673,7 +674,7 @@
 
 	integer,parameter::COEF_MASS=1,COEF_STIFF=2,COEF_LOAD=3,COEF_BOUND=4
 	integer,parameter::OPTIONBASIS_H=1,OPTIONBASIS_DH=2,OPTIONBASIS_H_H=3,OPTIONBASIS_H_DH=4,OPTIONBASIS_DH_H=5,OPTIONBASIS_DH_DH=6
-	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDERHOLD=2,CONSIDER_ALL=3
+	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2,CONSIDER_ALL=3
 	class(ty_unsat_calc),intent(inout),target::this
 	!class(ty_sat_layers),intent(in)::layers
 	!real(kind=dpd),intent(in)::dt
@@ -693,7 +694,7 @@
 	end select
 				
 
-	opt=0
+	opt=CONSIDER_HNEW
 	if(present(option)) opt = option
 
 	nelem				=this%elements%count
@@ -701,29 +702,43 @@
 	numclass		=this%elements%nc+1
 	numnodclass =numnod*numclass
 
+	if (this%parameters%isModifiedPicard) call this%update_th_from_h(CONSIDER_ALL)
+	!tex:Mass1 matrix:
+	!$\mathop \smallint \limits_{\rm{\Omega }} {\left. {\frac{{d\theta }}{{d\psi }}} \right|^{k,n + 1}}{\phi _j}{\phi _i}{\rm{\;}}d{\rm{\Omega }}$
 	if(IsTimeDependant)				call this%buildcoefmatrix(f_mass1,this%mxmass1,this%parameters%masslump,OPTIONBASIS_H_H)				!Build [MASS1]
+	!tex:Mass2 matrix:
+	!$\mathop \smallint \limits_{\rm{\Omega }} {\phi _j}{\phi _i}{\rm{\;}}d{\rm{\Omega }}$]
 	if(.not.IsTimeDependant)	call this%buildcoefmatrix(f_identity,this%mxmass2,this%parameters%masslump,OPTIONBASIS_H_H)			!Build [MASS2]
+	!tex:Stiffness matrix:
+	!$\mathop \smallint \limits_{\rm{\Omega }} {k^{k,n + 1}}\frac{{\partial {\phi _j}}}{{\partial x}}\frac{{\partial {\phi _i}}}{{\partial x}}{\rm{\;}}d{\rm{\Omega }}$
 	if(IsTimeDependant)				call this%buildcoefmatrix(f_stiff,this%mxstiff,.false.,OPTIONBASIS_DH_DH)												!Build [STIFF]
+	!tex:Sink matrix:
+	!$\mathop \smallint \limits_{\rm{\Omega }} {\phi _j}{\phi _i}{\rm{\;}}d{\rm{\Omega }}$]
 	if(.not.IsTimeDependant)	call this%buildcoefmatrix(f_identity,this%mxsink,.false.,OPTIONBASIS_H_H)			!Build [SINK]
 
 	if (isTimeDependant) then
 		!create mx matrix: [mx]=[mass]/dt+[stiff]+[bound]
 		!call construct_mx_dt(dt,mx,param%typesolution)
 
-		if (this%parameters%erroronnode) then
+		if (this%parameters%isModifiedPicard) then
 			!Linerization: Celia, 1990 Modified Picard linearization...
 			![MX] = [MASS1]/dt+[STIFF]
 			!{rhs}=[MASS1]{htemp}/dt-[MASS2]{thtemp-thold}/dt-[STIFF]{z}+[SINK]{sink}+{COLBOUND}
-
+			
+			!tex: Modified Picard linearization:
+			!$\left( {\frac{1}{{{\rm{\Delta }}t}}\left[ {{M_{MASSi,j}}} \right] + \left[ {{M_{Ki,j}}} \right]} \right)\left\{ {\psi _j^{k + 1,n + 1}} \right\} = \frac{1}{{{\rm{\Delta }}t}}\left[ {{M_{MASSi,j}}} \right]\left\{ {\psi _j^{k,n + 1}} \right\} - \frac{1}{{{\rm{\Delta }}t}}\left[ {{I_{i,j}}} \right]\left\{ {\theta _j^{k,n + 1} - \theta _j^n} \right\} - \left[ {{M_{Ki,j}}} \right]\left\{ {{z_j}} \right\} + \left\{ {{Q_{bound,i}}} \right\}$
+			
 				this%mx = this%mxmass1/this%time%dt+this%mxstiff
 				this%rhs=	this%mxmass1*nodes%htemp/this%time%dt-this%mxmass2*(nodes%thtemp-nodes%thold)/this%time%dt-this%mxstiff*nodes%x+this%mxsink*this%colsink+this%colbound
 
 
 		ELSE
-			!Linearization: simple h dependant linearization:
+			!Linearization: simple Picard linearization:
 			![MX] = [MASS1]/dt+[STIFF]
 			!{RHS}=[MASS1]·{hold}/dt-[STIFF]{z}+[SINK]{sink}+{colbound}
 
+			!tex: Picard linearization
+			!$\left( {\frac{1}{{{\rm{\Delta }}t}}\left[ {{M_{MASSi,j}}} \right] + \left[ {{M_{,j}}} \right]} \right)\left\{ {\psi _j^{k + 1,n + 1}} \right\} = \frac{1}{{{\rm{\Delta }}t}}\left[ {{M_{MASSi,j}}} \right]\left\{ {\psi _j^n} \right\} - \left[ {{M_{Ki,j}}} \right]\left\{ {{z_j}} \right\} + \left\{ {{Q_{bound,i}}} \right\}$
 			this%mx = this%mxmass1/this%time%dt+this%mxstiff
 			this%rhs=this%mxmass1*this%nodes%hold/this%time%dt-this%mxstiff*this%nodes%x+this%mxsink*this%colsink+this%colbound
 
@@ -759,14 +774,16 @@
 	nstartelem	= this%elements%idnode(e,1)
 	nendelem		= this%elements%idnode(e,numnodclass)
 	select case (opt)
-	case (0)
+	case (CONSIDER_HNEW)
 		henodes = this%nodes%hnew(nstartelem : nendelem)
-	case (1)
+	case (CONSIDER_HTEMP)
 		henodes = this%nodes%htemp(nstartelem : nendelem)
 		case default
 		stop('Matrix cannot be builded from old values in nodes')
 	end select
 
+	!tex:
+	!$\mathop \smallint \limits_{\rm{\Omega }} {\left. {\frac{{d\theta }}{{d\psi }}} \right|^{k,n + 1}}{\phi _j}{\phi _i}{\rm{\;}}d{\rm{\Omega }}$
 	headtemp = interp_on_element(chi,henodes)			!Returns htemp in each chi
 	!f_mass1 = f2_hyd_cap_h_vec2(headtemp,this%elements%material(e)) !IMPORTANT: Material is material(size(chi))
 	!f_mass1 = f2_hyd_cap_h_vec(headtemp,this%elements%material) !PREVIOUS: Material is material(size(chi))
@@ -790,14 +807,16 @@
 	nstartelem	= this%elements%idnode(e,1)
 	nendelem		= this%elements%idnode(e,numnodclass)
 	select case (opt)
-	case (0)
+	case (CONSIDER_HNEW)
 		henodes = this%nodes%hnew(nstartelem : nendelem)
-	case (1)
+	case (CONSIDER_HTEMP)
 		henodes = this%nodes%htemp(nstartelem : nendelem)
 		case default
 		stop('Matrix cannot be builded from old values in nodes')
 	end select
 
+	!tex:Stiffneww matrix:
+	!$\mathop \smallint \limits_{\rm{\Omega }} {k^{k,n + 1}}\frac{{\partial {\phi _j}}}{{\partial x}}\frac{{\partial {\phi _i}}}{{\partial x}}{\rm{\;}}d{\rm{\Omega }}$
 	headtemp = interp_on_element(chi,henodes)			!Returns htemp in each chi
 	!f_stiff = f2_hyd_k_h_vec2(headtemp,this%elements%material(e)) !PREVIOUS
 	!f_stiff = f2_hyd_k_h_vec(headtemp,this%elements%material) !PREVIOUS

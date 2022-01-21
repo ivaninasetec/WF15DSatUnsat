@@ -26,7 +26,7 @@
 
 	!---- 00 ---- Create instances (unsat, elemcom, elem), of classes (ty_unsat_model, ty_com_elements, ty_sat_elements)
 	logical,parameter						::IS_NOT_TIME_DEPENDANT=.false.,IS_TIME_DEPENDANT=.true.
-	integer,parameter						::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2, CONSIDER_ALL=3
+	integer,parameter						::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2,CONSIDER_ALL=3
 	!character*400,parameter			::FILEINPUT						='INPUTS\unsat_inputs.txt'
 	!character*400,parameter			::FILEBOUNDARY				='INPUTS\flow1d_bound_h.txt'
 	!character*400,parameter			::FILEOUTPUT_NODES		='OUTPUTS\unsat_outputs_nodes.csv'
@@ -36,6 +36,7 @@
 	character*400::fileboundary						
 	character*400::FILEOUTPUT_NODES			
 	character*400::FILEOUTPUT_ELEMENTS	
+	character*400::FILEOUTPUT_STATS	
 
 	type(ty_unsat_model),target				::unsat
 	class(ty_com_elements),pointer		::elemcom
@@ -45,7 +46,16 @@
 	logical					::isconverged=.false.,isconvergedall=.true.
 	integer					::iterconverg, npos, nargs
 
+	!For statistics:
+	real(kind=8)	  ::cputimeinit=0.0_8,cputimeend=0.0_8,systimeinit=0.0_8,systimeend=0.0_8,totaldt=0.0_8,meandt=0.0_8,maxdt=0.0_8,mindt=1.0E10_8
+	integer(8)			::itertotal=0,itersteps=0,timemilisec=0,countrate=1000
+	
+	
 	!---- 01 ---- Read file inputs
+	call CPU_TIME(cputimeinit)
+	call SYSTEM_CLOCK(timemilisec,countrate)
+	systimeinit=real(timemilisec,8)/real(countrate,8)
+	
 	nargs = COMMAND_ARGUMENT_COUNT()
 	if (nargs==0) then 
 		WRITE(*,*) 'Pease include input file as the first argument argument'
@@ -59,7 +69,8 @@
 	
 	fileboundary				=trim(namefile)//'.wfbound'
 	FILEOUTPUT_NODES		=trim(namefile)//'.outnodu'
-	FILEOUTPUT_ELEMENTS	=trim(namefile)//'.outelmu'	
+	FILEOUTPUT_ELEMENTS	=trim(namefile)//'.outelmu'
+	FILEOUTPUT_STATS	  =trim(namefile)//'.outstat'	
 	
 	call unsat%readfileinput(FILEINPUT,fileboundary)
 
@@ -123,6 +134,7 @@
 		! ---- 09.06 ---- Initialize isconverged to false
 		isconverged = .false.
 
+		call unsat%calc%update_th_from_h(CONSIDER_HOLD)
 		! ---- 09.07 ---- CONVERGENCE: do while not(isconverged or dt<dtmin and max iteration reached))
 		CONVERGENCE:do while(.not.(isconverged .or. (unsat%time%dt<=unsat%calc%parameters%dtmin .and. iterconverg==(unsat%calc%parameters%it_max-1))))
 			! ---- 09.07.01 ---- Increase iteration counter
@@ -141,10 +153,17 @@
 			! ---- 09.07.03.07 ----	Isconverged = epsh<epsh_tolerance
 			! ---- 09.07.03.08 ----	End subroutine iterate
 			!call unsat%calc%iterate(isconverged,isconvergedall)
+			itertotal=itertotal+1
 			call unsat%calc%iterate(isconverged)
+			
+			!if (unsat%parameters%isModifiedPicard) then
+			call unsat%calc%update_th_from_h(CONSIDER_HNEW)
+			unsat%calc%epsth=maxval(abs(unsat%calc%nodes%thnew-unsat%calc%nodes%thnew))
+			isconverged = (unsat%calc%epsh<unsat%parameters%epsh_tol).and.(unsat%calc%epsth<unsat%parameters%epsth_tol)
+			!end if
 
 			! ---- 09.07.04 ----	Update th_new values from h_new values
-			call unsat%calc%update_th_from_h(CONSIDER_HNEW)
+			if (unsat%parameters%isModifiedPicard) call unsat%calc%update_th_from_h(CONSIDER_HNEW)
 
 
 			if (iterconverg<unsat%calc%parameters%it_min) isconverged=.false.
@@ -180,11 +199,27 @@
 
 		! ---- 09.11 ---- Set old values from new values
 		call unsat%calc%set_old() !All new values passes now to old, and slopeold=(hnew-hold)/(t-told), told=t, dtold=dt, hold=hnew
+		!Log statistics
+		itersteps=itersteps+1
+		totaldt=totaldt+unsat%time%dt
+		mindt=min(mindt,unsat%time%dt)
+		maxdt=max(maxdt,unsat%time%dt)
 	end do TIMESTEPPING
+	meandt=totaldt/real(itersteps,8)
 
 	! ---- 10 ---- Close output files	and deallocate all
+	!Log statistics
+	call CPU_TIME(cputimeend)
+	call SYSTEM_CLOCK(timemilisec,countrate)
+	systimeend=real(timemilisec,8)/real(countrate,8)
 	close(31)
 	close(32)
 
+	!PRINT STATS:
+	open (33,file=FILEOUTPUT_STATS,status='unknown')
+	write(33,'("itertotal,nsteps,cputime_s,systime_s,mintimestep,meantimestep,maxtimestep")')
+	write(33,'(i6,",",i6,",",F10.3,",",F10.3,",",E10.3,",",E10.3,",",E10.3)') itertotal,itersteps,cputimeend-cputimeinit,systimeend-systimeinit,mindt,meandt,maxdt
+	close(33)
+	
 
 999	end program unsat_flow1d

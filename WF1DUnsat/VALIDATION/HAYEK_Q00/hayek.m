@@ -90,7 +90,11 @@ classdef hayek
             outputArg = zeros(size(z));
             zf_t = -obj.zf_t(t);
             outputArg(z>zf_t) = (1-exp(obj.a.*(obj.n-1).*(-z(z>zf_t)+zf_t)./obj.n)).^(1./(obj.n-1));
-        end    
+        end 
+        function outputArg = th_zvec_tsca(obj,z,t)
+            %Sr volumetric water content.
+            outputArg = obj.thres+(obj.thsat-obj.thres).*Se_zvec_tsca(obj,z,t);
+        end   
         
         function outputArg = h_zvec_tsca(obj,z,t)
             %Sr Residual saturation.
