@@ -31,6 +31,7 @@
     real(kind=dps)::l				!< Parameter l of Mualem-Van-Genuchten (-)
 		
 	contains
+	procedure,public:: get_incs_h1_to_h2_sca		=> f_hyd_incs_h1_to_h2_sca
 	procedure,public:: get_s_sca		=> f_hyd_s_h_sca
 	procedure,public:: get_s_vec		=> f_hyd_s_h_vec2
 	procedure,public:: get_th_sca		=> f_hyd_th_h_sca
@@ -892,6 +893,156 @@
 		end function f_hyd_dk_h_vg_vec2
 
 		end function f_hyd_dk_h_vec2
+
+		
+	!********************************************************************************************************************
+	! F: f2_hyd_S_H_PW_SCA(H,MATERIAL)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns specific saturation (scalar) from pressure head (scalar pressure) using the hyraulicfuncion
+	! defined with parameter MATERIAL%KINDMAT:
+	!	1: Mualem-Van Genuchten (Default)
+	!	2: Exp function
+	!********************************************************************************************************************
+
+	PURE FUNCTION f_hyd_incs_h1_to_h2_sca(material,h1,h2) RESULT(Rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_incs_h1_to_h2_sca" :: f_hyd_incs_h1_to_h2_sca
+	!DEC$ endif
+
+	!Returns specific saturation from pore pressure using kindmat function
+	!USE com_mod_ty_material,ONLY:TY_COM_MATERIAL
+	!USE com_mod_hyd_pw, ONLY: f2_hyd_incs_h1_to_h2_pw_sca
+	!USE com_mod_hyd_vg, ONLY: f2_hyd_incs_h1_to_h2_vg_sca
+	!USE com_mod_hyd_bc, ONLY: f2_hyd_incs_h1_to_h2_bc_sca
+	REAL(KIND=dps),INTENT(IN)::h1,h2
+	class(TY_COM_MATERIAL),INTENT(IN)::material
+	REAL(KIND=dps)::Rout
+
+	!Select proper hydraulic function depending on KindMat
+	SELECT CASE (material%KindMat)
+	CASE(2)
+		Rout = f_hyd_incs_h1_to_h2_pw_sca(material,h1,h2)
+	CASE(3)
+		Rout = f_hyd_incs_h1_to_h2_bc_sca(material,h1,h2)
+		CASE DEFAULT
+		Rout = f_hyd_incs_h1_to_h2_vg_sca(material,h1,h2)
+	END SELECT
+
+	contains
+	
+	! pw--------------------
+		pure function f_hyd_incs_h1_to_h2_pw_sca(material,h1,h2)
+	!return the specific saturation from pressure head(scalar)
+
+	!use com_mod_ty_material,only:ty_com_material
+
+	real(kind=dps),intent(in)::h1,h2
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::f_hyd_incs_h1_to_h2_pw_sca
+	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
+
+	a = real(material%a,16)
+	hb1 = real(h1,16)
+	hb2 = real(h2,16)
+	n= real(material%n,16)
+	m= real(material%m,16)
+
+	if (hb1<0.0_16) then
+		rout1 = merge(exp(material%a*h1/material%n),1.0_dps,h1<0.0_dps)
+	else
+		rout1 =  1.0_16
+	end if
+
+	if (hb2<0.0_16) then
+		rout2 = merge(exp(material%a*h2/material%n),1.0_dps,h2<0.0_dps)
+	else
+		rout2 =  1.0_16
+	end if
+
+	rout = rout2-rout1
+
+	f_hyd_incs_h1_to_h2_pw_sca = real(rout,dpd)
+
+		end function f_hyd_incs_h1_to_h2_pw_sca
+	
+		!vg--------------------------
+			pure function f_hyd_incs_h1_to_h2_vg_sca(material,h1,h2)
+
+	!return the specific saturation from pressure head(scalar)
+
+	!use com_mod_ty_material,only:ty_com_material
+
+	real(kind=dps),intent(in)::h1,h2
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::f_hyd_incs_h1_to_h2_vg_sca
+	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
+
+	a = real(material%a,16)
+	hb1 = real(h1,16)
+	hb2 = real(h2,16)
+	n= real(material%n,16)
+	m= real(material%m,16)
+
+	if (hb1<0.0_16) then
+		rout1 = (1.0_16+(-a*hb1)**n)**(-m)
+	else
+		rout1 =  1.0_16
+	end if
+
+	if (hb2<0.0_16) then
+		rout2 = (1.0_16+(-a*hb2)**n)**(-m)
+	else
+		rout2 =  1.0_16
+	end if
+
+	rout = rout2-rout1
+
+	f_hyd_incs_h1_to_h2_vg_sca = real(rout,dpd)
+
+			end function f_hyd_incs_h1_to_h2_vg_sca
+			
+			!bc-----------------------
+				pure function f_hyd_incs_h1_to_h2_bc_sca(material,h1,h2)
+
+	!CHECK:IMPORTANT: In this case the increment S is not between h1 and h2 but between h1+psi_b and h2+psi_b, as the watertable in reality begin in psi_b (material%a)
+
+	!use com_mod_ty_material,only:ty_com_material
+
+	real(kind=dps),intent(in)::h1,h2
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::f_hyd_incs_h1_to_h2_bc_sca
+	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
+
+	a = real(material%a,16)
+	hb1 = real(h1,16)
+	hb2 = real(h2,16)
+	n= real(material%n,16)
+	m= real(material%m,16)
+
+	if (hb1<0.0_16) then
+		rout1 = (hb1/(-material%a))**(-material%n) !CHECK: If this need to be hb1+material%a instead of hb1
+	else
+		rout1 =  1.0_16
+	end if
+
+	if (hb2<0.0_16) then
+		rout2 = (hb2/(-material%a))**(-material%n)
+	else
+		rout2 =  1.0_16
+	end if
+
+	rout = rout2-rout1
+
+	f_hyd_incs_h1_to_h2_bc_sca = real(rout,dpd)
+
+	end function f_hyd_incs_h1_to_h2_bc_sca
+	
+	
+	END FUNCTION f_hyd_incs_h1_to_h2_sca
+		
+		
+		
+		
 		
 
 	end module com_mod_ty_material

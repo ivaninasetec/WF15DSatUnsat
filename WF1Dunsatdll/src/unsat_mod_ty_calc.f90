@@ -152,7 +152,7 @@
 	!This function returns thsat-thres in the height x
 	function f_th_in_x(x)
 	use com_mod_linear_interpolation,only:linearinterpolation_ordered
-	use com_mod_hyd, only:f2_hyd_th_h_sca
+	!use com_mod_hyd, only:f2_hyd_th_h_sca
 
 	real(kind=dpd),intent(in)::x
 	real(kind=dpd)::f_th_in_x
@@ -170,8 +170,8 @@
 		hpres = linearinterpolation_ordered(x,this%nodes%x,this%nodes%hold)
 	end  select
 
-	f_th_in_x = f2_hyd_th_h_sca(hpres,this%elements%material(elementid_in_x))
-	!f_th_in_x = this%elements%material(elementid_in_x)%get_th(hpres)
+	!f_th_in_x = f2_hyd_th_h_sca(hpres,this%elements%material(elementid_in_x))
+	f_th_in_x = this%elements%material(elementid_in_x)%get_th_sca(hpres)
 
 	end function f_th_in_x
 
@@ -208,7 +208,7 @@
 	!This function returns thsat-thres in the height x
 	function f_thnewold_in_x(x)
 	use com_mod_linear_interpolation,only:linearinterpolation_ordered
-	use com_mod_hyd_vg, only: f2_hyd_incs_h1_to_h2_vg_sca
+	!use com_mod_hyd_vg, only: f2_hyd_incs_h1_to_h2_vg_sca
 
 	real(kind=dpd),intent(in)::x
 	real(kind=dpd)::f_thnewold_in_x
@@ -224,7 +224,8 @@
 	else
 		thsatres_in_x =	this%elements%material(elementid_in_x)%thsat-this%elements%material(elementid_in_x)%thres
 
-		f_thnewold_in_x = thsatres_in_x*f2_hyd_incs_h1_to_h2_vg_sca(hold,hnew,this%elements%material(elementid_in_x))
+		!f_thnewold_in_x = thsatres_in_x*f2_hyd_incs_h1_to_h2_vg_sca(hold,hnew,this%elements%material(elementid_in_x))
+		f_thnewold_in_x = thsatres_in_x*this%elements%material(elementid_in_x)%get_incs_h1_to_h2_sca(hold,hnew)
 	end if
 
 	end function f_thnewold_in_x
@@ -414,7 +415,7 @@
 	use unsat_mod_ty_nodes,only:ty_unsat_nodes
 	use com_mod_ty_nodes,only:ty_com_nodes
 
-	use com_mod_hyd,only:f2_hyd_th_h_vec !BCRRA
+	!use com_mod_hyd,only:f2_hyd_th_h_vec !BCRRA
 
 	class(ty_unsat_calc),intent(inout),target::this
 	integer,intent(in),optional::option
@@ -422,7 +423,7 @@
 	class(ty_unsat_nodes),pointer::nodes
 	integer,parameter						::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2,CONSIDER_ALL=3
 
-	integer::opt
+	integer::opt,i
 
 	nodescom=>this%nodes
 	opt = 0
@@ -436,15 +437,37 @@
 
 	select case (opt)
 	case(CONSIDER_HOLD)	
-		nodes%thold	= f2_hyd_th_h_vec(this%nodes%hold,this%nodes%material)
+		!$OMP DO
+		do i=1,size(nodes%thold)
+		nodes%thold(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hold(i))
+		end do
+		!$OMP END DO
+		!nodes%thold(:)	= f2_hyd_th_h_vec(this%nodes%hold(:),this%nodes%material(:))
 	case(CONSIDER_HTEMP)
-		nodes%thtemp = f2_hyd_th_h_vec(this%nodes%htemp,this%nodes%material)
+		!$OMP DO
+		do i=1,size(nodes%thtemp)
+		nodes%thtemp(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%htemp(i))
+		end do
+		!$OMP END DO
+		!nodes%thtemp = f2_hyd_th_h_vec(this%nodes%htemp,this%nodes%material)
 	case(CONSIDER_ALL)
-		nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew,nodes%material)
-		nodes%thtemp = f2_hyd_th_h_vec(nodes%htemp,nodes%material)
-		nodes%thold	= f2_hyd_th_h_vec(nodes%hold,nodes%material)
+		!$OMP DO
+		do i=1,size(nodes%thnew)
+		nodes%thold(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hold(i))
+		nodes%thtemp(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%htemp(i))
+		nodes%thnew(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hnew(i))
+		end do
+		!$OMP END DO
+		!nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew,nodes%material)
+		!nodes%thtemp = f2_hyd_th_h_vec(nodes%htemp,nodes%material)
+		!nodes%thold	= f2_hyd_th_h_vec(nodes%hold,nodes%material)
 		case default
-		nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew(:),nodes%material(:))
+		!$OMP DO
+		do i=1,size(nodes%thnew)
+		nodes%thnew(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hnew(i))
+		end do
+		!$OMP END DO
+		!nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew(:),nodes%material(:))
 	end select
 
 	end subroutine s_unsat_calc_update_th_from_h
@@ -875,7 +898,7 @@
 	use com_mod_ty_nodes,only:ty_com_nodes
 	use unsat_mod_ty_nodes,only:ty_unsat_nodes
 	use com_mod_fem_shapefunctions,only:dphi1d
-	use com_mod_hyd, only:f2_hyd_k_h_sca,f2_hyd_th_h_sca
+	!use com_mod_hyd, only:f2_hyd_k_h_sca,f2_hyd_th_h_sca
 	class(ty_unsat_calc),intent(inout),target::this
 	class(ty_com_elements),pointer::elemcom
 	class(ty_unsat_elements),pointer::elem
@@ -899,10 +922,10 @@
 	end select
 
 			do e=1,this%elements%count
-				elem%results_qent(e) = f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))))
-				!elem%results_qent(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))))
-				elem%results_qsal(e) = f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))))
-				!elem%results_qsal(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))))
+				!elem%results_qent(e) = f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))))
+				elem%results_qent(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))))
+				!elem%results_qsal(e) = f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))))
+				elem%results_qsal(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))))
 
 				elem%results_qmed(e)			=intelement_rel_1don(f_qmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 
@@ -918,14 +941,14 @@
 				elem%h1(e)							= nodes%hnew(elem%idnode(e,2))
 				elem%h0old(e)						= nodes%hold(elem%idnode(e,1))
 				elem%h1old(e)						= nodes%hold(elem%idnode(e,2))
-				elem%th0(e)							=f2_hyd_th_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))
-				!elem%th0(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,1)))
-				elem%th1(e)							=f2_hyd_th_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))
-				!elem%th1(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,2)))
-				elem%k0(e)							= f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))
-				!elem%k0(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))
-				elem%k1(e)							= f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))
-				!elem%k1(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))
+				!elem%th0(e)							=f2_hyd_th_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))
+				elem%th0(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,1)))
+				!elem%th1(e)							=f2_hyd_th_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))
+				elem%th1(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,2)))
+				!elem%k0(e)							= f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))
+				elem%k0(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))
+				!elem%k1(e)							= f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))
+				elem%k1(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))
 				elem%dhdx0(e)						= dot_product(dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
 				elem%dhdx1(e)						= dot_product(dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
 				elem%dhxdx0(e)					= dot_product(dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
@@ -939,7 +962,7 @@
 	!-----
 	function f_qmed_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element,dphi1d
-	use com_mod_hyd, only:f2_hyd_k_h_vec2
+	!use com_mod_hyd, only:f2_hyd_k_h_vec2
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_qmed_chi(size(chi))
 	real(kind=dps)::ktemp(size(chi)),hnewtemp(size(chi)),dphi1dtemp(size(chi),size(elem%idnode(e,:))),dhdxtemp(size(chi)),hxtemp(size(elem%idnode(e,:)))
@@ -947,8 +970,8 @@
 		!f_qmed_chi = elem%material(e)%get_k_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))*((nodes%hnew(elem%idnode(e,2))-nodes%hnew(elem%idnode(e,1)))/(nodes%x(elem%idnode(e,2))-nodes%x(elem%idnode(e,1)))+1)
 	
 	hnewtemp = interp_on_element(chi,nodes%hnew(elem%idnode(e,:))) 
-	ktemp = 	f2_hyd_k_h_vec2(hnewtemp,elem%material(e))
-	!ktemp = 	elem%material(e)%get_k_vec(hnewtemp)
+	!ktemp = 	f2_hyd_k_h_vec2(hnewtemp,elem%material(e))
+	ktemp = 	elem%material(e)%get_k_vec(hnewtemp)
 	dphi1dtemp = dphi1d(chi,nodes%x(elem%idnode(e,:)))
 	hxtemp = nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:))
 	dhdxtemp = matmul(dphi1dtemp,hxtemp)
@@ -959,13 +982,13 @@
 	!-----
 	function f_kmed_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	use com_mod_hyd, only:f2_hyd_k_h_vec2
+	!use com_mod_hyd, only:f2_hyd_k_h_vec2
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_kmed_chi(size(chi))
 	!Int(qent·phi)
 
-	f_kmed_chi = f2_hyd_k_h_vec2(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
-	!f_kmed_chi = elem%material(e)%get_k_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
+	!f_kmed_chi = f2_hyd_k_h_vec2(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
+	f_kmed_chi = elem%material(e)%get_k_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
 
 	end function f_kmed_chi
 
@@ -994,41 +1017,41 @@
 	!------
 	function f_thnew_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	use com_mod_hyd, only:f2_hyd_th_h_vec2
+	!use com_mod_hyd, only:f2_hyd_th_h_vec2
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_thnew_chi(size(chi))
 	!Int(qent·phi)
 
-	f_thnew_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
-	!f_thnew_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
+	!f_thnew_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
+	f_thnew_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
 
 	end function f_thnew_chi
 	!------
 	function f_thtemp_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	use com_mod_hyd, only:f2_hyd_th_h_vec2
+	!use com_mod_hyd, only:f2_hyd_th_h_vec2
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_thtemp_chi(size(chi))
 	!Int(qent·phi)
 	
-	f_thtemp_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%htemp(elem%idnode(e,:))),elem%material(e))
-	!f_thtemp_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%htemp(elem%idnode(e,:))))
+	!f_thtemp_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%htemp(elem%idnode(e,:))),elem%material(e))
+	f_thtemp_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%htemp(elem%idnode(e,:))))
 
 	end function f_thtemp_chi
 
 	!------
 	function f_thold_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	use com_mod_hyd, only:f2_hyd_th_h_vec2
+	!use com_mod_hyd, only:f2_hyd_th_h_vec2
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_thold_chi(size(chi))
 	!Int(qent·phi)
 
-	f_thold_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%hold(elem%idnode(e,:))),elem%material(e))
-	!f_thold_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%hold(elem%idnode(e,:))))
+	!f_thold_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%hold(elem%idnode(e,:))),elem%material(e))
+	f_thold_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%hold(elem%idnode(e,:))))
 
 	end function f_thold_chi
 
@@ -1089,7 +1112,7 @@
 	use unsat_mod_ty_nodes,only:ty_unsat_nodes
 	use com_mod_fem_shapefunctions,only:dphi1d
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	use com_mod_hyd, only:f2_hyd_k_h_sca
+	!use com_mod_hyd, only:f2_hyd_k_h_sca
 
 	class(ty_unsat_calc),intent(in),target::this
 	real(kind=dpd),intent(in)::x
@@ -1124,8 +1147,8 @@
 		chi = 2.0_dpd*(x-elem%x0(e))/(elem%x1(e)-elem%x0(e))-1.0_dpd
 
 		dhzdx = dot_product(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
-		k = f2_hyd_k_h_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
-		!k = elem%material(e)%get_k_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
+		!k = f2_hyd_k_h_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
+		k = elem%material(e)%get_k_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
 		f_unsat_calc_q_in_x = k*dhzdx
 
 
@@ -1146,7 +1169,7 @@
 	use com_mod_ty_nodes,only:ty_com_nodes
 	use com_mod_fem_shapefunctions,only:dphi1d
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	use com_mod_hyd, only:f2_hyd_k_h_sca
+	!use com_mod_hyd, only:f2_hyd_k_h_sca
 
 	class(ty_unsat_calc),intent(in),target::this
 	real(kind=dpd),intent(in)::chi
@@ -1161,8 +1184,8 @@
 	nodes => this%nodes
 
 	dhzdx =  dot_product(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
-	k = f2_hyd_k_h_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
-	!k = elem%material(e)%get_k_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
+	!k = f2_hyd_k_h_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
+	k = elem%material(e)%get_k_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
 	f_unsat_elem_q_in_chi_elem = k*dhzdx
 
 	end function f_unsat_elem_q_in_chi_elem

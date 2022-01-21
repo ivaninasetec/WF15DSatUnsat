@@ -82,7 +82,7 @@
 .TRUE.
 !****** BLOCK D: MESH **************************************
 !(nelem) Number of elements per layer
-100	100	100	100
+50	50	50	50
 !(nn) Nodes per element | (nc) Class of nodes
 2						 0
 

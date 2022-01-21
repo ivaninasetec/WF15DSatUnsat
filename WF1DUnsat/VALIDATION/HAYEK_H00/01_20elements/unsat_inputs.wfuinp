@@ -77,12 +77,12 @@
 !ZPHR: Phreatic level (z coordinate) from the top left [L]
 -500.0
 !TOPBOUNDBYH: Is top boundary defined by FLOW1D_BOUND_H.txt?
-.FALSE.
+.true.
 !TOPBOUNDBYQ: Is top boundary defined by specific flow with: FLOW1D_BOUND_Q.txt?
-.TRUE.
+.false.
 !****** BLOCK D: MESH **************************************
 !(nelem) Number of elements per layer
-100	100	100	100
+5	5	5	5
 !(nn) Nodes per element | (nc) Class of nodes
 2						 0
 
