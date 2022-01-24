@@ -158,7 +158,7 @@
 			
 			!if (unsat%parameters%isModifiedPicard) then
 			call unsat%calc%update_th_from_h(CONSIDER_HNEW)
-			unsat%calc%epsth=maxval(abs(unsat%calc%nodes%thnew-unsat%calc%nodes%thnew))
+			unsat%calc%epsth=maxval(abs(unsat%calc%nodes%thnew-unsat%calc%nodes%thtemp))
 			isconverged = (unsat%calc%epsh<unsat%parameters%epsh_tol).and.(unsat%calc%epsth<unsat%parameters%epsth_tol)
 			!end if
 

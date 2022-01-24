@@ -514,6 +514,8 @@
 	where (abs(h0-h1)<MIN_H0_TO_H1)
 		f_layers_get_water_inc_med_constant_simple = this%material(this%get_id_from_h(h1))%thsat-this%material(this%get_id_from_h(h1))%thres
 	else where
+		!tex:
+		!\[\overline {({\theta _{sat,l}} - {\theta _{res,l}})}  = \frac{{\sum\limits_l {({\theta _{sat,l}} - {\theta _{res,l}})\Delta {h_l}} }}{{\Delta h}}\]
 		f_layers_get_water_inc_med_constant_simple = abs(matmul(this%get_inc_h_vec(h0,h1),thsatrestemp)/(h1-h0))
 	end where
 

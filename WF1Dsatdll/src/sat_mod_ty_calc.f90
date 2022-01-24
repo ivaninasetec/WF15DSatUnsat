@@ -306,6 +306,7 @@
 	integer,parameter::COEF_MASS=1,COEF_STIFF=2,COEF_LOAD=3,COEF_BOUND=4
 	integer,parameter::OPTIONBASIS_H=1,OPTIONBASIS_DH=2,OPTIONBASIS_H_H=3,OPTIONBASIS_H_DH=4,OPTIONBASIS_DH_H=5,OPTIONBASIS_DH_DH=6
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDERHOLD=2
+	logical,parameter::IS_EQ_FIRST_VERSION=.TRUE.
 	class(ty_sat_calc),intent(inout),target::this
 	!class(ty_sat_layers),intent(in)::layers
 	!real(kind=dpd),intent(in)::dt
@@ -314,6 +315,7 @@
 	integer::opt,nelem,numnod,numclass,numnodclass
 
 	real(kind=dpd)::henodes(this%elements%nn*(this%elements%nc+1))
+	real(kind=dpd)::dhzenodes(this%elements%nn*(this%elements%nc+1))
 	real(kind=dpd)::henodesold(this%elements%nn*(this%elements%nc+1))
 	real(kind=dpd)::nrelnodes(this%elements%nn*(this%elements%nc+1))
 
@@ -325,19 +327,53 @@
 	numclass		=this%elements%nc+1
 	numnodclass =numnod*numclass
 
+	!Mass matrix:
+	!tex:\[\left[ {{M_{MASSi,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {{\overline {{n_{nw}}} }^{k,n + 1}}{\phi _j}{\phi _i}d{\rm{\Omega }}} \right] = \left[ {{M_{MASSi,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {r_{rel}}\cdot\frac{{\sum\limits_l {({\theta _{sat,l}} - {\theta _{res,l}})\Delta {h_l}} }}{{\Delta h}}{\phi _j}{\phi _i}d{\rm{\Omega }}} \right]{\overline {{n_{nw}}} ^{k,n + 1}}\]
 	if(IsTimeDependant)				call this%buildcoefmatrix(f_mass,this%mxmass,this%parameters%masslump,OPTIONBASIS_H_H)	!Build mass matrix
-	if(IsTimeDependant)				call this%buildcoefmatrix(f_stiff,this%mxstiff,.false.,OPTIONBASIS_DH_DH)								!Build stiff matrix
+	!Stiffness matrix:
+	
+	
+	!1st version:
+	!tex:
+	!$\left[ {{M_{Ki,j}}} \right] = \left[ {\int\limits_\Omega  {k_{eff}^{k,n + 1} \cdot {h^{k,n + 1}}\cdot\frac{{\partial {\phi _j}}}{{\partial x}}\frac{{\partial {\phi _i}}}{{\partial x}}} d\Omega } \right]$
+	
+	!2nd version (not working):
+	!tex:
+	!\[\left[ {{M_{Ki,j}}} \right] = \left[ {\int\limits_\Omega  {k_{eff}^{k,n + 1} \cdot \left( {\frac{{\partial {h^{k,n + 1}}}}{{\partial x}} + \frac{{\partial z}}{{\partial x}}} \right) \cdot {\phi _j}\frac{{\partial {\phi _i}}}{{\partial x}}} d\Omega } \right]\]	
+	
+	if(IS_EQ_FIRST_VERSION.and.IsTimeDependant)				call this%buildcoefmatrix(f_stiffA,this%mxstiff,.false.,OPTIONBASIS_DH_DH)	
+	if(.not.IS_EQ_FIRST_VERSION.and.IsTimeDependant)	call this%buildcoefmatrix(f_stiffB,this%mxstiff,.false.,OPTIONBASIS_H_DH)								!Build stiff matrix
+							
+
+	!Identity matrix for the waterflow:
+	!tex:$\left[ {{I_{i,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {\phi _j}{\phi _i}{\rm{\;}}d{\rm{\Omega }}} \right]$ 
 	if(.not.IsTimeDependant)	call this%buildcoefmatrix(f_identity,this%mxload,.false.,OPTIONBASIS_H_H)								!Build load matrix
-	if(IsTimeDependant)	call s_aux_buildcoefbound(this,this%mxbound)																						!Build boundary matrix (in this case pressure pass from h to 0 in a length of kmul·h)
+	!Boundary matrix:
+	!tex:
+	!	$\left[ {{M_{boundi,j}}} \right] = \left[ {\begin{array}{*{20}{c}}$
+	!0&0&0\\
+	!0& \ddots & \vdots \\
+	!0& \cdots &{C·k_{eff}^{k,n + 1}}
+	!\end{array}} \right]$
+	if(IsTimeDependant)				call s_aux_buildcoefbound(this,this%mxbound)																						!Build boundary matrix (in this case pressure pass from h to 0 in a length of kmul·h)
 	!if(IsTimeDependant)	call s_aux_buildcoefbound_multk(this,this%mxbound)																			!Second method assigning an increased permeability at boundary.
 
 	if (isTimeDependant) then
+		!1st version:
+		!tex: \[\left( {\frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right] + \left[ {{M_{Ki,j}}} \right] + \left[ {{M_{boundi,j}}} \right]} \right)\left\{ {\psi _j^{k + 1,n + 1}} \right\} = \frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right]\left\{ {\psi _j^n} \right\} - \left[ {{M_{Ki,j}}} \right]\left\{ {{z_j}} \right\} + \left[ {{I_{i,j}}} \right]\left\{ {{{\rm{q}}_{{\rm{vtb}},{\rm{j}}}}} \right\}\]
+		
+		!2nd version:
+		!tex:
+		!$\left( {\frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right] + \left[ {{M_{Ki,j}}} \right] + \left[ {{M_{boundi,j}}} \right]} \right)\left\{ {\psi _j^{k + 1,n + 1}} \right\} = \frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right]\left\{ {\psi _j^n} \right\} + \left[ {{I_{i,j}}} \right]\left\{ {{{\rm{q}}_{{\rm{vtb}},{\rm{i}}}}} \right\}$
+		
 		!create mx matrix: [mx]=[mass]/dt+[stiff]+[bound]
-		!call construct_mx_dt(dt,mx,param%typesolution)
 		this%mx = this%mxmass/this%time%dt+this%mxstiff+this%mxbound
 
-		!create {rhs} vector: {rhs} = [mass]{hold}/dt-[stiff]{zsoil}+[load]{colqent} Note:(-[qbound]·{z} if what's fixed is dh/dx instead of d(h+z)/dx)
-		this%rhs = this%mxmass*this%nodes%hold/this%time%dt-this%mxstiff*this%nodes%z+this%mxload*this%nodes%qent
+		!1dt version:
+		if(IS_EQ_FIRST_VERSION)				this%rhs = this%mxmass*this%nodes%hold/this%time%dt-this%mxstiff*this%nodes%z+this%mxload*this%nodes%qent
+		!2nd version:
+		if(.not.IS_EQ_FIRST_VERSION)	this%rhs = this%mxmass*this%nodes%hold/this%time%dt												   +this%mxload*this%nodes%qent
+
 	end if
 
 	contains
@@ -382,31 +418,23 @@
 	headold		= interp_on_element(chi,henodesold)	!Returns hold in each chi
 	nreltemp	= interp_on_element(chi,nrelnodes)	!Return relative porosity in chi. (non-wettin voids divided by total voids as calculated in the unsaturated vertical model)
 
-	!where (headtemp==headold)
-	!	waterincnodes = this%layers%material(1)%thsat-this%layers%material(1)%thres
-	!else where
-	!!waterincnodes = this%layers%get_water_inc(headold,headtemp)
-	!waterincnodes = this%layers%get_water_inc(headold,headtemp)/max(1e-10,(headtemp-headold))
-	!f_mass = nreltemp*this%layers%get_water_inc_med(headold,headtemp)
+	!tex:
+	!$\left[ {{M_{MASSi,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {{\overline {{n_{nw}}} }^{k,n + 1}}{\phi _j}{\phi _i}d{\rm{\Omega }}} \right]$
+	!tex:
+		!\[{\overline {{n_{nw}}} ^{k,n + 1}} = {r_{rel}}\cdot\overline {({\theta _{sat,l}} - {\theta _{res,l}})}  = {r_{rel}}\cdot\frac{{\sum\limits_l {({\theta _{sat,l}} - {\theta _{res,l}})\Delta {h_l}} }}{{\Delta h}}\]
 	f_mass = nreltemp*this%layers%get_water_inc_med(headold,headtemp)
-	!	!check waterinc:
-	!	!write(*,*) lays%get_water_inc(0.0_dpd,0.2_dpd)
-	!end where
-	!waterincnodes = max(waterincnodes,this%layers%material(1)%thsat-this%layers%material(1)%thres)
-	!waterinc = interp_on_element(chi,waterincnodes) !Interpolate the water increment in nodes to the chi values
-
-	!f_mass = this%layers%material(1)%thsat-this%layers%material(1)%thres !Use this when no unsat behaviour in increasing watertable (bad assumption)
+	
 	end function f_mass
 
 	!-----------------------------------------------------------------------------------------
 	!Returns ksat·head... (for [stiff] matrix)
-	function f_stiff(chi,e)
+	function f_stiffA(chi,e)
 	use com_mod_fem_shapefunctions,only:interp_on_element
 
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2
 	real(kind=dps),intent(in)::chi(:)
 	integer,intent(in)::e
-	real(kind=dps)::f_stiff(size(chi))
+	real(kind=dps)::f_stiffA(size(chi))
 	integer::nstartelem,nendelem
 	real(kind=dps)::head(size(chi),this%layers%count+1),ksat(this%layers%count+1),headonchi(size(chi)),kmed(size(chi)),headoldonchi(size(chi))
 
@@ -428,10 +456,8 @@
 
 	!Get a matrix for the height of water in each layer (for each value of chi) and over the top layer
 	headonchi = interp_on_element(chi,henodes)
-	headoldonchi = interp_on_element(chi,this%nodes%hold(nstartelem : nendelem))
+	!headoldonchi = interp_on_element(chi,this%nodes%hold(nstartelem : nendelem))
 	head = this%layers%get_inc_h_from0_vec(headonchi)
-	!head = this%layers%get_hvector(interp_on_element(chi,henodes))
-	!head = min(interp_on_element(chi,henodes),this%layers%height(1)) !assume that water only flow horizontally in the first layer
 	kmed = matmul(head,ksat)
 	where (headonchi<=0)
 		kmed = ksat(1)
@@ -439,14 +465,62 @@
 		kmed = abs(kmed/headonchi)
 	end where
 
-	f_stiff = kmed * headonchi
+	f_stiffA = kmed * headonchi
 
-	![stiff]=ksat·h·dphi_i/dx·dphi_j/dx=ksat·h·dphi_i/dchi·dchi/dx·dphi_j/dchi·dchi/dx=ksat·h(chi)·dN_i(chi)/J(chi)·dN_j(chi)/J(chi)
-	!f_stiff = matmul(head,ksat) !CHECK: Put abs to not getting bad things in the boundary or equal 0? (this is ksat_med·h)
-	!f_stiff = this%layers%material(1)%ksat*head
-	!		fun_quad = layers%material(1)%ksat*head*(dshapefunresult(ishape)*2.0/this%elements%lenght(e))*(dshapefunresult(jshape)*2.0/this%elements%lenght(e))
-	end function f_stiff
+	end function f_stiffA
 
+		!-----------------------------------------------------------------------------------------
+	!Returns ksat·head... (for [stiff] matrix)
+	function f_stiffB(chi,e)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+	use com_mod_fem_shapefunctions,only:dphi1d
+
+	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2
+	real(kind=dps),intent(in)::chi(:)
+	integer,intent(in)::e
+	real(kind=dps)::f_stiffB(size(chi))
+	integer::nstartelem,nendelem
+	real(kind=dps)::head(size(chi),this%layers%count+1),ksat(this%layers%count+1),headonchi(size(chi)),kmed(size(chi)),headoldonchi(size(chi)),dhzonchi(size(chi))
+
+	nstartelem	= this%elements%idnode(e,1)
+	nendelem		= this%elements%idnode(e,numnodclass)
+	select case (opt)
+	case (CONSIDER_HNEW)
+		henodes = this%nodes%hnew(nstartelem : nendelem)
+		dhzenodes= matmul(dphi1d(chi,this%nodes%x(nstartelem : nendelem)),this%nodes%hnew(nstartelem : nendelem)+this%nodes%z(nstartelem : nendelem))
+	case (CONSIDER_HTEMP)
+		henodes = this%nodes%hnew(nstartelem : nendelem)
+		dhzenodes= matmul(dphi1d(chi,this%nodes%x(nstartelem : nendelem)),this%nodes%htemp(nstartelem : nendelem)+this%nodes%z(nstartelem : nendelem))
+	case (CONSIDER_HOLD)
+		henodes = this%nodes%hnew(nstartelem : nendelem)
+		dhzenodes= matmul(dphi1d(chi,this%nodes%x(nstartelem : nendelem)),this%nodes%hold(nstartelem : nendelem)+this%nodes%z(nstartelem : nendelem))
+		case default
+		stop('Matrix cannot be builded from old values in nodes')
+	end select
+	
+	!Get a vector of ksat for every layer and another ksat=1.0 over the top layer
+	ksat(1:this%layers%count) = this%layers%material(:)%ksat
+	ksat(this%layers%count+1) = 1.0_dpd !Assumed that permeatility over the top layer is 1m3/2
+
+	!Get a matrix for the height of water in each layer (for each value of chi) and over the top layer
+	headonchi = interp_on_element(chi,henodes)
+	dhzonchi =  interp_on_element(chi,dhzenodes)
+	head = this%layers%get_inc_h_from0_vec(headonchi)
+
+	kmed = matmul(head,ksat)
+	where (headonchi<=0)
+		kmed = ksat(1)
+	else where
+		kmed = abs(kmed/headonchi)
+	end where
+
+	!tex:${k_{eff}^{k,n + 1}\cdot\left( {\frac{{\partial {h^{k,n + 1}}}}{{\partial x}} + \frac{{\partial z}}{{\partial x}}} \right)\cdot}$
+	f_stiffB = kmed * dhzonchi
+
+	end function f_stiffB
+	
+	
+	
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
@@ -475,7 +549,12 @@
 		htemp = this%layers%get_inc_h_from0_sca(this%nodes%htemp(this%nodes%count))
 		ksal = dot_product(ktemp,htemp)/this%nodes%htemp(this%nodes%count)*multksal
 	end if
-
+	!tex:
+	!	$\left[ {{M_{boundi,j}}} \right] = \left[ {\begin{array}{*{20}{c}}
+	!0&0&0\\
+	!0& \ddots & \vdots \\
+	!0& \cdots &{k_{eff}^{k,n + 1}}
+	!\end{array}} \right]$
 	mx = 0.0_dpd
 	call mx%set(nnodes,nnodes,ksal)
 
