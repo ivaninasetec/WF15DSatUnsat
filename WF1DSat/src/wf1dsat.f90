@@ -17,6 +17,7 @@
 	character*400::fileboundary						
 	character*400::FILEOUTPUT_NODES			
 	character*400::FILEOUTPUT_ELEMENTS	
+	character*400::FILEOUTPUT_STATS	
 	
 	logical,parameter::IS_NOT_TIME_DEPENDANT=.false.,IS_TIME_DEPENDANT=.true.
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDERHOLD=2
@@ -26,8 +27,17 @@
 
 	integer::iterconverg, npos, nargs
 	logical::isconverged,isconvergedall=.true.
+	
+	!For statistics:
+	real(kind=8)	  ::cputimeinit=0.0_8,cputimeend=0.0_8,systimeinit=0.0_8,systimeend=0.0_8,totaldt=0.0_8,meandt=0.0_8,maxdt=0.0_8,mindt=1.0E10_8
+	integer(8)			::itertotal=0,itersteps=0,timemilisec=0,countrate=1000
+	
 
 	!---- 01 ---- Read file inputs
+	call CPU_TIME(cputimeinit)
+	call SYSTEM_CLOCK(timemilisec,countrate)
+	systimeinit=real(timemilisec,8)/real(countrate,8)
+	
 	nargs = COMMAND_ARGUMENT_COUNT()
 	if (nargs==0) then 
 		WRITE(*,*) 'Pease include input file as the first argument argument'
@@ -42,6 +52,7 @@
 	fileboundary				=trim(namefile)//'.wfbound'
 	FILEOUTPUT_NODES		=trim(namefile)//'.outnods'
 	FILEOUTPUT_ELEMENTS	=trim(namefile)//'.outelms'
+	FILEOUTPUT_STATS	  =trim(namefile)//'.outstat'	
 	
 	call sat%readfileinput(FILEINPUT,fileboundary)
 	
@@ -119,6 +130,7 @@
 			! ---- 06.07.02.07 ----	Isconverged = epsh<epsh_tolerance
 			! ---- 06.07.02.08 ----	End subroutine iterate
 			!call sat%calc%iterate(isconverged,isconvergedall)
+			itertotal=itertotal+1
 			call sat%calc%iterate(isconverged)
 
 			if (iterconverg<sat%calc%parameters%it_min) isconverged=.false.
@@ -133,7 +145,7 @@
 				iterconverg = 0
 				isconvergedall=.true.
 			end if
-
+			
 		end do CONVERGENCE
 
 		!Iteration converged or min dtmin reached
@@ -151,11 +163,29 @@
 
 		! ---- 06.11 ---- set old values from new values for next timestep
 		call sat%calc%set_old() !All new values passes now to old, and Slopeold=(hnew-hold)/(t-told), told=t, dtold=dt, hold=hnew
+	
+		!Log statistics
+		itersteps=itersteps+1
+		totaldt=totaldt+sat%time%dt
+		mindt=min(mindt,sat%time%dt)
+		maxdt=max(maxdt,sat%time%dt)
 	end do TIMESTEPPING
 
 	! ---- 07 ---- Close output files	and deallocate all
 	close(31)
 	close(32)
 
+	!PRINT STATS:
+	!Log statistics
+	call CPU_TIME(cputimeend)
+	call SYSTEM_CLOCK(timemilisec,countrate)
+	systimeend=real(timemilisec,8)/real(countrate,8)
+	meandt=totaldt/real(itersteps,8)
+	
+	open (33,file=FILEOUTPUT_STATS,status='unknown')
+	write(33,'("itertotal,nsteps,cputime_s,systime_s,mintimestep,meantimestep,maxtimestep")')
+	write(33,'(i6,",",i6,",",F10.3,",",F10.3,",",E10.3,",",E10.3,",",E10.3)') itertotal,itersteps,cputimeend-cputimeinit,systimeend-systimeinit,mindt,meandt,maxdt
+	close(33)
+	
 
 999	END PROGRAM

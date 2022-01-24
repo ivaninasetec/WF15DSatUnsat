@@ -287,7 +287,7 @@
 	case (3) !general dense matrix (general matrix, dense storage)
 		call solve_csr_fgmres_ilut(mx,rhs,solution,csrrows,csrcols)
 		case default
-		stop("arguments dont match for banded matrix linear algebra solver")
+		stop("This solver is not yet implemented")
 	end select
 
 	contains

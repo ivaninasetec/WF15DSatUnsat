@@ -1,110 +1,110 @@
+	!!********************************************************************************************************************
+	!!*                                                                                                                  *
+	!!*                                 MODULE: MOD_FUN_HYDRAULIC_PW                                                     *
+	!!*                                                                                                                  *
+	!!********************************************************************************************************************
+	!!* THIS MODULE INCLUDE VARIABLY SATURATED HYDRAULIC FUNCTIONS: SIMPLIFIED POWER FUNCITONS	(Paper Hayek,2016)        *
+	!!*    f_hyd_S_h_PW:   Returns the specific saturation from pressure head                                            *
+	!!*    f_hyd_th_h_PW:  Returns water content from pressure head                                                      *
+	!!*    f_hyd_kr_h_PW:  Returns relative permeability from pressure head                                              *
+	!!*    f_hyd_k_h_PW:   Returns permeability from pressure head                                                       *
+	!!*    f_hyd_cap_h_PW: Returns water capacity from pressure head                                                     *
+	!!*                                                                                                                  *
+	!!*    Iván Campos-Guereta Díez                                                                                      *
+	!!*    MSc Civil Engineering by Polytechnic University of Madrid                                                     *
+	!!*    PhD Student by University of Nottingham                                                                       *
+	!!*    eMBA by International Institute San Telmo in Seville                                                          *
+	!!*    ivan.camposguereta@nottingham.ac.uk                                                                           *
+	!!*                                                                                                                  *
+	!!*    This software is copyrighted 2019(C)                                                                          *
+	!!********************************************************************************************************************
+ !
+	!module com_mod_hyd_pw
+ !
+	!implicit none
+	!private
+	!include 'inc_precision.fi'
+ !
+	!!********************************************************************************************************************
+	!! POLIMORPHIC INTERFACES FOR THE FOLLOWING HYDRAULIC FUNCIONS
+	!!--------------------------------------------------------------------------------------------------------------------
+	!! f_hyd_S_h_PW	:Returns Equivalent saturation (sca or vec) from pressure head (sca or vec)
+	!! f_hyd_th_h_PW	:Returns water content (sca or vec)					from pressure head (sca or vec)
+	!! f_hyd_kr_h_PW	:Returns relative permeability (sca or vec) from pressure head (sca or vec)
+	!! f_hyd_k_h_PW	:Returns permeability (sca or vec)					from pressure head (sca or vec)
+	!! f_hyd_cap_h_PW:Returns water capacity (sca or vec)				from pressure head (sca or vec)
+	!!********************************************************************************************************************
+ !
+	!!interface f_hyd_s_h_pw
+	!!module procedure f_hyd_s_h_pw_sca
+	!!module procedure f_hyd_s_h_pw_vec
+	!!module procedure f_hyd_s_h_pw_vec2
+	!!end interface f_hyd_s_h_pw
+	!!
+	!!interface f_hyd_th_h_pw
+	!!module procedure f_hyd_th_h_pw_sca
+	!!module procedure f_hyd_th_h_pw_vec
+	!!module procedure f_hyd_th_h_pw_vec2
+	!!end interface f_hyd_th_h_pw
+	!!
+	!!interface f_hyd_kr_h_pw
+	!!module procedure f_hyd_kr_h_pw_sca
+	!!module procedure f_hyd_kr_h_pw_vec
+	!!module procedure f_hyd_kr_h_pw_vec2
+	!!end interface f_hyd_kr_h_pw
+	!!
+	!!interface f_hyd_k_h_pw
+	!!module procedure f_hyd_k_h_pw_sca
+	!!module procedure f_hyd_k_h_pw_vec
+	!!module procedure f_hyd_k_h_pw_vec2
+	!!end interface f_hyd_k_h_pw
+	!!
+	!!interface f_hyd_cap_h_pw
+	!!module procedure f_hyd_cap_h_pw_sca
+	!!module procedure f_hyd_cap_h_pw_vec
+	!!module procedure f_hyd_cap_h_pw_vec2
+	!!end interface f_hyd_cap_h_pw
+	!!
+	!!interface f_hyd_dkr_h_pw
+	!!module procedure f_hyd_dkr_h_pw_sca
+	!!module procedure f_hyd_dkr_h_pw_vec
+	!!module procedure f_hyd_dkr_h_pw_vec2
+	!!end interface f_hyd_dkr_h_pw
+	!!
+	!!interface f_hyd_dk_h_pw
+	!!module procedure f_hyd_dk_h_pw_sca
+	!!module procedure f_hyd_dk_h_pw_vec
+	!!module procedure f_hyd_dk_h_pw_vec2
+	!!end interface f_hyd_dk_h_pw
+	!!
+	!!public::f_hyd_s_h_pw,   f_hyd_th_h_pw,  f_hyd_kr_h_pw,  f_hyd_k_h_pw,  f_hyd_cap_h_pw,  f_hyd_dkr_h_pw,  f_hyd_dk_h_pw
+ !
+	!PUBLIC::  f_hyd_S_h_pw_sca,  f_hyd_S_h_pw_vec,  f_hyd_S_h_pw_vec2, &
+	!	f_hyd_th_h_pw_sca, f_hyd_th_h_pw_vec, f_hyd_th_h_pw_vec2,  &
+	!	f_hyd_kr_h_pw_sca, f_hyd_kr_h_pw_vec, f_hyd_kr_h_pw_vec2, &
+	!	f_hyd_k_h_pw_sca,  f_hyd_k_h_pw_vec,  f_hyd_k_h_pw_vec2,  &
+	!	f_hyd_cap_h_pw_sca,f_hyd_cap_h_pw_vec,f_hyd_cap_h_pw_vec2, &
+	!	f_hyd_dkr_h_pw_sca,f_hyd_dkr_h_pw_vec,f_hyd_dkr_h_pw_vec2, &
+	!	f_hyd_dk_h_pw_sca, f_hyd_dk_h_pw_vec, f_hyd_dk_h_pw_vec2, &
+	!	f_hyd_incs_h1_to_h2_pw_sca
+ !
+	!contains
+
 	!********************************************************************************************************************
-	!*                                                                                                                  *
-	!*                                 MODULE: MOD_FUN_HYDRAULIC_PW                                                     *
-	!*                                                                                                                  *
-	!********************************************************************************************************************
-	!* THIS MODULE INCLUDE VARIABLY SATURATED HYDRAULIC FUNCTIONS: SIMPLIFIED POWER FUNCITONS	(Paper Hayek,2016)        *
-	!*    f2_hyd_S_h_PW:   Returns the specific saturation from pressure head                                            *
-	!*    f2_hyd_th_h_PW:  Returns water content from pressure head                                                      *
-	!*    f2_hyd_kr_h_PW:  Returns relative permeability from pressure head                                              *
-	!*    f2_hyd_k_h_PW:   Returns permeability from pressure head                                                       *
-	!*    f2_hyd_cap_h_PW: Returns water capacity from pressure head                                                     *
-	!*                                                                                                                  *
-	!*    Iván Campos-Guereta Díez                                                                                      *
-	!*    MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!*    PhD Student by University of Nottingham                                                                       *
-	!*    eMBA by International Institute San Telmo in Seville                                                          *
-	!*    ivan.camposguereta@nottingham.ac.uk                                                                           *
-	!*                                                                                                                  *
-	!*    This software is copyrighted 2019(C)                                                                          *
-	!********************************************************************************************************************
-
-	module com_mod_hyd_pw
-
-	implicit none
-	private
-	include 'inc_precision.fi'
-
-	!********************************************************************************************************************
-	! POLIMORPHIC INTERFACES FOR THE FOLLOWING HYDRAULIC FUNCIONS
-	!--------------------------------------------------------------------------------------------------------------------
-	! f2_hyd_S_h_PW	:Returns Equivalent saturation (sca or vec) from pressure head (sca or vec)
-	! f2_hyd_th_h_PW	:Returns water content (sca or vec)					from pressure head (sca or vec)
-	! f2_hyd_kr_h_PW	:Returns relative permeability (sca or vec) from pressure head (sca or vec)
-	! f2_hyd_k_h_PW	:Returns permeability (sca or vec)					from pressure head (sca or vec)
-	! f2_hyd_cap_h_PW:Returns water capacity (sca or vec)				from pressure head (sca or vec)
-	!********************************************************************************************************************
-
-	!interface f2_hyd_s_h_pw
-	!module procedure f2_hyd_s_h_pw_sca
-	!module procedure f2_hyd_s_h_pw_vec
-	!module procedure f2_hyd_s_h_pw_vec2
-	!end interface f2_hyd_s_h_pw
-	!
-	!interface f2_hyd_th_h_pw
-	!module procedure f2_hyd_th_h_pw_sca
-	!module procedure f2_hyd_th_h_pw_vec
-	!module procedure f2_hyd_th_h_pw_vec2
-	!end interface f2_hyd_th_h_pw
-	!
-	!interface f2_hyd_kr_h_pw
-	!module procedure f2_hyd_kr_h_pw_sca
-	!module procedure f2_hyd_kr_h_pw_vec
-	!module procedure f2_hyd_kr_h_pw_vec2
-	!end interface f2_hyd_kr_h_pw
-	!
-	!interface f2_hyd_k_h_pw
-	!module procedure f2_hyd_k_h_pw_sca
-	!module procedure f2_hyd_k_h_pw_vec
-	!module procedure f2_hyd_k_h_pw_vec2
-	!end interface f2_hyd_k_h_pw
-	!
-	!interface f2_hyd_cap_h_pw
-	!module procedure f2_hyd_cap_h_pw_sca
-	!module procedure f2_hyd_cap_h_pw_vec
-	!module procedure f2_hyd_cap_h_pw_vec2
-	!end interface f2_hyd_cap_h_pw
-	!
-	!interface f2_hyd_dkr_h_pw
-	!module procedure f2_hyd_dkr_h_pw_sca
-	!module procedure f2_hyd_dkr_h_pw_vec
-	!module procedure f2_hyd_dkr_h_pw_vec2
-	!end interface f2_hyd_dkr_h_pw
-	!
-	!interface f2_hyd_dk_h_pw
-	!module procedure f2_hyd_dk_h_pw_sca
-	!module procedure f2_hyd_dk_h_pw_vec
-	!module procedure f2_hyd_dk_h_pw_vec2
-	!end interface f2_hyd_dk_h_pw
-	!
-	!public::f2_hyd_s_h_pw,   f2_hyd_th_h_pw,  f2_hyd_kr_h_pw,  f2_hyd_k_h_pw,  f2_hyd_cap_h_pw,  f2_hyd_dkr_h_pw,  f2_hyd_dk_h_pw
-
-	PUBLIC::  f2_hyd_S_h_pw_sca,  f2_hyd_S_h_pw_vec,  f2_hyd_S_h_pw_vec2, &
-		f2_hyd_th_h_pw_sca, f2_hyd_th_h_pw_vec, f2_hyd_th_h_pw_vec2,  &
-		f2_hyd_kr_h_pw_sca, f2_hyd_kr_h_pw_vec, f2_hyd_kr_h_pw_vec2, &
-		f2_hyd_k_h_pw_sca,  f2_hyd_k_h_pw_vec,  f2_hyd_k_h_pw_vec2,  &
-		f2_hyd_cap_h_pw_sca,f2_hyd_cap_h_pw_vec,f2_hyd_cap_h_pw_vec2, &
-		f2_hyd_dkr_h_pw_sca,f2_hyd_dkr_h_pw_vec,f2_hyd_dkr_h_pw_vec2, &
-		f2_hyd_dk_h_pw_sca, f2_hyd_dk_h_pw_vec, f2_hyd_dk_h_pw_vec2, &
-		f2_hyd_incs_h1_to_h2_pw_sca
-
-	contains
-
-	!********************************************************************************************************************
-	! F: f2_hyd_S_H_PW_SCA(H,MATERIAL)
+	! F: f_hyd_S_H_PW_SCA(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns specific saturation (scalar) from pressure head (scalar pressure), with simplified power
 	! function:
 	!		Se=EXP(a*h/n)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_s_h_pw_sca(h,material) result(rout)
+	pure function f_hyd_s_h_pw_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_s_h_pw_sca" :: f2_hyd_s_h_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_s_h_pw_sca" :: f_hyd_s_h_pw_sca
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
@@ -116,28 +116,28 @@
 		rout = 1.0_dps
 	end if
 
-	end function f2_hyd_s_h_pw_sca
+	end function f_hyd_s_h_pw_sca
 
 	!********************************************************************************************************************
-	! F: f2_hyd_incs_h1_to_h2_vg_sca(H1,H2,MATERIAL)
+	! F: f_hyd_incs_h1_to_h2_vg_sca(H1,H2,MATERIAL)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns specific saturation (scalar) from pressure head (scalar pressure), with simplified power
 	! function:
 	!		Se1=EXP(a*h1/n) Se2=EXP(a*h2/n) -> Out Se2-Se1
 	!********************************************************************************************************************
 
-	pure function f2_hyd_incs_h1_to_h2_pw_sca(h1,h2,material)
+	pure function f_hyd_incs_h1_to_h2_pw_sca(material,h1,h2)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_incs_h1_to_h2_pw_sca" :: f2_hyd_incs_h1_to_h2_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_incs_h1_to_h2_pw_sca" :: f_hyd_incs_h1_to_h2_pw_sca
 	!DEC$ endif
 
 	!return the specific saturation from pressure head(scalar)
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h1,h2
 	type(ty_com_material),intent(in)::material
-	real(kind=dpd)::f2_hyd_incs_h1_to_h2_pw_sca
+	real(kind=dpd)::f_hyd_incs_h1_to_h2_pw_sca
 	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
 
 	a = real(material%a,16)
@@ -160,27 +160,27 @@
 
 	rout = rout2-rout1
 
-	f2_hyd_incs_h1_to_h2_pw_sca = real(rout,dpd)
+	f_hyd_incs_h1_to_h2_pw_sca = real(rout,dpd)
 
-	end function f2_hyd_incs_h1_to_h2_pw_sca
+	end function f_hyd_incs_h1_to_h2_pw_sca
 
 
 
 	!********************************************************************************************************************
-	! F: f2_hyd_S_H_PW_VEC(H,MATERIAL)
+	! F: f_hyd_S_H_PW_VEC(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns specific saturation (vector) from pressure head (vector pressure), with simplified power
 	! function:
 	!		Se=EXP(a*h/n)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_s_h_pw_vec(h,material) result(rout)
+	pure function f_hyd_s_h_pw_vec(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_s_h_pw_vec" :: f2_hyd_s_h_pw_vec
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_s_h_pw_vec" :: f_hyd_s_h_pw_vec
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
@@ -192,17 +192,17 @@
 		rout = 1.0_dps
 	end where
 
-	end function f2_hyd_s_h_pw_vec
+	end function f_hyd_s_h_pw_vec
 
 	!-----------------
 
-	pure function f2_hyd_s_h_pw_vec2(h,material) result(rout)
+	pure function f_hyd_s_h_pw_vec2(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_s_h_pw_vec2" :: f2_hyd_s_h_pw_vec2
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_s_h_pw_vec2" :: f_hyd_s_h_pw_vec2
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
@@ -214,105 +214,105 @@
 		rout = 1.0_dps
 	end where
 
-	end function f2_hyd_s_h_pw_vec2
+	end function f_hyd_s_h_pw_vec2
 
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_th_h_PW_sca(h,material)
+	!	F: f_hyd_th_h_PW_sca(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns water content (scalar) from pressure head (scalar pressure), with simplified power
 	! function:
 	!		th = thres+(thsat-thres)*Se
 	!********************************************************************************************************************
 
-	pure function f2_hyd_th_h_pw_sca(h,material) result(rout)
+	pure function f_hyd_th_h_pw_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_th_h_pw_sca" :: f2_hyd_th_h_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_th_h_pw_sca" :: f_hyd_th_h_pw_sca
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
 	real(kind=dps)::rout
 
 	if (h<0.0) then
-		rout = material%thres+(material%thsat-material%thres)*f2_hyd_s_h_pw_sca(h,material)
+		rout = material%thres+(material%thsat-material%thres)*f_hyd_s_h_pw_sca(material,h)
 	else
 		rout = material%thsat
 	end if
 
-	end function f2_hyd_th_h_pw_sca
+	end function f_hyd_th_h_pw_sca
 
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_th_h_PW_vec(h,material)
+	!	F: f_hyd_th_h_PW_vec(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns water content (vector) from pressure head (vector pressure), with simplified power
 	! function:
 	!		th = thres+(thsat-thres)*Se
 	!********************************************************************************************************************
 
-	pure function f2_hyd_th_h_pw_vec(h,material) result(rout)
+	pure function f_hyd_th_h_pw_vec(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_th_h_pw_vec" :: f2_hyd_th_h_pw_vec
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_th_h_pw_vec" :: f_hyd_th_h_pw_vec
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dps)::rout(size(h))
 
 	where (h<0.0)
-		rout = material%thres+(material%thsat-material%thres)*f2_hyd_s_h_pw_vec(h,material)
+		rout = material%thres+(material%thsat-material%thres)*f_hyd_s_h_pw_vec(material,h)
 	else where
 		rout = material%thsat
 	end where
 
-	end function f2_hyd_th_h_pw_vec
+	end function f_hyd_th_h_pw_vec
 
 	!---------
 
-	pure function f2_hyd_th_h_pw_vec2(h,material) result(rout)
+	pure function f_hyd_th_h_pw_vec2(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_th_h_pw_vec2" :: f2_hyd_th_h_pw_vec2
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_th_h_pw_vec2" :: f_hyd_th_h_pw_vec2
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
 	real(kind=dps)::rout(size(h))
 
-	rout = material%thres+(material%thsat-material%thres)*f2_hyd_s_h_pw_vec2(h,material)
+	rout = material%thres+(material%thsat-material%thres)*f_hyd_s_h_pw_vec2(material,h)
 
 	!where (h<0.0)
-	!	rout = material%thres+(material%thsat-material%thres)*f2_hyd_s_h_pw_sca(h,material)
+	!	rout = material%thres+(material%thsat-material%thres)*f_hyd_s_h_pw_sca(material,h)
 	!else where
 	!	rout = material%thsat
 	!end where
 
-	end function f2_hyd_th_h_pw_vec2
+	end function f_hyd_th_h_pw_vec2
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_kr_h_PW_sca(h,material)
+	!	F: f_hyd_kr_h_PW_sca(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns relative permeability (scalar) from pressure head (scalar pressure), with simplified power
 	! function:
 	!		Kr = EXP(a·h)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_kr_h_pw_sca(h,material) result(rout)
+	pure function f_hyd_kr_h_pw_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_kr_h_pw_sca" :: f2_hyd_kr_h_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_kr_h_pw_sca" :: f_hyd_kr_h_pw_sca
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
@@ -324,24 +324,24 @@
 		rout = 1.0_dps
 	end if
 
-	end function f2_hyd_kr_h_pw_sca
+	end function f_hyd_kr_h_pw_sca
 
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_kr_h_PW_vec(h,material)
+	!	F: f_hyd_kr_h_PW_vec(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns relative permeability (vector) from pressure head (vector pressure), with simplified power
 	! function:
 	!		Kr = EXP(a·h)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_kr_h_pw_vec(h,material) result(rout)
+	pure function f_hyd_kr_h_pw_vec(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_kr_h_pw_vec" :: f2_hyd_kr_h_pw_vec
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_kr_h_pw_vec" :: f_hyd_kr_h_pw_vec
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	!kr = exp(a·h)
 	real(kind=dps),intent(in)::h(:)
@@ -354,17 +354,17 @@
 		rout = 1.0_dps
 	end where
 
-	end function f2_hyd_kr_h_pw_vec
+	end function f_hyd_kr_h_pw_vec
 
 	!--------
 
-	pure function f2_hyd_kr_h_pw_vec2(h,material) result(rout)
+	pure function f_hyd_kr_h_pw_vec2(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_kr_h_pw_vec2" :: f2_hyd_kr_h_pw_vec2
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_kr_h_pw_vec2" :: f_hyd_kr_h_pw_vec2
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	!kr = exp(a·h)
 	real(kind=dps),intent(in)::h(:)
@@ -377,90 +377,90 @@
 		rout = 1.0_dps
 	end where
 
-	end function f2_hyd_kr_h_pw_vec2
+	end function f_hyd_kr_h_pw_vec2
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_k_h_PW_sca(h,material)
+	!	F: f_hyd_k_h_PW_sca(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns permeability (scalar) from pressure head (scalar pressure), with simplified power
 	! function:
 	!		k = ksat·kr
 	!********************************************************************************************************************
 
-	pure function f2_hyd_k_h_pw_sca(h,material) result(rout)
+	pure function f_hyd_k_h_pw_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_k_h_pw_sca" :: f2_hyd_k_h_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_k_h_pw_sca" :: f_hyd_k_h_pw_sca
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
 	real(kind=dps)::rout
 
-	rout = material%ksat*f2_hyd_kr_h_pw_sca(h,material)
+	rout = material%ksat*f_hyd_kr_h_pw_sca(material,h)
 
-	end function f2_hyd_k_h_pw_sca
+	end function f_hyd_k_h_pw_sca
 
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_k_h_PW_vec(h,material)
+	!	F: f_hyd_k_h_PW_vec(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns permeability (vector) from pressure head (vector pressure), with simplified power
 	! function:
 	!		k = ksat·kr
 	!********************************************************************************************************************
 
-	pure function f2_hyd_k_h_pw_vec(h,material) result(rout)
+	pure function f_hyd_k_h_pw_vec(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_k_h_pw_vec" :: f2_hyd_k_h_pw_vec
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_k_h_pw_vec" :: f_hyd_k_h_pw_vec
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dps)::rout(size(h))
 
-	rout = material%ksat*f2_hyd_kr_h_pw_vec(h,material)
+	rout = material%ksat*f_hyd_kr_h_pw_vec(material,h)
 
-	end function f2_hyd_k_h_pw_vec
+	end function f_hyd_k_h_pw_vec
 
 	!---------
 
-	pure function f2_hyd_k_h_pw_vec2(h,material) result(rout)
+	pure function f_hyd_k_h_pw_vec2(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_k_h_pw_vec2" :: f2_hyd_k_h_pw_vec2
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_k_h_pw_vec2" :: f_hyd_k_h_pw_vec2
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
 	real(kind=dps)::rout(size(h))
 
-	rout = material%ksat*f2_hyd_kr_h_pw_vec2(h,material)
+	rout = material%ksat*f_hyd_kr_h_pw_vec2(material,h)
 
-	end function f2_hyd_k_h_pw_vec2
+	end function f_hyd_k_h_pw_vec2
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_cap_h_PW_sca(h,material)
+	!	F: f_hyd_cap_h_PW_sca(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns water capacity (dth/dh) (scalar) from pressure head (scalar pressure), with simplified power
 	! function:
 	!		Cap=(thsat-thres)·(a/n)*EXP(a·h/n)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_cap_h_pw_sca(h,material) result(rout)
+	pure function f_hyd_cap_h_pw_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_cap_h_pw_sca" :: f2_hyd_cap_h_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_cap_h_pw_sca" :: f_hyd_cap_h_pw_sca
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
@@ -472,24 +472,24 @@
 		rout = (material%thsat-material%thres)*(material%a/material%n)
 	end if
 
-	end function f2_hyd_cap_h_pw_sca
+	end function f_hyd_cap_h_pw_sca
 
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_cap_h_PW_sca(h,material)
+	!	F: f_hyd_cap_h_PW_sca(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns water capacity (dth/dh) (vector) from pressure head (vector pressure), with simplified power
 	! function:
 	!		Cap=(thsat-thres)·(a/n)*EXP(a·h/n)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_cap_h_pw_vec(h,material) result(rout)
+	pure function f_hyd_cap_h_pw_vec(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_cap_h_pw_vec" :: f2_hyd_cap_h_pw_vec
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_cap_h_pw_vec" :: f_hyd_cap_h_pw_vec
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
@@ -501,17 +501,17 @@
 		rout = (material%thsat-material%thres)*(material%a/material%n)
 	end where
 
-	end function f2_hyd_cap_h_pw_vec
+	end function f_hyd_cap_h_pw_vec
 
 	!------
 
-	pure function f2_hyd_cap_h_pw_vec2(h,material) result(rout)
+	pure function f_hyd_cap_h_pw_vec2(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_cap_h_pw_vec2" :: f2_hyd_cap_h_pw_vec2
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_cap_h_pw_vec2" :: f_hyd_cap_h_pw_vec2
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
@@ -523,23 +523,23 @@
 		rout = (material%thsat-material%thres)*(material%a/material%n)
 	end where
 
-	end function f2_hyd_cap_h_pw_vec2
+	end function f_hyd_cap_h_pw_vec2
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_dkr_h_PW_sca(h,material)
+	!	F: f_hyd_dkr_h_PW_sca(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns derivative of relative permeability (scalar) over pressure head (scalar pressure)
 	! with simplified power function:
 	!		dKr/dh = a·EXP(a·h)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_dkr_h_pw_sca(h,material) result(rout)
+	pure function f_hyd_dkr_h_pw_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_dkr_h_pw_sca" :: f2_hyd_dkr_h_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dkr_h_pw_sca" :: f_hyd_dkr_h_pw_sca
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
@@ -551,24 +551,24 @@
 		rout = 1.0_dps
 	end if
 
-	end function f2_hyd_dkr_h_pw_sca
+	end function f_hyd_dkr_h_pw_sca
 
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_dkr_h_PW_vec(h,material)
+	!	F: f_hyd_dkr_h_PW_vec(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns derivative of relative permeability (vector) over pressure head (vector pressure)
 	! with simplified power function:
 	!		dKr/dh = a·EXP(a·h)
 	!********************************************************************************************************************
 
-	pure function f2_hyd_dkr_h_pw_vec(h,material) result(rout)
+	pure function f_hyd_dkr_h_pw_vec(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_dkr_h_pw_vec" :: f2_hyd_dkr_h_pw_vec
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dkr_h_pw_vec" :: f_hyd_dkr_h_pw_vec
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	!kr = exp(a·h)
 	real(kind=dps),intent(in)::h(:)
@@ -581,17 +581,17 @@
 		rout = 1.0_dps
 	end where
 
-	end function f2_hyd_dkr_h_pw_vec
+	end function f_hyd_dkr_h_pw_vec
 
 	!-------------------
 
-	pure function f2_hyd_dkr_h_pw_vec2(h,material) result(rout)
+	pure function f_hyd_dkr_h_pw_vec2(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_dkr_h_pw_vec2" :: f2_hyd_dkr_h_pw_vec2
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dkr_h_pw_vec2" :: f_hyd_dkr_h_pw_vec2
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	!kr = exp(a·h)
 	real(kind=dps),intent(in)::h(:)
@@ -604,74 +604,95 @@
 		rout = 1.0_dps
 	end where
 
-	end function f2_hyd_dkr_h_pw_vec2
+	end function f_hyd_dkr_h_pw_vec2
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_dk_h_PW_sca(h,material)
+	!	F: f_hyd_dk_h_PW_sca(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns derivative of permeability (scalar) over pressure head (scalar pressure)
 	! with simplified power function:
 	!		dK/dh = ksat·dKr/dh
 	!********************************************************************************************************************
 
-	pure function f2_hyd_dk_h_pw_sca(h,material) result(rout)
+	pure function f_hyd_dk_h_pw_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_dk_h_pw_sca" :: f2_hyd_dk_h_pw_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dk_h_pw_sca" :: f_hyd_dk_h_pw_sca
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
 	real(kind=dps)::rout
 
-	rout = material%ksat*f2_hyd_dkr_h_pw_sca(h,material)
+	rout = material%ksat*f_hyd_dkr_h_pw_sca(material,h)
 
-	end function f2_hyd_dk_h_pw_sca
+	end function f_hyd_dk_h_pw_sca
 
 
 	!********************************************************************************************************************
-	!	F: f2_hyd_dk_h_PW_vec(h,material)
+	!	F: f_hyd_dk_h_PW_vec(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns derivative of permeability (vector) over pressure head (vector pressure)
 	! with simplified power function:
 	!		dK/dh = ksat·dKr/dh
 	!********************************************************************************************************************
 
-	pure function f2_hyd_dk_h_pw_vec(h,material) result(rout)
+	pure function f_hyd_dk_h_pw_vec(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_dk_h_pw_vec" :: f2_hyd_dk_h_pw_vec
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dk_h_pw_vec" :: f_hyd_dk_h_pw_vec
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dps)::rout(size(h))
 
-	rout = material%ksat*f2_hyd_dkr_h_pw_vec(h,material)
+	rout = material%ksat*f_hyd_dkr_h_pw_vec(material,h)
 
-	end function f2_hyd_dk_h_pw_vec
+	end function f_hyd_dk_h_pw_vec
 
 	!------------------
 
-	pure function f2_hyd_dk_h_pw_vec2(h,material) result(rout)
+	pure function f_hyd_dk_h_pw_vec2(material,h) result(rout)
 	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f2_hyd_dk_h_pw_vec2" :: f2_hyd_dk_h_pw_vec2
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dk_h_pw_vec2" :: f_hyd_dk_h_pw_vec2
 	!DEC$ endif
 
 
-	use com_mod_ty_material,only:ty_com_material
+	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
 	real(kind=dps)::rout(size(h))
 
-	rout = material%ksat*f2_hyd_dkr_h_pw_vec2(h,material)
+	rout = material%ksat*f_hyd_dkr_h_pw_vec2(material,h)
 
-	end function f2_hyd_dk_h_pw_vec2
+	end function f_hyd_dk_h_pw_vec2
+	
+	!********************************************************************************************************************
+	! F: f_hyd_Cmax_bc(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Return the maximum value of the water capacity, to apply on the L-method
+	!********************************************************************************************************************
 
+	pure function f_hyd_Cmax_pw(material) result(rout)
 
-	end module com_mod_hyd_pw
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout,a,n,alpha,thetar,thetas
+	n=material%n
+	a=material%a
+	thetar=material%thres
+	thetas=material%thsat
+
+	!tex:
+	!$${C_{max}} = \frac{{\left( {\theta r - \theta s} \right)\lambda }}{{\psi b}}$$
+	
+	rout = a*(thetas-thetar)/n
+
+	end function f_hyd_Cmax_pw
+
+	!end module com_mod_hyd_pw

@@ -250,7 +250,7 @@ hold on
 times = [0,10,20,30,40,50,100,200,400,600,800,930];
 for t=times(times>=tmin&times<=tmax)
     plot(unsatoutputelements.qmed(unsatoutputelements.iu==iu&unsatoutputelements.t==t),unsatoutputelements.x1(unsatoutputelements.iu==iu&unsatoutputelements.t==t),'k');
-    plot(unsatoutputelements.qs(unsatoutputelements.iu==iu&unsatoutputelements.t==t),unsatoutputelements.x1(unsatoutputelements.iu==iu&unsatoutputelements.t==t),'r');
+    plot(unsatoutputelements.qnewmann(unsatoutputelements.iu==iu&unsatoutputelements.t==t),unsatoutputelements.x1(unsatoutputelements.iu==iu&unsatoutputelements.t==t),'r');
 end
 times = [950,1000,1500,2000,4000,6000,7200];
 for t=times(times>=tmin&times<=tmax)
