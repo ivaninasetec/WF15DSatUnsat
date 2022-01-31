@@ -114,7 +114,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout
 
-	if (h<0.0_dps) then
+	if (h<-material%a) then
 		rout = (h/(-material%a))**(-material%n)
 	else
 		rout =  1.0_dps
@@ -145,18 +145,21 @@
 	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
 
 	a = real(material%a,16)
-	hb1 = real(h1,16)
-	hb2 = real(h2,16)
+	!In Brooks and Corey the difference need to be checked from a distance psibc over the watertable as util that height the soil is saturated.
+	hb1 = real(h1,16)+material%a
+	hb2 = real(h2,16)+material%a
+	!hb1 = real(h1,16)
+	!hb2 = real(h2,16)
 	n= real(material%n,16)
 	m= real(material%m,16)
 
-	if (hb1<0.0_16) then
+	if (hb1<-material%a) then
 		rout1 = (hb1/(-material%a))**(-material%n) !CHECK: If this need to be hb1+material%a instead of hb1
 	else
 		rout1 =  1.0_16
 	end if
 
-	if (hb2<0.0_16) then
+	if (hb2<-material%a) then
 		rout2 = (hb2/(-material%a))**(-material%n)
 	else
 		rout2 =  1.0_16
@@ -190,7 +193,7 @@
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
 
-	withsuction:where (h<0.0_dpd)
+	withsuction:where (h<-material%a)
 		rout = (h/(-material%a))**(-material%n)
 	elsewhere
 		rout =  1.0_dps
@@ -213,7 +216,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<-material%a)
 		rout = (h/(-material%a))**(-material%n)
 	elsewhere
 		rout =  1.0_dps
@@ -312,7 +315,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout,se
 
-	if (h<0.0_dps) then
+	if (h<-material%a) then
 		se = f_hyd_s_h_bc_sca(material,h)
 		rout = se**(2.0_dpd+material%l+2.0_dpd/material%n)
 	else
@@ -344,7 +347,7 @@
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h)),se(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<-material%a)
 		se = f_hyd_s_h_bc_vec(material,h)
 		rout = se**(2.0_dpd+material%l+2.0_dpd/material%n)
 	elsewhere
@@ -368,7 +371,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout(size(h)),se(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<-material%a)
 		se = f_hyd_s_h_bc_vec2(material,h)
 		rout = se**(2.0_dpd+material%l+2.0_dpd/material%n)
 	elsewhere
@@ -469,7 +472,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout
 
-	if (h<0.0_dps) then
+	if (h<-material%a) then
 		!need to check the sign of cap!!!!!!!!!!!!!!!!!!!!
 		rout =((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
 	else
@@ -502,7 +505,7 @@
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<-material%a)
 		!need to check the sign of cap!!!!!!!!!!!!!!!!!!!!
 		rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
 	elsewhere
@@ -526,7 +529,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<-material%a)
 		!need to check the sign of cap!!!!!!!!!!!!!!!!!!!!
 		rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
 	elsewhere
@@ -558,7 +561,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout,x,y
 
-	if (h<0.0_dps) then
+	if (h<-material%a) then
 		x = 1.0_dpd+(-material%a*h)**material%n
 		y = x-1.0_dpd
 		rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h		
@@ -592,7 +595,7 @@
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h)),x(size(h)),y(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<-material%a)
 		x = 1+(-material%a*h)**material%n
 		y = x-1
 		rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h
@@ -617,7 +620,7 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout(size(h)),x(size(h)),y(size(h))
 
-	withsuction:where (h<0.0_dps)
+	withsuction:where (h<-material%a)
 		x = 1+(-material%a*h)**material%n
 		y = x-1
 		rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h
@@ -709,12 +712,12 @@
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout,lambda,psib,alpha,thetar,thetas
 	lambda=material%n
-	psib=material%a
+	psib=-material%a
 	thetar=material%thres
 	thetas=material%thsat
 
 	!tex:
-	!$${C_{max}} = \frac{{\left( {\theta r - \theta s} \right)\lambda }}{{\psi b}}$$
+	!$${C_{max}} = \frac{{\left( {\theta r - \theta s} \right)\lambda }}{{-\psi_{bc}}}$$
 	
 	rout = ((thetar - thetas)*lambda)/psib
 

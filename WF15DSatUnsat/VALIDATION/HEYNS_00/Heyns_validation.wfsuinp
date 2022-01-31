@@ -1,15 +1,18 @@
+!*****************************************************************
+! BASE WITH CHANGES: Ksat subballast: Calc form Ch3, WRC subballast
+! calc from Ch2(no thres), Ksat_ballast (0.5m/s)
 !****** BLOCK A: PARAMETERS **************************************
 !GENERAL PARAMETERS
-!(epsh_tol) Tolerancia en h | (epsth_tol) Tolerancia en th | (epshsat_tol)
-1.0E-3						 1.0E+33		1.0E-2
+!(epsh_tol) Tolerancia en h | (epsth_tol) Tolerancia en th | (epshsat_tol) Tolerated error in the watertable
+1.0E-6						 1.0E-2		1.0E-3
 !Minimum iterations | (itinc_dt) Iteration to increase dt  | (itdec_dt) Iterations to decrease dt | (maxit) Max iterations for time step (if surpassed restart timestep and decrease dt)
-2	30					50					70
+1	30					50					75
 !(crelax) Relaxation coefficient (updates of values in each iterations equal to: (1-crelax)·hn+(crelax)·hn+1
 1.00
 !(IsMassLump) ¿Use mass lumping in mass matrix? | (erroronnod) ¿Use error on node or error in element?
 .true.										     .false.
 !(quadratureorder) Order of quadrature for integration in element
-40
+10
 !(typesolution) Type of solution used in calcs: 
 !Number	| sparsity | solver | preconditioner
 !	1     dense      gauss    none
@@ -34,7 +37,7 @@
 !(multksal) Multiplication factor for the permeability at the seepage surface
 1.075
 !(max hsatinc) Max Hsat Increment
-0.01
+0.001
 !TIME PARAMETERS:
 !(tinit) Initial time | (dtinit) dt at first step | (tmax) t at end of simulation | (dtmin) Min value for dt | (dtmax) Max value for dt 
 0.0			1.0E-8			    7200			     1.0E-10					  5
@@ -51,36 +54,36 @@
 !****** BLOCK B: MATERIALS **************************************
 !(count) Number of different of materials (Ud)
 2
-!(kindmat) Kind of material (1= Mualem-Van Genuchten, 2= Exponential Hydraulic Function)
-1			1			
+!(kindmat) Kind of material (1= Mualem-Van Genuchten, 2= Exponential Hydraulic Function, 3= brooks-corey, 4 clean ballast)
+1			4			
 !(thsat) Saturated volumetric water content (m3/m3)
-0.43	0.265
+0.269	0.45
 !(thres) Residual volumetric water content (m3/m3)
-0.045	0.049
-!(ksat)	Saturated permeability (m/s) (ballast should be 5.08E-2 but it isnt)
-5.00E-1		5.64e-4	
+0.000	0.000
+!(ksat)	Saturated permeability (m/s) (ballast should be 5.65E-4 m/s)
+2.76E-4		0.5	
 !(a)		a parameter of Van Genuchten (m-1) or a parameter of other hydraulic function
-200		3.6	
+3.908		7.73E-4	
 !(n)		n parameter of Van Genuchten (-) or n parameter of other hydraulic function
-4.0		1.56		
+1.634		2.07		
 !(m)		m parameter of Van Genuchten (-) or m parameter of other hydraulic function
-0.75		0.358	
+0.388		0.75	
 !(l)		l parameter of Mualem-Van Genuchten or m parameter of other hydraulic function
 0.5		0.5	
 !
 !****** BLOCK C: LAYERS **************************************
 !(count) Number of layers
 2
-!(width) Witdh of layers
-2.00
-!(height): Height of each layer (at left side) (m) (Heyns: total 35.56in subballast at 6in=0.1524m and ballast at 11in=0.2794 , )
-0.1524		0.03
+!(width) Witdh of layers (87in)
+2.2
+!(height): Height of each layer (at left side) (m) (Heyns: total 35.56in subballast at 6in=0.1524m and ballast at 5in=0.2794 , )
+0.1524		0.1270
 !(slope): Slope of the bottom of each layer and the last for the top (m/m) (number=nlayers+1, first one must be 0.0)
 0.00	0.00	0.00
-!(material) Material number on the layer as defined in block B
-2	1
+!(material) Material number on the layer as defined in block B (the first is the bottom layer)
+1	2
 !ZPHR: Phreatic level (z coordinate) from the top left (m)
--0.1824
+-0.28
 !TOPBOUNDBYH: Is top boundary defined by FLOW1D_BOUND_H.txt?
 .FALSE.
 !TOPBOUNDBYQ: Is top boundary defined by specific flow with: FLOW1D_BOUND_Q.txt?
@@ -91,11 +94,11 @@
 !(nn) Nodes per element | (nc) Class of nodes
 2						 0
 !(vmod_count) Number of vertical modules
-3
+6
 !(nelemh) Number of elements between vertical modules (number=vmod)
-10	10	10
-!(vmod_x) Coord x of each vertical module(first always cero)
-0.0	0.97028	1.7907
+20	20 20 20 20	40
+!(vmod_x) Coord x of each vertical module(first always cero) (Piezometer 3 at 38.2in=97.028cm, piezometer P5 at:179.07 
+0.0	0.97028 1.35 1.75 1.90	2.10
 !(nelemv) Number of elements per layer (number=number of layers)
-20	30
+40	30
 
