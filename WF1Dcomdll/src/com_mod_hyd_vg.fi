@@ -186,6 +186,7 @@
 	n= real(material%n,16)
 	m= real(material%m,16)
 
+	!In this case we are considering the value of saturation at hb1
 	if (hb1<0.0_16) then
 		rout1 = (1.0_16+(-a*hb1)**n)**(-m)
 	else

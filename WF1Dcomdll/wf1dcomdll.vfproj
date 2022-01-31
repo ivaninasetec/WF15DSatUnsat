@@ -66,6 +66,7 @@
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
 	<Files>
 		<Filter Name="Header Files" Filter="fi;fd;h;inc">
+		<File RelativePath=".\src\com_mod_hyd_ba.fi"/>
 		<File RelativePath=".\src\com_mod_hyd_bc.fi"/>
 		<File RelativePath=".\src\com_mod_hyd_pw.fi"/>
 		<File RelativePath=".\src\com_mod_hyd_vg.fi"/>

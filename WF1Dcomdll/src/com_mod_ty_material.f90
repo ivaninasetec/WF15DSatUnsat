@@ -54,6 +54,7 @@
 	include 'com_mod_hyd_vg.fi' !Van-Genuchten
 	include 'com_mod_hyd_pw.fi' !Power function in Hayek,2016
 	include 'com_mod_hyd_bc.fi'	!Brooks and Corey
+	include 'com_mod_hyd_ba.fi'	!Clean ballast: wrc as Brooks and Corey, kr=Sr^(2+l)
 
 	!********************************************************************************************************************
 	! F: F_HYD_S_H_PW_SCA(material,h)
@@ -79,6 +80,8 @@
 		rout = f_hyd_s_h_pw_sca(material,h)
 	case(3)
 		rout = f_hyd_s_h_bc_sca(material,h)
+	case(4)
+		rout = f_hyd_s_h_ba_sca(material,h)
 		case default
 		rout = f_hyd_s_h_vg_sca(material,h)
 	end select
@@ -139,6 +142,8 @@
 		rout = f_hyd_s_h_pw_vec2(material,h)
 	case(3)
 		rout = f_hyd_s_h_bc_vec2(material,h)
+			case(4)
+		rout = f_hyd_s_h_ba_vec2(material,h)
 		case default
 		rout = f_hyd_s_h_vg_vec2(material,h)
 	end select
@@ -197,6 +202,8 @@
 		rout = f_hyd_th_h_pw_sca(material,h)
 	case(3)
 		rout = f_hyd_th_h_bc_sca(material,h)
+			case(4)
+		rout = f_hyd_th_h_ba_sca(material,h)
 		case default
 		rout = f_hyd_th_h_vg_sca(material,h)
 	end select
@@ -257,6 +264,8 @@
 		Rout = f_hyd_th_h_pw_vec2(material,h)
 	case(3)
 		Rout = f_hyd_th_h_bc_vec2(material,h)
+			case(4)
+		Rout = f_hyd_th_h_ba_vec2(material,h)
 		case default
 		Rout = f_hyd_th_h_vg_vec2(material,h)
 	end select
@@ -318,7 +327,9 @@
 	case(2)
 		rout = f_hyd_kr_h_pw_sca(material,h)
 	case(3)
-		rout = f_hyd_kr_h_pw_sca(material,h)
+		rout = f_hyd_kr_h_bc_sca(material,h)
+			case(4)
+		rout = f_hyd_kr_h_ba_sca(material,h)
 		case default
 		rout = f_hyd_kr_h_vg_sca(material,h)
 	end select
@@ -386,6 +397,8 @@
 		rout = f_hyd_kr_h_pw_vec2(material,h)
 	case(3)
 		rout = f_hyd_kr_h_bc_vec2(material,h)
+			case(4)
+		rout = f_hyd_kr_h_ba_vec2(material,h)
 		case default
 		rout = f_hyd_kr_h_vg_vec2(material,h)
 	end select
@@ -455,6 +468,8 @@
 		rout = f_hyd_k_h_pw_sca(material,h)
 	case(3)
 		rout = f_hyd_k_h_bc_sca(material,h)
+			case(4)
+		rout = f_hyd_k_h_ba_sca(material,h)
 		case default
 		rout = f_hyd_k_h_vg_sca(material,h)
 	end select
@@ -511,9 +526,11 @@
 	!Select proper hydraulic function depending on KindMat
 	select case (material%kindmat)
 	case(2)
-		Rout = f_hyd_k_h_PW_vec2(material,h)
+		Rout = f_hyd_k_h_pw_vec2(material,h)
 	case(3)
 		Rout = f_hyd_k_h_bc_vec2(material,h)
+			case(4)
+		Rout = f_hyd_k_h_ba_vec2(material,h)
 
 		case default
 		Rout = f_hyd_k_h_VG_vec2(material,h)
@@ -573,6 +590,8 @@
 		rout = f_hyd_cap_h_pw_sca(material,h)
 	case(3)
 		rout = f_hyd_cap_h_bc_sca(material,h)
+			case(4)
+		rout = f_hyd_cap_h_ba_sca(material,h)
 		case default
 		rout = f_hyd_cap_h_vg_sca(material,h)
 	end select
@@ -643,6 +662,8 @@
 		Rout = f_hyd_Cap_h_PW_vec2(material,h)
 	case(3)
 		Rout = f_hyd_Cap_h_bc_vec2(material,h)
+			case(4)
+		Rout = f_hyd_Cap_h_ba_vec2(material,h)
 		case default
 		Rout = f_hyd_cap_h_VG_vec2(material,h)
 	END select
@@ -710,6 +731,8 @@
 		Rout = f_hyd_dkr_h_PW_sca(material,h)
 	CASE(3)
 		Rout = f_hyd_dkr_h_bc_sca(material,h)
+			CASE(4)
+		Rout = f_hyd_dkr_h_ba_sca(material,h)
 		CASE DEFAULT
 		Rout = f_hyd_dkr_h_VG_sca(material,h)
 	END SELECT
@@ -778,6 +801,8 @@
 		rout = f_hyd_dkr_h_pw_vec2(material,h)
 	CASE(3)
 		rout = f_hyd_dkr_h_bc_vec2(material,h)
+			CASE(4)
+		rout = f_hyd_dkr_h_ba_vec2(material,h)
 		case default
 		rout = f_hyd_dkr_h_vg_vec2(material,h)
 	end select
@@ -846,6 +871,8 @@
 		rout = f_hyd_dk_h_pw_sca(material,h)
 	case(3)
 		rout = f_hyd_dk_h_bc_sca(material,h)
+			case(4)
+		rout = f_hyd_dk_h_ba_sca(material,h)
 		case default
 		rout = f_hyd_dk_h_vg_sca(material,h)
 	end select
@@ -903,6 +930,8 @@
 		rout = f_hyd_dk_h_pw_vec2(material,h)
 	case(3)
 		rout = f_hyd_dk_h_bc_vec2(material,h)
+			case(4)
+		rout = f_hyd_dk_h_ba_vec2(material,h)
 		case default
 		rout = f_hyd_dk_h_vg_vec2(material,h)
 	end select
@@ -966,6 +995,8 @@
 		Rout = f_hyd_incs_h1_to_h2_pw_sca(material,h1,h2)
 	CASE(3)
 		Rout = f_hyd_incs_h1_to_h2_bc_sca(material,h1,h2)
+			CASE(4)
+		Rout = f_hyd_incs_h1_to_h2_ba_sca(material,h1,h2)
 		CASE DEFAULT
 		Rout = f_hyd_incs_h1_to_h2_vg_sca(material,h1,h2)
 	END SELECT
@@ -1110,6 +1141,8 @@
 		rout = f_hyd_Cmax_pw(material)
 	case(3)
 		rout = f_hyd_Cmax_bc(material)
+			case(4)
+		rout = f_hyd_Cmax_ba(material)
 		case default
 		rout = f_hyd_Cmax_vg(material)
 	end select
