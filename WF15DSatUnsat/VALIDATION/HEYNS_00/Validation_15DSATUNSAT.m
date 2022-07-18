@@ -446,7 +446,7 @@ rigthelement=max(satoutputelements.ie);
 % qboundballast=satoutputelements.q(satoutputelements.is==2&satoutputelements.ie==rigthelement&satoutputelements.t<=tmax);
 % qboundballast_acum=cumsum(qboundballast);
 qboundsubballast=satoutputelements.q(satoutputelements.is==2&satoutputelements.ie==rigthelement&satoutputelements.t<=tmax);
-qboundsubballast_acum=cumsum(qboundballast);
+qboundsubballast_acum=cumsum(qboundsubballast);
 plot(satoutputelements.t(satoutputelements.is==1&satoutputelements.ie==rigthelement&satoutputelements.t<=tmax),satoutputelements.q(satoutputelements.is==1&satoutputelements.ie==rigthelement&satoutputelements.t<=tmax),'k');
 % plot(satoutputelements.t(satoutputelements.is==2&satoutputelements.ie==rigthelement&satoutputelements.t<=tmax),satoutputelements.q(satoutputelements.is==2&satoutputelements.ie==rigthelement&satoutputelements.t<=tmax),'--k');
 plot(HeynsQ.t_s(HeynsQ.t_s<=tmax),HeynsQ.Q_subballast(HeynsQ.t_s<=tmax),'b');
