@@ -218,12 +218,12 @@
 		
 	
 	!Construct mesh:
-	do j=1, size(this%mesh%nelemv) !CHECK: This doesnt consider multiple nodes in an element
+	do j=1, size(this%mesh%nelemv)
 		this%unsat(i)%mesh%idnode_bottom(j) = sum(this%mesh%nelemv(1:j-1))+1
 		this%unsat(i)%mesh%idnode_top(j) = sum(this%mesh%nelemv(1:j))
 	end do
 
-	do j=1, size(this%mesh%nelemv) !CHECK: This doesnt consider multiple nodes in an element
+	do j=1, size(this%mesh%nelemv) 
 		this%unsat(i)%mesh%idnode_bottom(j) = sum(this%mesh%nelemv(1:j-1))+1
 		this%unsat(i)%mesh%idnode_top(j) = sum(this%mesh%nelemv(1:j))+1
 	end do

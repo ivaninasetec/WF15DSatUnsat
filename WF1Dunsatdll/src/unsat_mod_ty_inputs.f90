@@ -1,14 +1,16 @@
 	!********************************************************************************************************************
-	!        MODULE TO INPUT ALL DATA IN THE SATURATED MODEL AND POLULATE ALL CLASS INSTANCES
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
+	! TITLE         : MODULE TO INPUT ALL DATA IN THE WF1DUNSAT MODEL AND POLULATE ALL CLASS INSTANCES
+	! PROJECT       : WF1DUNSATDLL
 	! MODULE        : MOD_SAT_TY_LAYER
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.
-	! LICENSE				: This software is copyrighted 2019(C)
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION
+	!> Module to input all data in the unsaturated model and polulate all class instances
+	!
 	!> @author
 	!> Iván Campos-Guereta Díez
 	!  MSc Civil Engineering by Polytechnic University of Madrid
@@ -35,8 +37,9 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_materials. Input all data in class from file.
-	!> @param[in] nmat
+	!> Input parameters from fileINPUT
+	!> @param[inout] parameters class instance of parameters where to input
+	!> @param[in] FileINPUT path and filename of theinput file
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_inputs_parameters(parameters,FileINPUT)
@@ -44,7 +47,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_unsat_inputs_parameters" :: s_unsat_inputs_parameters
 	!DEC$ endif
 	use com_mod_ty_parameters, only: ty_com_parameters
-	!use com_mod_inputs, only:s_com_inputs_locateblock,s_com_inputs_nextrecord
 
 	integer,parameter::STORAGE_DENSE=1,STORAGE_CSR=2,STORAGE_BANDED=3
 	integer,parameter::PRECONDITIONER_NONE=0,PRECONDITIONER_JACOBI=1,PRECONDITIONER_ILU0=2,PRECONDITIONER_ILUT=3
@@ -86,8 +88,6 @@
 	open(40, file=fileinput, status='old')
 	call s_com_inputs_locateblock(40, 'A', readerror)
 
-	!read(40,*)
-	!read(40,*)
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_epsh_tol, param_epsth_tol
 	call s_com_inputs_nextrecord(40,readerror)
@@ -100,13 +100,6 @@
 	read(40,*) param_quadratureorder
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_typesolution
-	!read(40,*)
-	!read(40,*) param_typematrixstorage
-	!read(40,*)
-	!read(40,*) param_typepreconditioner
-	!read(40,*)
-	!read(40,*) param_typesolver
-	!read(40,*)
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_ccourant
 	call s_com_inputs_nextrecord(40,readerror)
@@ -186,7 +179,6 @@
 		param_typepreconditioner = PRECONDITIONER_JACOBI
 	end select
 
-
 	CLOSE(40)
 
 	!Assing readings to parameters instance...
@@ -207,7 +199,6 @@
 	parameters%ccourant						= PARAM_CCOURANT ! Courant number
 	parameters%multksal						= PARAM_MULKSAL ! Permeability at the seepage surface compared to permeability on element
 
-
 	parameters%tinit = param_tinit
 	parameters%dtinit = param_dtinit
 	parameters%tmax = param_tmax
@@ -217,17 +208,16 @@
 	parameters%dtmin = param_dtmin
 	parameters%tprintinc = param_tprintinc
 
-
 	end subroutine s_unsat_inputs_parameters
 
-
 	!---------------------------------------------------------------------------------------------------------------------
-	! s_sat_inputs_materials(materials)
+	! s_sat_inputs_materials(material,fileinput)
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_materials. Input all data in class from file.
-	!> @param[in] nmat
+	!> Input materials from fileINPUT
+	!> @param[inout] material array with class instances of materials
+	!> @param[in] FileINPUT path and filename of theinput file
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_inputs_materials(material,fileinput)
@@ -235,7 +225,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_unsat_inputs_materials" :: s_unsat_inputs_materials
 	!DEC$ endif
 	use com_mod_ty_material, only: ty_com_material
-	!use com_mod_inputs, only:s_com_inputs_locateblock,s_com_inputs_nextrecord
 
 	type(ty_com_material),allocatable,intent(inout)::material(:)
 	character*400,intent(in)::fileinput
@@ -287,10 +276,8 @@
 
 	close(40)
 
-
-	!Assing values to materials instance...
+	!Assign values to materials instance...
 	if(.not.allocated(material)) allocate(material(param_materials_count))
-	!call materials%allocateall(PARAM_MATERIALS_COUNT)
 
 	do i=1, param_materials_count
 		material(i)%id = i
@@ -322,8 +309,9 @@
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
 	!> Build the instance layers from the data in file.
+	!> @param[inout] layers
 	!> @param[in] fileinput
-	!> @param[in] materials
+	!> @param[in] material
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_inputs_layers(layers,fileinput,material)
@@ -332,7 +320,6 @@
 	!DEC$ endif
 	use com_mod_ty_layers, only: ty_com_layers
 	use com_mod_ty_material,only:ty_com_material
-	!use com_mod_inputs, only:s_com_inputs_locateblock,s_com_inputs_nextrecord
 
 	class(ty_com_layers),intent(inout)::layers
 	character*400,intent(in)::fileinput
@@ -365,8 +352,6 @@
 	READ(40,*) (param_mod_layer_h(i),i=1,param_mod_layers_count)
 	call s_com_inputs_nextrecord(40,readerror)
 	READ(40,*) (param_mod_layer_nmaterial(i),i=1,param_mod_layers_count)
-	!call s_com_inputs_nextrecord(40,readerror)
-	!READ(40,*) (param_mod_layer_slope(i),i=1,param_mod_layers_count)
 	call s_com_inputs_nextrecord(40,readerror)
 	READ(40,*) layers%zphr
 	call s_com_inputs_nextrecord(40,readerror)
@@ -381,7 +366,6 @@
 	call layers%allocateall(param_mod_layers_count)
 	layers%width		= param_mod_layers_width
 	layers%height		= param_mod_layer_h
-	!layers%slope		= param_mod_layer_slope
 
 	do i=1, PARAM_MOD_LAYERS_COUNT
 		layers%material(i)		= material(param_mod_layer_nmaterial(i))
@@ -406,8 +390,10 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Build the instance layers from the data in file.
-	!> @param[in] nmat
+	!> Build the instance mesh from the data in file.
+	!> @param[inout] mesh
+	!> @param[in] fileinput
+	!> @param[in] layers
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_inputs_mesh(mesh,fileinput,layers)
@@ -416,7 +402,6 @@
 	!DEC$ endif
 	use unsat_mod_ty_mesh, only: ty_unsat_mesh
 	use com_mod_ty_layers, only: ty_com_layers
-	!use com_mod_inputs, only:s_com_inputs_locateblock,s_com_inputs_nextrecord
 
 	class(ty_unsat_mesh),intent(inout)::mesh
 	character*400,intent(in)::fileinput
@@ -431,14 +416,7 @@
 	integer:: PARAM_NELEMENTS
 	integer:: PARAM_MOD_NMODVER
 
-	!real(kind=dps),parameter:: total_length = 10.0
-	!real(kind=dps),parameter:: mesh_slope = 0.03
-
 	integer:: PARAM_NUMELEM_LAYER(layers%count)
-	!integer,allocatable:: NUMELEM_VMOD(:)
-	!real(kind=dps),allocatable::PARAM_X_VMOD(:) !checkthis: the boundaries definition will be in an specific function
-	!real(kind=dps),allocatable::PARAM_QENTVMOD(:) !checkthis: the boundaries definition will be in an specific function
-
 
 	!Start reading file...
 	open(40, file=fileinput, status='old')
@@ -447,21 +425,6 @@
 	READ(40,*) (PARAM_NUMELEM_LAYER(i),i=1,layers%count)
 	call s_com_inputs_nextrecord(40,readerror)
 	READ(40,*) PARAM_MESH_NODES_PER_ELEMENT, PARAM_MESH_CLASS_OF_NODE
-	!call s_com_inputs_nextrecord(40,readerror)
-	!READ(40,*) PARAM_MOD_NMODVER
-	!
-	!allocate(NUMELEM_VMOD(PARAM_MOD_NMODVER))
-	!allocate(PARAM_X_VMOD(PARAM_MOD_NMODVER))
-	!allocate(PARAM_QENTVMOD(PARAM_MOD_NMODVER))
-	!
-	!call s_com_inputs_nextrecord(40,readerror)
-	!read(40,*) (NUMELEM_VMOD(i),i=1,param_mod_nmodver)
-	!call s_com_inputs_nextrecord(40,readerror)
-	!read(40,*) (PARAM_X_VMOD(i),i=1,param_mod_nmodver)
-	!call s_com_inputs_nextrecord(40,readerror)
-	!read(40,*) (PARAM_QENTVMOD(i),i=1,param_mod_nmodver)
-	!close(40)
-
 
 	!Build mesh instance from inputs...
 
@@ -476,40 +439,20 @@
 	mesh%nnodclassv_count	= mesh%nnodv_count*(mesh%nc+1)
 
 	mesh%height =sum(layers%height)
-	!mesh%length = layers%width
-	!mesh%slope	= layers%slope(1)
 
 	call mesh%allocateall(layers%count)
-
-	!mesh%nelemlayer = PARAM_NUMELEM_LAYER
-	!
-	!mesh%vmod_nelem = NUMELEM_VMOD
-	!mesh%vmod_idnod(1)=1
-	!do i=2, PARAM_MOD_NMODVER
-	!	mesh%vmod_idnod(i)=mesh%vmod_idnod(i-1)+NUMELEM_VMOD(i)
-	!end do
-	!
-	!mesh%vmod_x=PARAM_X_VMOD
-	!
-	!mesh%vmod_hsat =0.0_dpd
-	!mesh%vmod_hsattemp =0.0_dpd
-	!mesh%vmod_hsatold =0.0_dpd
-	!
-	!mesh%vmod_qent			= PARAM_QENTVMOD
-	!mesh%vmod_qenttemp	= PARAM_QENTVMOD
-	!mesh%vmod_qentold		= PARAM_QENTVMOD
-
-	!deallocate(NUMELEM_VMOD)
-	!deallocate(PARAM_X_VMOD)
-	!deallocate(PARAM_QENTVMOD)
 
 	end subroutine s_unsat_inputs_mesh
 
 	!---------------------------------------------------------------------------------------------------------------------
+	! s_unsat_inputs_nodes(nodes,mesh,layers)
+	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Fill all data needed for the ty_unsat_nodes from the mesh data.
-	!> @param[in] mesh
+	!> Build the instance nodes from the data in file.
+	!> @param[inout] nodes
+	!> @param[in] fileinput
+	!> @param[in] layers
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_inputs_nodes(nodes,mesh,layers)
@@ -557,34 +500,6 @@
 	end do
 
 	nodes%x=nodes%x-sum(layers%height)
-
-	!!Assign x of nodes (meshing):
-	!ncount=0
-	!!On top layer
-	!incx = -layers%height(layers%count)/real(mesh%nelemv(layers%count),dps)
-	!
-	!do n=1, mesh%nelemv(layers%count)+1
-	!	ncount = n
-	!	do nc=1,mesh%nc+1
-	!		idnode = 1+(ncount-1)*nc
-	!		nodes%x(idnode)=real(n-1,dps)*incx
-	!		nodes%minmeshlenght(idnode) = abs(incx) !Define min mesh lenght on node
-	!	end do
-	!end do
-	!
-	!
-	!do i=layers%count-1,1,-1
-	!incx = -layers%height(i)/real(mesh%nelemv(i),dps)
-	!
-	!do n=1, mesh%nelemv(i)+1
-	!	ncount = sum(mesh%nelemv(i+1:layers%count))+n
-	!	do nc=1,mesh%nc+1
-	!		idnode = 1+(ncount-1)*nc
-	!		nodes%x(idnode)=real(n-1,dps)*incx+(layers%htop(i)-layers%htop(layers%count))
-	!		nodes%minmeshlenght(idnode) = abs(incx) !Define min mesh lenght on node
-	!	end do
-	!end do
-	!end do
 
 	!Assign hinit to nodes...
 	select type(nodes)
@@ -639,12 +554,15 @@
 	end subroutine s_unsat_inputs_nodes
 
 	!---------------------------------------------------------------------------------------------------------------------
-	!> @author iván campos-guereta díez
+	! s_unsat_inputs_nodes(elements,mesh,nodes,layers)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> procedure inside the class ty_com_elements. fill all elements data. first nodes has to be filled.
-	!> @param[in] ne
-	!> @param[in] nn
-	!> @param[in] nc
+	!> Build the instance elements from the data in nodes, mesh and layers.
+	!> @param[inout] elements
+	!> @param[inout] mesh
+	!> @param[in] nodes
+	!> @param[in] layers
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_inputs_elements(elements,mesh,nodes,layers)
@@ -664,7 +582,6 @@
 	integer::ne !number of elements
 	integer::nn !number of nodes per element
 	integer::nc !class number of nodes
-
 
 	integer::nnc,i,j,l,e,nelem
 
@@ -695,24 +612,32 @@
 	do l=1,layers%count
 		do e=1,mesh%nelemv(l)
 			nelem=nelem+1
-			elements%material(nelem) = layers%material(l)
+			elements%material(nelem)%id = layers%material(l)%id
+			elements%material(nelem)%kindmat = layers%material(l)%kindmat
+			elements%material(nelem)%thsat = layers%material(l)%thsat
+			elements%material(nelem)%thres = layers%material(l)%thres
+			elements%material(nelem)%ksat = layers%material(l)%ksat
+			elements%material(nelem)%a = layers%material(l)%a
+			elements%material(nelem)%n = layers%material(l)%n
+			elements%material(nelem)%m = layers%material(l)%m
+			elements%material(nelem)%l = layers%material(l)%l
 		end do
 	end do
-
 
 	!Update material in nodes
 	call elements%update_materials_to_nodes(nodes)
 
 	end subroutine s_unsat_inputs_elements
 
-
 	!---------------------------------------------------------------------------------------------------------------------
-	!> @author iván campos-guereta díez
+	! s_unsat_inputs_nodes(elements,mesh,nodes,layers)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> This subroutine reads boundary condition file and fill the class "ty_com_boundary".
-	!> @param[in] ne
-	!> @param[in] nn
-	!> @param[in] nc
+	!> Build the instance elements from the inputfile and layers.
+	!> @param[in] fileboundary
+	!> @param[inout] boundary
+	!> @param[in] layers
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_inputs_boundary(fileboundary,boundary,layers)
@@ -741,22 +666,18 @@
 		do while (readerror==0)
 			read (55,*, iostat=readerror) dumb,dumb
 			boundary%timestepscount=boundary%timestepscount+1
-			!write(*,*) mo%bd%timestepscount
 		end do
 		boundary%timestepscount=boundary%timestepscount-1
 
-		!write(*,*) 'finish read bound_h'
 		write(*,*) 'allocating boundary array...'
 		allocate(boundary%timebound(boundary%timestepscount))
 		allocate(boundary%hbound(boundary%timestepscount))
 
 		rewind(55)
 		read(55,'(a)')
-		!write(*,*) 'rewinded'
-		!write(*,*) 'timestep count: ', mo%bd%timestepscount
+
 		do i=1, boundary%timestepscount
 			read (55,*) boundary%timebound(i), boundary%hbound(i)
-			!write(*,*) i
 		end do
 
 		close(55)
@@ -793,7 +714,6 @@
 
 	end if
 
-
 	end subroutine s_unsat_inputs_boundary
 
 	!********************************************************************************************************************
@@ -822,7 +742,6 @@
 	checkblock=.false.
 	do while (.not.checkblock)
 		read (fileindex,'(A)', iostat=readerror) chblock
-		!read (fileindex,'(A)') chblock
 		if (readerror.ne.0) then
 			write(*,*) 'BLOCK '//bloq//' not found on input file'
 			stop
@@ -835,8 +754,7 @@
 	!********************************************************************************************************************
 	! S: NEXTRECORD(FileIndex, Readerror)
 	!--------------------------------------------------------------------------------------------------------------------
-	! This subROUTine rewind the file with index "FileIndex" and search for the line with the word: 'Block '+Bloq
-	! that will define the initial line for the input of that block.
+	! This subROUTine search for the next record without a comment
 	! In case of error returns Readerror<>0
 	!********************************************************************************************************************
 

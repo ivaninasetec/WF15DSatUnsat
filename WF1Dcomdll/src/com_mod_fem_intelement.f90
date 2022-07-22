@@ -1,30 +1,25 @@
 	!********************************************************************************************************************
-	!*                                                                                                                  *
-	!*                                 MODULE: MOD_COM_INTELEMENT                                                       *
-	!*                                                                                                                  *
+	! TITLE         : COM_MOD_FEM_INTELEMENT: FUNCTIONS TO INTEGRATE IN AN ELEMENT USING GAUSS-LEGENDRE QUARATURE
+	! PROJECT       : WF1DCOMDLL
+	! MODULE        : MOD_COM_QUADRATURE
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> this module include the function that integrate other function (func1d) in an element with nodes with absolute
+	!> coordinates  xne(nnodes). Function func1d can be in absolute coordinates or in relative coordinates to the element
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
-	!* THIS MODULE INCLUDE THE FUNCTION THAT INTEGRATE OTHER FUNCTION (func1D) IN AN ELEMENT WITH NODES xne(nnodes)     *
-	!* USING GAUSS-LEGENDRE QUADRATURE OF ORDER NO.                                                                     *
-	!*                                                                                                                  *
-	!*    Jacobian1D(chi,xne):   Calculate jacobian on the relative coord chi (from -1 to 1), of an element with        *
-	!*                           absolute coords in nodes xne(nnodes).                                                  *
-	!*                           The Jacobian is the determinant of the matrix of the derivatives of absolute coords,   *
-	!*                           With respect the relative coords (chi) =|dx_i(chi)/dchi_j|.                            *
-	!*                                                                                                                  *
-	!* It uses the modules:                                                                                             *
-	!*    MOD_COM_QUADRATURE                                                                                            *
-	!*    MOD_COM_JACOBIAN                                                                                              *
-	!*    MOD_COM_SHAPEFUNCTIONS                                                                                        *
-	!*                                                                                                                  *
-	!*    Iván Campos-Guereta Díez                                                                                      *
-	!*    MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!*    PhD Student by University of Nottingham                                                                       *
-	!*    eMBA by International Institute San Telmo in Seville                                                          *
-	!*    ivan.camposguereta@nottingham.ac.uk                                                                           *
-	!*                                                                                                                  *
-	!*    This software is copyrighted 2019(C)                                                                          *
-	!********************************************************************************************************************
-
 
 	module com_mod_fem_intelement
 
@@ -40,7 +35,7 @@
 	! F: INTELEMENT_ABS_1DON(FUNC1D,XNE,NO)
 	!--------------------------------------------------------------------------------------------------------------------
 	!		Function that returns the integral in the element. In this case the function is in absolute coords to the element.
-	!   func1d(x):         Is the relative coord at wich calculate the jacobian
+	!   func1d(x):   Function to integrate (function of absolute coordinates)
 	!   xne(nnodes): Is the absolute coodinates of the nodes of element.
 	!********************************************************************************************************************
 
@@ -49,10 +44,8 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"intelement_abs_1don_sca" :: intelement_abs_1don_sca
 	!DEC$ endif
 
-
 	use com_mod_fem_quadrature,only:        quadrature1d_sca
 	use com_mod_fem_shapefunctions,only:          jacobian1d
-
 
 	interface
 	function func1d_x(x)
@@ -86,7 +79,7 @@
 	! F: INTELEMENT_ABS_1DON(FUNC1D,XNE,NO)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns the integral in the element. In this case the function is in relative coords to the element.
-	!   fun1d(chi):         Is the relative coord at wich calculate the jacobian
+	!   fun1d(chi):  Function to integrate (function of absolute coordinates)
 	!   xne(nnodes): Is the absolute coodinates of the nodes of element.
 	!********************************************************************************************************************
 
@@ -95,10 +88,8 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"intelement_abs_1don_sca" :: intelement_abs_1don_sca
 	!DEC$ endif
 
-
 	use com_mod_fem_quadrature,only:        quadrature1d
 	use com_mod_fem_shapefunctions,only:          jacobian1d
-
 
 	interface
 	function func1d_x(x)
@@ -132,7 +123,7 @@
 	! F: INTELEMENT_REL_1DON(FUNC1D,XNE,NO)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Function that returns the integral in the element. In this case the function is in relative coords to the element.
-	!   fun1d(chi):         Is the relative coord at wich calculate the jacobian
+	!   fun1d(chi):  Function to integrate (function of relative coordinates to the element)
 	!   xne(nnodes): Is the absolute coodinates of the nodes of element.
 	!********************************************************************************************************************
 
@@ -156,9 +147,6 @@
 
 	real(kind=dps),intent(in)::xne(:) !absolute x on nodes
 	integer,intent(in)::no !quadrature order
-
-	!
-	!procedure(func_in_rel)::func1d
 
 	integer, parameter:: ndim=1				!number of dimensions=1
 	integer, parameter:: nne=2				!number of nodes in element=2

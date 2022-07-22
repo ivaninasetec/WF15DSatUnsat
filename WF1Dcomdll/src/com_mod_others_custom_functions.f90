@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        CLASS TO INCLUDE CUSTOM FUNCTIONS TO USE IN CALCULATIONS
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
+	! TITLE         : LIBRARY WITH CUSTOM FUNCTIONS TO USE IN CALCULATIONS
+	! PROJECT       : WF1DCOMDLL
 	! MODULE        : mod_sat_ty_nodes
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
-	!> @author
-	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
 	! DESCRIPTION:
 	!> Class for the collection of nodes-classes in the saturated model
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module com_other_custom_functions
@@ -25,7 +26,6 @@
 	include 'inc_precision.fi'
 
 	private
-
 
 	public::f_get_derivatives
 	contains
@@ -47,10 +47,6 @@
 
 	f_get_derivatives(2:n-1) = ( (y(3:n)-y(2:n-1)) *(x(2:n-1)-x(1:n-2))**2+(y(2:n-1)-y(1:n-2))*(x(3:n)-x(2:n-1))**2 )/((x(2:n-1)-x(1:n-2))*(x(3:n)-x(2:n-1))*(x(3:n)-x(1:n-2)))
 
-
 	end function f_get_derivatives
-
-
-
 
 	end module com_other_custom_functions

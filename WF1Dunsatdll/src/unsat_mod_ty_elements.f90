@@ -1,32 +1,33 @@
 	!********************************************************************************************************************
-	!        EXTENSION OF CLASS TY_COM_ELEMENTS FOR UNSATURATED MODEL
-  !********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : UNSAT_MOD_TY_ELEMENTS
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : UNSAT_MOD_TY_ELEMENTS: EXTENDED DERIVED TYPE OF COM_MOD_TY_ELEMENTS TO INCLUDE PROPERTIES AND METHODS OF WF1DUNSAT
+	! PROJECT       : WF1DUNSATDLL
+	! MODULE        : COM_MOD_TY_CALC
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Extended derived type of com_mod_ty_elements to include properties and methods of wf1dunsat
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-  !  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-  !  PhD Student by University of Nottingham                                                                       *
-  !  eMBA by International Institute San Telmo in Seville                                                          *
-  !  ivan.camposguereta@nottingham.ac.uk  
-	! DESCRIPTION:
-	!> Class for horizontal saturated layer. Extend common class of layers.                 
-  !********************************************************************************************************************
-	
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
+	!********************************************************************************************************************
+
 	module unsat_mod_ty_elements
 	use com_mod_ty_elements, only: ty_com_elements
-	
-  implicit none
-  include 'inc_precision.fi'
 
-  private
-	
+	implicit none
+	include 'inc_precision.fi'
+
+	private
+
 	type,extends(ty_com_elements),public::ty_unsat_elements	!< CLASS: Definition of the layer in saturated model
 		real(kind=dps),allocatable::thnew(:)	!<Current water content integrated on element (n+1,k+1)
 		real(kind=dps),allocatable::thtemp(:)	!<Current water content integrated on element for previous iteration (n+1,k)
@@ -50,13 +51,7 @@
 		real(kind=dps),allocatable::dhdx1(:)	!<Water content integrated on element on the previous timestep (n)
 		real(kind=dps),allocatable::dhxdx0(:)	!<Water content integrated on element on the previous timestep (n)
 		real(kind=dps),allocatable::dhxdx1(:)	!<Water content integrated on element on the previous timestep (n)
-		!real(kind=dps),allocatable::results_incvol(:)
-		!real(kind=dps),allocatable::results_incqhor(:)
-		
+
 	end type ty_unsat_elements
-	
 
-
-	
-	
 	end module unsat_mod_ty_elements

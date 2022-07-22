@@ -1,27 +1,27 @@
 	!********************************************************************************************************************
-	!        CLASS FOR THE COLLECTION OF NODES-CLASSES IN THE SATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : mod_sat_ty_nodes
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : COM_MOD_TY_NODES: DERIVED TYPE THAT DEFINES COMMON PROPERTIES AND METHODS OF THE NODES
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_ELEMENTS
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type that defines properties and methods of the nodes
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for the collection of nodes-classes in the saturated model
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module com_mod_ty_nodes
 	use com_mod_ty_material, only: ty_com_material
-	!use com_mod_ty_calc, only: ty_com_calc
 
 	implicit none
 	include 'inc_precision.fi'
@@ -32,7 +32,6 @@
 		integer::count !<Total number of nodes-classes
 		integer::nn		 !<Number of nodes per element
 		integer::nc		 !<Number of classes
-		!type(ty_com_calc),allocatable::calc
 
 		integer,allocatable::id(:) !<ID of node-class
 		integer,allocatable::idnode(:) !ID of node
@@ -43,7 +42,6 @@
 		real(kind=dps),allocatable::z(:)			!<Z coordinate of node [L]
 
 		real(kind=dps),allocatable::qent(:)		!<Imposed water flow at entrance [L/T]
-		!real(kind=dps),allocatable::bound(:)	!<Imposed dirichlet [L]
 		real(kind=dps),allocatable::minmeshlenght(:)
 
 		real(kind=dps),allocatable::hinit(:)
@@ -179,8 +177,6 @@
 	if(allocated(this%qnewmann))			deallocate(this%qnewmann)
 
 	if(allocated(this%material))			deallocate(this%material)
-
-	!call this%calc%deallocateall()
 
 	end subroutine f_com_nodes_deallocateall
 

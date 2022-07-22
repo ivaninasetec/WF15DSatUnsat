@@ -1,3 +1,25 @@
+	!********************************************************************************************************************
+	! TITLE         : COM_MOD_TY_PARAMETERS: DERIVED TYPE THAT DEFINES COMMON PARAMETERS FOR BOTH WF1DSAT AND WF1DUNSAT
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_PARAMETERS
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type that defines properties and methods of the materials
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
+	!********************************************************************************************************************
+
 	module com_mod_ty_parameters
 
 	implicit none
@@ -60,14 +82,7 @@
 		real(kind=dps)	::crelax_nrel !< Max saturated height.
 		real(kind=dps)	::crelax_q !< Max saturated height.
 		integer					::n_repetitions_satunsat
-		!integer					::nodesperelement !< Nodes per element
-		!integer					::classesofnodes  !< Classes per node
-		!integer					::kl							!< Number of lower bands when band storage is used
-		!integer					::ku							!< Number of upper bands when band storage is used
 
-		!******************************************************************************************************************
-		! TY_COM_TIME
-		! Derived type that defines time options
 		!------------------------------------------------------------------------------------------------------------------
 		!	 |tinit           [real]:           Time at the begining of the calculations.
 		!	 |dtinit          [real]:           Initial time step 'dt'.

@@ -1,3 +1,25 @@
+	!********************************************************************************************************************
+	! TITLE         : COM_MOD_TY_LAYERS: DERIVED TYPE THAT DEFINES COMMON PROPERTIES OF ALL LAYERS
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_ELEMENTS
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type that defines common properties and methods of the layers
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
+	!********************************************************************************************************************
+
 	module com_mod_ty_layers
 	use com_mod_ty_material, only: ty_com_material
 
@@ -5,18 +27,11 @@
 	include 'inc_precision.fi'
 
 
-
 	private
 
-
-
 	!******************************************************************************************************************
-	! TY_COM_LAYER
-	! Derived type that defines properties of a layer
-	!------------------------------------------------------------------------------------------------------------------
-	!*	 |H          [real]:           Height of the layer                                                       *
-	!*	 |L          [real]:           Widht of the layer                                                        *
-	!*	 |material(pt)    [ty_com_material]:Pointer to the material of the layer (point to mo%material(ix))           *
+	! TY_COM_LAYERS
+	! Derived type that defines properties and methods of the layers
 	!******************************************************************************************************************
 
 	type,public::ty_com_layers !< Class: layer (common definition)
@@ -54,8 +69,6 @@
 	procedure,public:: get_inc_h_from0_sca		=> f_layers_get_inc_h_from0_sca
 	procedure,public:: get_inc_h_from0_vec		=> f_layers_get_inc_h_from0_vec
 
-	procedure,public:: get_nrel_from_hsat_to_h => f_layers_get_nrel_from_hsat_to_h
-
 	procedure,public:: get_water_inc_med	=> f_layers_get_water_inc_med_constant_simple
 
 	end type ty_com_layers
@@ -65,7 +78,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Get a vector with heghts until a given h, begining from h=0 to given h
+	!> Get a vector with heights until a given h, begining from h=0 to given h
 	!> @param[in] nlayers
 	!---------------------------------------------------------------------------------------------------------------------
 
@@ -81,9 +94,7 @@
 
 	n=this%count
 
-	!f_layers_get_h_from0_sca(1)  =max(0.0_dpd,min(h,this%htop(1)))
 	f_layers_get_h_from0_sca(:)=max(0.0_dpd,min(this%htop(:),h)-this%hbottom(1))
-	!f_layers_get_h_from0_sca(n+1)=max(0.0_dpd,h-this%htop(n))
 
 	end function f_layers_get_h_from0_sca
 
@@ -91,7 +102,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Get a vector with heghts until a given h, begining from h=0 to given h
+	!> Get a vector with heights until a given h, begining from h=0 to given h
 	!> @param[in] nlayers
 	!---------------------------------------------------------------------------------------------------------------------
 
@@ -107,11 +118,9 @@
 
 	n=this%count
 
-	!f_layers_get_h_from0_vec(:,1)		=max(0.0_dpd,min(h(:),this%htop(1)))
 	do i=1,n+1
 		f_layers_get_h_from0_vec(:,i)		=max(0.0_dpd,min(this%htop(i),h)-this%hbottom(1)) !Difference from 0
 	end do
-	!f_layers_get_h_from0_vec(:,n+1)	=max(0.0_dpd,h-this%htop(n))
 
 	end function f_layers_get_h_from0_vec
 
@@ -176,7 +185,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_id_from_h" :: f_layers_get_id_from_h
 	!DEC$ endif
 
-
 	class(ty_com_layers),intent(in)::this
 	real(kind=dpd),intent(in)::h(:)
 	integer::f_layers_get_id_from_h(size(h))
@@ -187,81 +195,10 @@
 	DO i=1, size(h)
 		mask = this%hbottom<=h(i)
 		findtemp = FINDLOC(mask,.true.,BACK=.true.)
-		f_layers_get_id_from_h(i) = max(findtemp(1),1) !Check: When the water is over the last layer the number returned is the last layer
+		f_layers_get_id_from_h(i) = max(findtemp(1),1)
 	end do
 
 	end function f_layers_get_id_from_h
-
-	!---------------------------------------------------------------------------
-	!> @author Iván Campos-Guereta Díez
-	!> @brief
-	!> Returns water increment (L3) the fills unsaturated material when passing from h0 to h1
-	!> Uses the hypergeometric funtion to integrate the water content between h0 and h1. A linear increase in pressure
-	!> with height is assumed.
-	!> @param[in] h0
-	!---------------------------------------------------------------------------
-
-	function f_layers_get_nrel_from_hsat_to_h(this,h0,h1) !ChecK this function, it is important to estimate well nrel. It is better for performance to substitute hypergeometric by an approximate function.
-	!DEC$ if defined(_DLL)
-	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_nrel_from_hsat_to_h" :: f_layers_get_nrel_from_hsat_to_h
-	!DEC$ endif
-
-	use com_mod_external_functions,only:hyp
-
-	class(ty_com_layers),intent(in)::this
-	real(kind=dpd),intent(in)::h0(:),h1(size(h0))
-	real(kind=dpd)::f_layers_get_nrel_from_hsat_to_h(size(h0)),incwat(size(h0)),satwat(size(h0))
-
-	real(kind=dpd)::inch(size(h0),this%count+1),hypi1,hypi0,zhypi1,zhypi0,inchnewtohold(size(h0)),inc0temp,inc1temp
-	integer::nlayers,i,k
-
-	nlayers = this%count
-
-	inch = this%get_h_from_h_to_h_vec(max(0.0_dpd,h0),max(0.0_dpd,h1)) !get height on each layer over h0 (until h1).
-
-	incwat = 0.0_dpd
-	satwat = 0.0_dpd
-	inchnewtohold = sign(max(abs(max(0.0_dpd,h1)-max(0.0_dpd,h0)),1E-10_dpd),max(0.0_dpd,h1)-max(0.0_dpd,h0)) !CHECK: Consider always at least an inch=1E-10. (SIGN(A,B) returns the value of A with the sign of B.)
-	inc0temp = 0.0_dpd
-	inc1temp = 0.0_dpd
-	f_layers_get_nrel_from_hsat_to_h = 0.0_dpd
-	do k=1,size(h0)
-		do i=1,nlayers
-			inc0temp = inc1temp !This is h0
-			inc1temp = inc0temp+inch(k,i) !This is h1
-			if (inc1temp>0) then
-				!if (i==1) then
-				!	zhypi1=-((inch(k,i)*this%material(i)%a)**this%material(i)%n) !-(a·Dh1)^n
-				!	hypi1 = hyp(zhypi1,this%material(i)%m,1.0_dpd/this%material(i)%n,1.0_dpd+1.0_dpd/this%material(i)%n) !2F1(m,1/n,1+1/n,zhypi1)
-				!	!DVi=DVi+(thsat-thres)·Dh_i/Dh·(1-2F1)
-				!	f_layers_get_water_inc_med = f_layers_get_water_inc_med + (this%material(i)%thsat-this%material(i)%thres) * inch(k,i)/inchnewtohold*(1.0_dpd-hypi1)
-				!else
-				zhypi1=-((inc1temp*this%material(i)%a)**this%material(i)%n) !-(a·Dh1)^n
-				hypi1 = hyp(zhypi1,this%material(i)%m,1.0_dpd/this%material(i)%n,1.0_dpd+1.0_dpd/this%material(i)%n) !2F1_1(m,1/n,1+1/n,zhypi1) CHECK: ¿It is being calculated with the hypergeometric function?
-
-				zhypi0=-((inc0temp*this%material(i)%a)**this%material(i)%n) !-(a·Dh0)^n
-				hypi0 = hyp(zhypi0,this%material(i)%m,1.0_dpd/this%material(i)%n,1.0_dpd+1.0_dpd/this%material(i)%n) !2F1_0(m,1/n,1+1/n,zhypi1)
-
-				!DVi=DVi+(thsat-thres)·Dh_i/Dh·(1-2F1)
-				!Si = Si-1+Dh_i/Dh·(1-2F1)
-				f_layers_get_nrel_from_hsat_to_h(k) = f_layers_get_nrel_from_hsat_to_h(k) + (inc1temp/inchnewtohold(k)*(1.0_dpd-hypi1)-inc0temp/inchnewtohold(k)*(1.0_dpd-hypi0))
-				!end if
-			end if
-		end do
-
-		if (inch(k,nlayers+1)>0.0_dpd) then
-			inc0temp = inc1temp
-			inc1temp = inc0temp+inch(k,nlayers+1)
-			f_layers_get_nrel_from_hsat_to_h(k) = f_layers_get_nrel_from_hsat_to_h(k) + 1.0_dpd * (inc1temp-inc0temp)/inchnewtohold(k)
-		end if
-
-		!if (h0(k)>h1(k)) then !volumetric water content reducing when h0>h1.
-		!	f_layers_get_nrel_from_hsat_to_h= -f_layers_get_nrel_from_hsat_to_h
-		!end if
-	end do
-	f_layers_get_nrel_from_hsat_to_h = abs(f_layers_get_nrel_from_hsat_to_h)
-
-	end function f_layers_get_nrel_from_hsat_to_h
 
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
@@ -273,11 +210,10 @@
 	!> @param[in] h1
 	!---------------------------------------------------------------------------------------------------------------------
 
-	function f_layers_get_inc_h_sca(this,h0,h1) !Check this is the same as Get_h_from_h_to_h
+	function f_layers_get_inc_h_sca(this,h0,h1) 
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_inc_h_sca" :: f_layers_get_inc_h_sca
 	!DEC$ endif
-
 
 	class(ty_com_layers),intent(in)::this
 	real(kind=dpd),intent(in)::h0 !< Height of first  point from the bottom of first layer
@@ -308,7 +244,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_inc_h_vec" :: f_layers_get_inc_h_vec
 	!DEC$ endif
-
 
 	class(ty_com_layers),intent(in)::this
 	real(kind=dpd),intent(in)::h0(:) !< Height of first  point from the bottom of first layer
@@ -349,7 +284,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_inc_h_from0_sca" :: f_layers_get_inc_h_from0_sca
 	!DEC$ endif
 
-
 	class(ty_com_layers),intent(in)::this
 	real(kind=dpd),intent(in)::h1 !< Height of second point from the bottom of first layer
 	real(kind=dpd)::f_layers_get_inc_h_from0_sca(this%count+1)
@@ -378,7 +312,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_inc_h_from0_vec" :: f_layers_get_inc_h_from0_vec
 	!DEC$ endif
-
 
 	class(ty_com_layers),intent(in)::this
 	real(kind=dpd),intent(in)::h1(:) !< Height of first  point from the bottom of first layer
@@ -409,7 +342,6 @@
 		f_layers_get_inc_h_from0_vec(:,l) = 0.0_dpd
 	end where
 
-
 	end function f_layers_get_inc_h_from0_vec
 
 
@@ -425,7 +357,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_h_from_h_to_h_sca" :: f_layers_get_h_from_h_to_h_sca
 	!DEC$ endif
-
 
 	class(ty_com_layers),intent(in)::this
 	real(kind=dpd),intent(in)::h0 !< Height of first  point from the bottom of first layer
@@ -456,7 +387,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_h_from_h_to_h_vec" :: f_layers_get_h_from_h_to_h_vec
 	!DEC$ endif
-
 
 	class(ty_com_layers),intent(in)::this
 	real(kind=dpd),intent(in)::h0(:) !< Height of first  point from the bottom of first layer
@@ -498,7 +428,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_layers_get_water_inc_med_constant_simple" :: f_layers_get_water_inc_med_constant_simple
 	!DEC$ endif
-
 
 	integer,parameter::NDIVISIONS=10
 	real(kind=dpd), parameter::MIN_H0_TO_H1 = 1.0E-5_dpd;

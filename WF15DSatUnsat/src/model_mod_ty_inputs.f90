@@ -449,7 +449,6 @@
 		layers%material(i)		= material(param_mod_layer_nmaterial(i)) !ASSIGN: material(:)
 	end do
 
-	!CHECK: htop and hbottom need a review in order to use different slopes.
 	layers%hbottom(1) = 0.0
 	layers%htop(1) = layers%height(1)
 	do i=2,PARAM_MOD_LAYERS_COUNT

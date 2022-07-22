@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        CLASS THAT INCLUDE THE WHOLE MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : mod_sat_ty_nodes
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : COM_MOD_TY_TIME: DERIVED TYPE THAT DEFINE COMMON PARAMETERS RELATED TO TIME AND TIMESSTEPING
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_CALC
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type that define common parameters related to time and timessteping
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for the collection of nodes-classes in the saturated model
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module com_mod_ty_time
@@ -40,8 +41,6 @@
 	procedure,public:: increase_time				=>	s_com_time_increase_time
 	procedure,public:: factor_timestep			=>	s_com_time_factor_timestep
 	procedure,public:: update_dt						=>	s_com_calc_update_dt
-	!procedure,public:: construct=> s_unsat_model_construct
-	!procedure,public:: print_timestep=> s_unsat_model_print_timestep
 
 	end type ty_com_time
 
@@ -50,8 +49,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Increase time and update time related parameters
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_com_time_increase_time(this)
@@ -70,9 +68,6 @@
 	if(ttemp<this%tprint.and.this%t>=this%tprint) then
 		this%t = this%tprint
 		this%checkprint = .true.
-		!this%tprint  = min(this%parameters%tmax,this%tprint+this%parameters%tprintinc) !Update: tprint= tprintinc·int(ttemp/tprintinc)+tprintinc
-		!else if (this%t==this%tprint) then
-		!  this%checkprint = .true.
 	else
 		this%checkprint = .false.
 	end if
@@ -83,8 +78,8 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Increase Delta t by multiplying by factor, having into consideration dtmin and dtmax
+	!> @param[inout] factor	Factor to multiply Dt
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_com_time_factor_timestep(this,factor)
@@ -100,12 +95,11 @@
 
 	end subroutine s_com_time_factor_timestep
 
-
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Update increment of t depending on the number of iterations performed (dynmic timestepping)
+	!> @param[inout] iterconvergence	Number of iterations in the previous convergence process
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_com_calc_update_dt(this,iterconverg)

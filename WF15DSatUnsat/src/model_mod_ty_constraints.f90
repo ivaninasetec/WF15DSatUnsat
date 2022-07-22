@@ -364,7 +364,6 @@
 	nsat		= size(this%sat)
 	nunsat	= size(this%unsat)
 	
-	!CHECK: Calc of nrel: nrel maintains last one if no variation in hsat: (qver-qnewmann)·dt/{(thsat-thres)·(hsat-hsatold)} 
 	!This it to get the nrel needed to increase in sat model from hsat_u to hsatold_u with given qver entering-leaving.
 	!dt·(qent-qsal-qnewmann)=nrel·(thsat-threl)·(hsat_u-hsatold_u)
 	do is=1,nsat
@@ -379,7 +378,6 @@
 					!Maintain previous nrel.
 					!this%unsat(iu)%constraints%nrel(is)=1.0_dpd !CHECK
 				else
-					!CHECK: Calc of nrel: min=0.001, max=0.1
           !this%unsat(iu)%constraints%nrel(is) = 0.01_dpd
 					this%unsat(iu)%constraints%nrel(is) = max(this%unsat(iu)%parameters%nrelmin,min(this%unsat(iu)%parameters%nrelmax,abs((qver-qnewmann)*dt/(sat_waterinc_med(1)*(hsat_u-hsatold_u))))) 
 				end if
@@ -427,7 +425,6 @@
 	nsat		= size(this%sat)
 	nunsat	= size(this%unsat)
 	
-	!CHECK: Calc of nrel: nrel maintains last one if no variation in hsat: (qver-qnewmann)·dt/{(thsat-thres)·(hsat-hsatold)} 
 	!This it to get the nrel needed to increase in sat model from hsat_u to hsatold_u with given qver entering-leaving.
 	!dt·(qent-qsal-qnewmann)=nrel·(thsat-threl)·(hsat_u-hsatold_u)
 	epshsathunsat = 0.0_dpd
@@ -460,7 +457,6 @@
 
 	subroutine s_model_constraint_set_dirichlet_from_hsat_h(this)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
 	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
@@ -474,7 +470,7 @@
 	do iu=1,nunsat
 		!idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
     idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
-	if ((this%get_hsath(is,iu)>1E-10_dpd)) then !CHECK: Check this if I have to put hsat>0 or dqhordx>0 as when hsat=0 there has to be no horizontal flow.
+	if ((this%get_hsath(is,iu)>1E-10_dpd)) then 
 		this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= this%get_hsath(is,iu) !******We put as dirichlet hsath, not hsath_mean
 		this%unsat(iu)%calc%nodes%isdirichlet	(idnode_u)	= .true.
 	else
@@ -492,8 +488,6 @@
 
 	subroutine s_model_constraint_set_dirichlet_from_hsath_mean(this,krelax)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd),optional::krelax	
@@ -515,7 +509,7 @@
     idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
 		this%unsat(iu)%calc%nodes%qnewmann	(idnode_u)		= 0.0_dpd
 		this%unsat(iu)%calc%nodes%isnewmann	(idnode_u)		= .false.
-	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then !CHECK: Check this if I have to put hsat>0 or dqhordx>0 as when hsat=0 there has to be no horizontal flow.
+	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then 
 		this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= (1.0_dpd-krelx)*this%get_hsatv(is,iu)+krelx*this%get_hsath_mean(is,iu) !******We put as dirichlet the mean, not hsat
 		this%unsat(iu)%calc%nodes%isdirichlet	(idnode_u)	= .true.
 	else
@@ -533,8 +527,6 @@
 
 	subroutine s_model_constraint_set_newmann_from_sath_with_relaxation(this,krelax)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd),optional::krelax
@@ -552,11 +544,10 @@
 	
 	do is=1,nsat
 	do iu=1,nunsat
-		!idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
     idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
 		this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= 0.0_dpd
 		this%unsat(iu)%calc%nodes%isdirichlet	(idnode_u)	= .false.		
-	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then !CHECK: Check this if I have to put hsat>0 or dqhordx>0 as when hsat=0 there has to be no horizontal flow.
+	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then 
 		this%unsat(iu)%calc%nodes%qnewmann	(idnode_u)		= (1.0_dpd-krelx)*this%get_qnewmannv(is,iu)+krelx*(this%get_dqhordxh(is,iu))
 		this%unsat(iu)%calc%nodes%isnewmann	(idnode_u)		= .true.		
 	else
@@ -575,8 +566,6 @@
 
 	function f_get_error_in_hsat(this)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd)::f_get_error_in_hsat
@@ -602,8 +591,6 @@
 
 	function f_get_error_in_q(this)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd)::f_get_error_in_q
