@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        MODULE: CLASS OF COLLECTION OF CONSTRAINTS CALCULATIONS FOR SATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : mod_sat_ty_layers
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : SAT_MOD_TY_CONSTRAINTS: DERIVED TYPE TO DEFINE PROPERTIES AND METHODS ON THE CONSTRAINTS IN WF1DSAT MODEL
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_CALC
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type to define properties and methods on the constraints in wf1dsat model
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class of collection of layers in horizontal saturated model
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module sat_mod_ty_constraints
@@ -92,8 +93,6 @@
 	if(.not.allocated(this% hsattemp))allocate(this% hsattemp (nvmod))
 	if(.not.allocated(this% hsatold))	allocate(this% hsatold (nvmod))
 	if(.not.allocated(this% qent))		allocate(this% qent (nvmod))
-	!if(.not.allocated(this% qenttemp)) allocate(this% qenttemp (nvmod))
-	!if(.not.allocated(this% qentold))	allocate(this% qentold (nvmod))
 	if(.not.allocated(this% dqhordx))	allocate(this% dqhordx (nvmod))
 	if(.not.allocated(this% nrel))		allocate(this% nrel (nvmod))
 	if(.not.allocated(this% intep_matrix))			allocate(this% intep_matrix (nvmod,nnodes))
@@ -135,8 +134,6 @@
 	if(allocated(this% hsattemp))	deallocate(this% hsattemp)
 	if(allocated(this% hsatold))	deallocate(this% hsatold )
 	if(allocated(this% qent))			deallocate(this% qent)
-	!if(allocated(this% qenttemp))	deallocate(this% qenttemp)
-	!if(allocated(this% qentold))	deallocate(this% qentold)
 	if(allocated(this% dqhordx))	deallocate(this% dqhordx)
 	if(allocated(this% nrel))			deallocate(this% nrel)
 	if(allocated(this% intep_matrix))	deallocate(this% intep_matrix)
@@ -195,7 +192,6 @@
 	this%count = size(idnode)
 	if(.not.allocated(this%idnode)) allocate(this%idnode(this%count))
 
-
 	do i=1,this%count
 		this%idnode(i)%p	=> idnode(i)
 		this%x(i)%p		=> nodes%x(this%idnode(i)%p)
@@ -212,10 +208,7 @@
 			this%nrel(i)%p		=> nrel(i)
 		end if
 
-
 		this%dqhordx(i)%p		=> nodes%results_dqhordx_from_incvoldt(this%idnode(i)%p) !Take results_dqhordx_from_incvol because expect that calc is more precise than results_dqhordx
-		!this%dqhordx(i)%p		=> this%dqhordx_mean(i)	 !Take results_dqhordx_from_incvol because expect that calc is more precise than results_dqhordx
-
 
 	end do
 
@@ -247,13 +240,10 @@
 
 	end subroutine s_sat_constraints_construct
 
-
-
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_nodes. Stablish soil shape (coord z) from slope.
-	!> Modify this subroutine to define other soil shape.
+	!> Construct the interpolation matrix needed to pass the waterflow nodes where WF1DUNSAT are located to all WF1DSAT nodes
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_constraints_construct_interpmatrix(this,nodes)

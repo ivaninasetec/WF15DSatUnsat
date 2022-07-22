@@ -1,105 +1,37 @@
 	!********************************************************************************************************************
-	!*                                                                                                                  *
-	!*                                 MODULE: MOD_UNSAT_HYDRAULICFUN_BA                                                *
-	!*                                                                                                                  *
-	!********************************************************************************************************************
-	!* THIS MODULE INCLUDE VARIABLY SATURATED HYDRAULIC FUNCTIONS FOR THE BALLAST AS IN CHAPTER 4 OF THE THESIS         *
-	!*    f_hyd_S_h_BA:   Returns the specific saturation from pressure head                                            *
-	!*    f_hyd_th_h_BA:  Returns water content from pressure head                                                      *
-	!*    f_hyd_kr_h_BA:  Returns relative permeability from pressure head                                              *
-	!*    f_hyd_k_h_BA:   Returns permeability from pressure head                                                       *
-	!*    f_hyd_cap_h_BA: Returns water capacity from pressure head                                                     *
-	!*                                                                                                                  *
-	!*    Iván Campos-Guereta Díez                                                                                      *
-	!*    MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!*    PhD Student by University of Nottingham                                                                       *
-	!*    eMBA by International Institute San Telmo in Seville                                                          *
-	!*    ivan.camposguereta@nottingham.ac.uk                                                                           *
-	!*                                                                                                                  *
-	!*    This software is copyrighted 2019(C)                                                                          *
+	! TITLE         : MOD_FUN_HYDRAULIC_PW: HYDRAULIC FUNCTIONS	FOR THE BALLAST INCLUDED IN CHAPTER 4 OF THE THESIS
+	! PROJECT       : WF1DCOMDLL Library for common functions and derived types
+	! MODULE        : -
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> hydraulic functions	for the ballast included in chapter 4 of the thesis
+	!>    f_hyd_S_h_BA:   Returns the specific saturation from pressure head
+	!>    f_hyd_th_h_BA:  Returns water content from pressure head
+	!>    f_hyd_kr_h_BA:  Returns relative permeability from pressure head
+	!>    f_hyd_k_h_BA:   Returns permeability from pressure head
+	!>    f_hyd_cap_h_BA: Returns water capacity from pressure head
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
-	!module com_mod_hyd_ba
- !
-	!implicit none
-	!private
-	!include 'inc_precision.fi'
- !
-	!! !********************************************************************************************************************
-	!! ! POLIMORPHIC INTERFACES FOR THE FOLLOWING HYDRAULIC FUNCIONS
-	!! !--------------------------------------------------------------------------------------------------------------------
-	!! ! f_hyd_S_h_Ba	:Returns Equivalent saturation (sca or vec) from pressure head (sca or vec)
-	!! ! f_hyd_th_h_Ba	:Returns water content (sca or vec)					from pressure head (sca or vec)
-	!! ! f_hyd_kr_h_Ba	:Returns relative permeability (sca or vec) from pressure head (sca or vec)
-	!! ! f_hyd_k_h_Ba	:Returns permeability (sca or vec)					from pressure head (sca or vec)
-	!! ! f_hyd_cap_h_Ba:Returns water capacity (sca or vec)				from pressure head (sca or vec)
-	!! !********************************************************************************************************************
-	!!
-	!! interface f_hyd_s_h_ba
-	!! module procedure f_hyd_s_h_ba_sca
-	!! module procedure f_hyd_s_h_ba_vec
-	!! module procedure f_hyd_s_h_ba_vec2
-	!! end interface f_hyd_s_h_ba
-	!!
-	!! interface f_hyd_th_h_ba
-	!! module procedure f_hyd_th_h_ba_sca
-	!! module procedure f_hyd_th_h_ba_vec
-	!!module procedure f_hyd_th_h_ba_vec2
-	!! end interface f_hyd_th_h_ba
-	!!
-	!! interface f_hyd_kr_h_ba
-	!! module procedure f_hyd_kr_h_ba_sca
-	!! module procedure f_hyd_kr_h_ba_vec
-	!!module procedure f_hyd_kr_h_ba_vec2
-	!! end interface f_hyd_kr_h_ba
-	!!
-	!! interface f_hyd_k_h_ba
-	!! module procedure f_hyd_k_h_ba_sca
-	!! module procedure f_hyd_k_h_ba_vec
-	!!module procedure f_hyd_k_h_ba_vec2
-	!! end interface f_hyd_k_h_ba
-	!!
-	!! interface f_hyd_cap_h_ba
-	!! module procedure f_hyd_cap_h_ba_sca
-	!! module procedure f_hyd_cap_h_ba_vec
-	!!module procedure f_hyd_cap_h_ba_vec2
-	!!end interface f_hyd_cap_h_ba
-	!!
-	!! interface f_hyd_dkr_h_ba
-	!! module procedure f_hyd_dkr_h_ba_sca
-	!! module procedure f_hyd_dkr_h_ba_vec
-	!!module procedure f_hyd_dkr_h_ba_vec2
-	!!end interface f_hyd_dkr_h_ba
-	!!
-	!!interface f_hyd_dk_h_ba
-	!! module procedure f_hyd_dk_h_ba_sca
-	!! module procedure f_hyd_dk_h_ba_vec
-	!!module procedure f_hyd_dk_h_ba_vec2
-	!! end interface f_hyd_dk_h_ba
-	!!
-	!! public::f_hyd_s_h_ba,   f_hyd_th_h_ba,  f_hyd_kr_h_ba,  f_hyd_k_h_ba,  f_hyd_cap_h_ba,  f_hyd_dkr_h_ba,  f_hyd_dk_h_ba, f_hyd_s0_h_ba_sca, f_hyd_incs_h1_to_h2_ba_sca
- !
-	!PUBLIC::  f_hyd_S_h_ba_sca,  f_hyd_S_h_ba_vec,  f_hyd_S_h_ba_vec2, &
-	!	f_hyd_th_h_ba_sca, f_hyd_th_h_ba_vec, f_hyd_th_h_ba_vec2,  &
-	!	f_hyd_kr_h_ba_sca, f_hyd_kr_h_ba_vec, f_hyd_kr_h_ba_vec2, &
-	!	f_hyd_k_h_ba_sca,  f_hyd_k_h_ba_vec,  f_hyd_k_h_ba_vec2,  &
-	!	f_hyd_cap_h_ba_sca,f_hyd_cap_h_ba_vec,f_hyd_cap_h_ba_vec2, &
-	!	f_hyd_dkr_h_ba_sca,f_hyd_dkr_h_ba_vec,f_hyd_dkr_h_ba_vec2, &
-	!	f_hyd_dk_h_ba_sca, f_hyd_dk_h_ba_vec, f_hyd_dk_h_ba_vec2, &
-	!	f_hyd_incs_h1_to_h2_ba_sca
- !
- !
- !
-	!contains
- !
- !
-	!!********************************************************************************************************************
-	!! F: f_hyd_S_H_PW_SCA(material,h)
-	!!--------------------------------------------------------------------------------------------------------------------
-	!! Function that returns specific saturation (scalar) from pressure head (scalar pressure), with simplified power
-	!! function:
-	!!		Se=(1+(-a·h))^n)^(-m) for h<0 | Se=1 for h>=0
-	!!********************************************************************************************************************
+	!********************************************************************************************************************
+	! F: f_hyd_S_H_PW_SCA(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns specific saturation (scalar) from pressure head (scalar pressure), with simplified power
+	! function:
+	!		Se=(1+(-a·h))^n)^(-m) for h<0 | Se=1 for h>=0
+	!********************************************************************************************************************
 
 	pure function f_hyd_s_h_ba_sca(material,h) result(rout)
 	!DEC$ if defined(_DLL)
@@ -107,8 +39,6 @@
 	!DEC$ endif
 
 	!return the specific saturation from pressure head(scalar)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
@@ -135,27 +65,21 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_incs_h1_to_h2_ba_sca" :: f_hyd_incs_h1_to_h2_ba_sca
 	!DEC$ endif
 
-	!CHECK:IMPORTANT: In this case the increment S is not between h1 and h2 but between h1+psi_b and h2+psi_b, as the watertable in reality begin in psi_b (material%a)
-
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h1,h2
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::f_hyd_incs_h1_to_h2_ba_sca
 	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
 
 	a = real(material%a,16)
-	!CHECK:In this case we want to integrate between h1+psib and h2+psib
+
 	hb1 = real(h1,16)+material%a
 	hb2 = real(h2,16)+material%a
-	!hb1 = real(h1,16)
-	!hb2 = real(h2,16)
 	n= real(material%n,16)
 	m= real(material%m,16)
 
 	!Saturation S1 is the integral from 0 to hb1 of S
 	if (hb1<-material%a) then
-		rout1 = (hb1/(-material%a))**(-material%n) !CHECK: 
+		rout1 = (hb1/(-material%a))**(-material%n) 
 	else
 		rout1 =  1.0_16
 	end if
@@ -189,8 +113,6 @@
 
 	!return the specific saturation from pressure head(vector)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dpd),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
@@ -211,8 +133,6 @@
 	!DEC$ endif
 
 	!return the specific saturation from pressure head(vector)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
@@ -241,8 +161,6 @@
 
 	!returns the moisture content from pressure head(scalar)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout
@@ -267,8 +185,6 @@
 
 	!returns the moisture content from pressure head(vector)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
@@ -285,8 +201,6 @@
 	!DEC$ endif
 
 	!returns the moisture content from pressure head(vector)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
@@ -310,8 +224,6 @@
 	!DEC$ endif
 
 	!returns relative permeability from pressure head(vector)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
@@ -343,8 +255,6 @@
 
 	!returns relative permeability from pressure head(vector)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h)),se(size(h))
@@ -366,8 +276,6 @@
 	!DEC$ endif
 
 	!returns relative permeability from pressure head(vector)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
@@ -397,8 +305,6 @@
 
 	!returns permeability from pressure head(scalar)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout
@@ -406,7 +312,6 @@
 	rout = material%ksat*f_hyd_kr_h_ba_sca(material,h)
 
 	end function f_hyd_k_h_ba_sca
-
 
 	!********************************************************************************************************************
 	! F: f_hyd_k_h_VG_vec(material,h)
@@ -422,8 +327,6 @@
 	!DEC$ endif
 
 	!returns permeability from pressure head(vector)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
@@ -441,8 +344,6 @@
 	!DEC$ endif
 
 	!returns permeability from pressure head(vector)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
@@ -468,18 +369,15 @@
 
 	!returns water capacity from pressure head(scalar)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout
 
 	if (h<-material%a) then
-		!need to check the sign of cap!!!!!!!!!!!!!!!!!!!!
-		rout =((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
-	else
-		rout =  0.0_dps
-	end if
+			rout =((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
+		else
+			rout =  0.0_dps
+		end if
 
 
 	end function f_hyd_cap_h_ba_sca
@@ -501,18 +399,15 @@
 
 	!returns water capacity from pressure head(vector)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
 
 	withsuction:where (h<-material%a)
-		!need to check the sign of cap!!!!!!!!!!!!!!!!!!!!
-		rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
-	elsewhere
-		rout =  0.0_dps
-	end where withsuction
+			rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
+		elsewhere
+			rout =  0.0_dps
+		end where withsuction
 
 	end function f_hyd_cap_h_ba_vec
 
@@ -525,18 +420,15 @@
 
 	!returns water capacity from pressure head(vector)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout(size(h))
 
 	withsuction:where (h<-material%a)
-		!need to check the sign of cap!!!!!!!!!!!!!!!!!!!!
-		rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
-	elsewhere
-		rout =  0.0_dps
-	end where withsuction
+			rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
+		elsewhere
+			rout =  0.0_dps
+		end where withsuction
 
 	end function f_hyd_cap_h_ba_vec2
 
@@ -557,19 +449,16 @@
 
 	!returns water capacity from pressure head(scalar)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout
 
 	if (h<-material%a) then
-		
-		!tex:
-		!$k_{r}=-\frac{\lambda   (l+2) \left(\left(\frac{\psi }{\text{$\psi $b}}\right)^{-\lambda }\right)^{l+2}}{\psi }$
+
+	!tex:
+	!$k_{r}=-\frac{\lambda   (l+2) \left(\left(\frac{\psi }{\text{$\psi $b}}\right)^{-\lambda }\right)^{l+2}}{\psi }$
 		rout = -(material%n * (2.0_dpd + material%l ) * ( (h/(-material%a))**(-material%n) )**( 2.0_dpd + material%l))/h
-		
-		!rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h		
+
 	else
 		rout =  0.0_dps
 	end if
@@ -594,15 +483,12 @@
 
 	!returns water capacity from pressure head(scalar)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
 
 	withsuction:where (h<-material%a)
 		rout = -(material%n * (2.0_dpd + material%l ) * ( (h/(-material%a))**(-material%n) )**( 2.0_dpd + material%l))/h
-		!rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h
 	elsewhere
 		rout =  0.0_dps
 	end where withsuction
@@ -618,15 +504,12 @@
 
 	!returns water capacity from pressure head(scalar)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout(size(h))
 
 	withsuction:where (h<-material%a)
 		rout = -(material%n * (2.0_dpd + material%l ) * ( (h/(-material%a))**(-material%n) )**( 2.0_dpd + material%l))/h
-		!rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h
 	elsewhere
 		rout =  0.0_dps
 	end where withsuction
@@ -647,8 +530,6 @@
 	!DEC$ endif
 
 	!returns permeability from pressure head(scalar)
-
-	!use com_mod_ty_material,only:ty_com_material
 
 	real(kind=dps),intent(in)::h
 	type(ty_com_material),intent(in)::material
@@ -674,8 +555,6 @@
 
 	!returns permeability from pressure head(vector)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material(:)
 	real(kind=dpd)::rout(size(h))
@@ -693,8 +572,6 @@
 
 	!returns permeability from pressure head(vector)
 
-	!use com_mod_ty_material,only:ty_com_material
-
 	real(kind=dps),intent(in)::h(:)
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::rout(size(h))
@@ -702,9 +579,9 @@
 	rout = material%ksat*f_hyd_dkr_h_ba_vec2(material,h)
 
 	end function f_hyd_dk_h_ba_vec2
-	
-	
-		!********************************************************************************************************************
+
+
+	!********************************************************************************************************************
 	! F: f_hyd_Cmax_ba(material,h)
 	!--------------------------------------------------------------------------------------------------------------------
 	! Return the maximum value of the water capacity, to apply on the L-method
@@ -724,7 +601,7 @@
 
 	!tex:
 	!$${C_{max}} = \frac{{\left( {\theta r - \theta s} \right)\lambda }}{{\psi b}}$$
-	
+
 	rout = ((thetar - thetas)*lambda)/psib
 
 	end function f_hyd_Cmax_ba

@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        EXTENSION OF CLASS CALC FOR VERTICAL UNSATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : MOD_SAT_TY_LAYER
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : UNSAT_MOD_TY_CALC: EXTENDED DERIVED TYPE OF COM_MOD_TY_CALC TO INCLUDE PROPERTIES AND METHODS OF WF1DUNSAT
+	! PROJECT       : WF1DUNSATDLL
+	! MODULE        : COM_MOD_TY_CALC
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Extended derived type of com_mod_ty_elements to include properties and methods of wf1dunsat
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for horizontal saturated layer. Extend common class of layers.
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module unsat_mod_ty_calc
@@ -37,9 +38,6 @@
 		type(ty_com_material) ,pointer::material(:)
 		type(ty_unsat_elements),pointer::elementsptr
 		type(ty_unsat_nodes),pointer::nodesptr
-
-		!real(kind=dps),allocatable::colbound(:)	!<Vector with the imposed dirichlet conditions?
-		!real(kind=dps),allocatable::colqent(:)	!<Vector with the imposed flows as newmann conditions
 
 		class(ty_mx),allocatable::mxmass1	!<Mass matrix: of the FEM linear system
 		class(ty_mx),allocatable::mxmass2	!<Mass matrix: of the FEM linear system
@@ -80,8 +78,10 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Get the value of thsat-thres on x0 to x1 using an integration order
+	!> @param[inout] x0	First coordinate
+	!> @param[inout] x1	Second coordinate
+	!> @param[inout] integration_order	Quadrature order for the integral
 	!---------------------------------------------------------------------------------------------------------------------
 
 	function f_unsat_calc_get_thsatres_mean_from_x0_to_x1_sca(this,x0,x1,integration_order)
@@ -123,14 +123,17 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Get the value of th from x0 to x1 using an integration order
+	!> @param[inout] x0	First coordinate
+	!> @param[inout] x1	Second coordinate
+	!> @param[inout] integration_order	Quadrature order for the integral
+	!> @param[inout] option	0 use hnew, 1 use htemp, 2 use hold
 	!---------------------------------------------------------------------------------------------------------------------
 
 	function f_unsat_calc_get_th_from_x0_to_x1_sca(this,x0,x1,integration_order,option)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_unsat_calc_get_th_from_x0_to_x1_sca" :: f_unsat_calc_get_th_from_x0_to_x1_sca
-	!DEC$ endif	
+	!DEC$ endif
 	use com_mod_fem_intelement, only:intelement_abs_1don_sca
 
 	class(ty_unsat_calc),intent(in)::this
@@ -149,10 +152,9 @@
 	!----------------------------------------------------------
 	contains
 
-	!This function returns thsat-thres in the height x
+	!This function returns th in the height x
 	function f_th_in_x(x)
 	use com_mod_linear_interpolation,only:linearinterpolation_ordered
-	!use com_mod_hyd, only:f2_hyd_th_h_sca
 
 	real(kind=dpd),intent(in)::x
 	real(kind=dpd)::f_th_in_x
@@ -170,7 +172,6 @@
 		hpres = linearinterpolation_ordered(x,this%nodes%x,this%nodes%hold)
 	end  select
 
-	!f_th_in_x = f2_hyd_th_h_sca(hpres,this%elements%material(elementid_in_x))
 	f_th_in_x = this%elements%material(elementid_in_x)%get_th_sca(hpres)
 
 	end function f_th_in_x
@@ -180,8 +181,10 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Get the value of thnew-thold (current timestep - previous) from x0 to x1 using an integration order
+	!> @param[inout] x0	First coordinate
+	!> @param[inout] x1	Second coordinate
+	!> @param[inout] integration_order	Quadrature order for the integral
 	!---------------------------------------------------------------------------------------------------------------------
 
 	function f_unsat_calc_get_thnewold_from_x0_to_x1_sca(this,x0,x1,integration_order)
@@ -208,7 +211,6 @@
 	!This function returns thsat-thres in the height x
 	function f_thnewold_in_x(x)
 	use com_mod_linear_interpolation,only:linearinterpolation_ordered
-	!use com_mod_hyd_vg, only: f2_hyd_incs_h1_to_h2_vg_sca
 
 	real(kind=dpd),intent(in)::x
 	real(kind=dpd)::f_thnewold_in_x
@@ -224,7 +226,6 @@
 	else
 		thsatres_in_x =	this%elements%material(elementid_in_x)%thsat-this%elements%material(elementid_in_x)%thres
 
-		!f_thnewold_in_x = thsatres_in_x*f2_hyd_incs_h1_to_h2_vg_sca(hold,hnew,this%elements%material(elementid_in_x))
 		f_thnewold_in_x = thsatres_in_x*this%elements%material(elementid_in_x)%get_incs_h1_to_h2_sca(hold,hnew)
 	end if
 
@@ -235,8 +236,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Estimate hnew for the new timestep
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_estimate_hnew_for_new_timestep(this)
@@ -247,7 +247,6 @@
 	class(ty_unsat_calc),intent(inout)::this
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDERHOLD=2,CONSIDER_ALL=3
 
-	!this%nodes%hnew	= this%nodes%hold+this%slopeold*this%time%dt !CHECK
 	this%nodes%hnew	= this%nodes%hold
 	call this%update_th_from_h(CONSIDER_HNEW)
 
@@ -256,8 +255,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Estimate htemp for the new iteration
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_estimate_htemp_for_new_iteration(this)
@@ -269,14 +267,12 @@
 
 	this%nodes%htemp = this%nodes%hnew
 	call this%update_th_from_h(CONSIDER_HTEMP)
-	!this%nodes%hnew	= this%nodes%hold+this%slopeold*this%dt
 	end subroutine s_unsat_calc_estimate_htemp_for_new_iteration
 
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Revert values to previous timestep (usually when the current timestep didn't converge)
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_revert_to_old(this)
@@ -285,8 +281,6 @@
 	!DEC$ endif
 	class(ty_unsat_calc),intent(inout)::this
 	this%time%t			= this%time%told
-	!call this%time%increase_time() !Dont increase the time as it is done in the timestepping
-	!this%dt			= this%dtold
 
 	!All values to initial conditions
 	this%nodes%hnew		= this%nodes%hold
@@ -304,8 +298,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Set old values from current calculation (usually when iteration process has finished and converged)
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_set_old(this)
@@ -314,12 +307,9 @@
 	!DEC$ endif
 	class(ty_unsat_calc),intent(inout)::this
 
-	!this%slopeold = 0.0_dpd
-
 	if(this%time%told.ne.this%time%t) then
 		this%time%dtold = (this%time%t-this%time%told)
 		this%time%told		= this%time%t
-		!this%time%dtold	= this%time%dt
 	end if
 	this%slopeold = min(1.0_dpd,(this%nodes%hnew-this%nodes%hold)/this%time%dtold)
 
@@ -333,8 +323,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Set value of hnew from the value of solution and coeficient of relaxation
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_update_hnew_from_solution(this)
@@ -354,10 +343,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Assing Newmman boundaries (waterflow on nodes)
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_assign_newmann(this)
@@ -381,9 +367,6 @@
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
 	!> Get the values of the flow due to the imposition of the dirichlet boundary conditions
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_get_qnewmann(this)
@@ -403,9 +386,7 @@
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
 	!> Get the water content on the nodes knowing the value of hnew, htemp or hold
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> @param[in] option 0 use hnew, 1 use htemp, 2 use hold
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_update_th_from_h(this,option)
@@ -414,8 +395,6 @@
 	!DEC$ endif
 	use unsat_mod_ty_nodes,only:ty_unsat_nodes
 	use com_mod_ty_nodes,only:ty_com_nodes
-
-	!use com_mod_hyd,only:f2_hyd_th_h_vec !BCRRA
 
 	class(ty_unsat_calc),intent(inout),target::this
 	integer,intent(in),optional::option
@@ -436,38 +415,32 @@
 	end select
 
 	select case (opt)
-	case(CONSIDER_HOLD)	
+	case(CONSIDER_HOLD)
 		!$OMP DO
 		do i=1,size(nodes%thold)
-		nodes%thold(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hold(i))
+			nodes%thold(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hold(i))
 		end do
 		!$OMP END DO
-		!nodes%thold(:)	= f2_hyd_th_h_vec(this%nodes%hold(:),this%nodes%material(:))
 	case(CONSIDER_HTEMP)
 		!$OMP DO
 		do i=1,size(nodes%thtemp)
-		nodes%thtemp(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%htemp(i))
+			nodes%thtemp(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%htemp(i))
 		end do
 		!$OMP END DO
-		!nodes%thtemp = f2_hyd_th_h_vec(this%nodes%htemp,this%nodes%material)
 	case(CONSIDER_ALL)
 		!$OMP DO
 		do i=1,size(nodes%thnew)
-		nodes%thold(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hold(i))
-		nodes%thtemp(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%htemp(i))
-		nodes%thnew(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hnew(i))
+			nodes%thold(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hold(i))
+			nodes%thtemp(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%htemp(i))
+			nodes%thnew(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hnew(i))
 		end do
 		!$OMP END DO
-		!nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew,nodes%material)
-		!nodes%thtemp = f2_hyd_th_h_vec(nodes%htemp,nodes%material)
-		!nodes%thold	= f2_hyd_th_h_vec(nodes%hold,nodes%material)
 		case default
 		!$OMP DO
 		do i=1,size(nodes%thnew)
-		nodes%thnew(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hnew(i))
+			nodes%thnew(i)	= this%nodes%material(i)%Get_th_sca(this%nodes%hnew(i))
 		end do
 		!$OMP END DO
-		!nodes%thnew	= f2_hyd_th_h_vec(nodes%hnew(:),nodes%material(:))
 	end select
 
 	end subroutine s_unsat_calc_update_th_from_h
@@ -477,10 +450,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Allocate all allocatable properties of the parent class
 	!---------------------------------------------------------------------------------------------------------------------
 	subroutine s_unsat_calc_allocateall(this)
 	!DEC$ if defined(_DLL)
@@ -490,15 +460,10 @@
 	use unsat_mod_ty_elements, only:ty_unsat_elements
 	use com_mod_ty_parameters, only:ty_com_parameters
 
-	!integer,parameter::KU=1,KL=1
-
 	class(ty_unsat_calc),intent(inout)::this
-
-	!integer::nnc !<Number of nodes-classes
 
 	if(.not.allocated(this%nodes))			allocate(ty_unsat_nodes::this%nodes)
 	if(.not.allocated(this%elements))		allocate(ty_unsat_elements::this%elements)
-	!if(.not.allocated(this%parameters))	allocate(ty_com_parameters::this%parameters)
 
 	end subroutine s_unsat_calc_allocateall
 
@@ -507,10 +472,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Deallocate all allocatable properties of the parent class
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_deallocateall(this)
@@ -520,8 +482,6 @@
 
 	class(ty_unsat_calc),intent(inout)::this
 
-	!if(allocated(this%colbound))		deallocate(this%colbound)
-	!if(allocated(this%colqent))		deallocate(this%colqent)
 	if(allocated(this%slopeold))		deallocate(this%slopeold)
 	if(allocated(this%rhs))					deallocate(this%rhs)
 	if(allocated(this%solution))		deallocate(this%solution)
@@ -543,11 +503,6 @@
 		deallocate(this%nodes)
 	end if
 
-	!if(allocated(this%parameters)) then
-	!	!call this%parameters%deallocateall()
-	!	deallocate(this%parameters)
-	!end if
-
 	end subroutine s_unsat_calc_deallocateall
 
 	!---------------------------------------------------------------------------------------------------------------------
@@ -555,10 +510,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Construct the class (asigning all asignable properties)
 	!---------------------------------------------------------------------------------------------------------------------
 	subroutine s_unsat_calc_construct(this)
 	!DEC$ if defined(_DLL)
@@ -576,7 +528,6 @@
 	class(ty_com_nodes),pointer::nodescom
 	class(ty_unsat_nodes),pointer::nodes
 	integer::nnc !<Number of nodes-classes
-	!integer,intent(in)::sparsity !<Sparsity of matrix (1=dense, 2=csr, 3= banded)
 
 	nnc=this%nodes%count
 	elemcom=>this%elements
@@ -597,13 +548,11 @@
 	!Allocate all vectors
 	if(.not.allocated(this%colbound)) allocate(this%colbound(nnc))
 	if(.not.allocated(this%colsink)) allocate(this%colsink(nnc))
-	!if(.not.allocated(this%colqent))	allocate(this%colqent(nnc))
 	if(.not.allocated(this%slopeold)) allocate(this%slopeold(nnc))
 	if(.not.allocated(this%rhs))			allocate(this%rhs(nnc))
 	if(.not.allocated(this%solution)) allocate(this%solution(nnc))
 	if(.not.allocated(this%perm))			allocate(this%perm(nnc)) !If perm is not allocated then it is not used.
 	if(.not.allocated(this%rhsinit))			allocate(this%rhsinit(nnc))
-
 
 	if(.not.allocated(elem%thnew))		allocate(elem%thnew(this%elements%count))
 	if(.not.allocated(elem%thtemp))		allocate(elem%thtemp(this%elements%count))
@@ -632,24 +581,11 @@
 	elem%results_qmed=0.0_dpd
 	elem%results_incvoldtperm=0.0_dpd
 
-
-
-
 	if(.not.allocated(nodes%thnew))		allocate(nodes%thnew(nodes%count))
 	if(.not.allocated(nodes%thtemp))	allocate(nodes%thtemp(nodes%count))
 	if(.not.allocated(nodes%thold))		allocate(nodes%thold(nodes%count))
 	if(.not.allocated(nodes%results_qnewmann)) allocate(nodes%results_qnewmann(nodes%count))
-	!if(.not.allocated(nodes%results_qent))		allocate(nodes%results_qent(nodes%count))
-	!if(.not.allocated(nodes%results_incvol))	allocate(nodes%results_incvol(nodes%count))
-	!if(.not.allocated(nodes%results_qhor))		allocate(nodes%results_qhor(nodes%count))
-	!if(.not.allocated(nodes%results_dqhordx))	allocate(nodes%results_dqhordx(nodes%count))
-	!nodes%results_qent=0.0_dpd
-	!nodes%results_incvol=0.0_dpd
-	!nodes%results_qhor=0.0_dpd
-	!nodes%results_dqhordx=0.0_dpd
 	nodes%results_qnewmann = 0.0_dpd
-
-
 
 	!allocate matrix
 	select case(this%parameters%typematrixstorage)
@@ -669,22 +605,17 @@
 	call this%allocate_matrix(this%mxinit)
 
 	this%slopeold = 0.0_dpd
-	!this%slopeold = 1.0E-3*this%parameters%dtinit !Not 0 to avoid not updating hnew
 
 	end subroutine s_unsat_calc_construct
-
-
-
 
 	!---------------------------------------------------------------------------------------------------------------------
 	! BUILD LINEAR SYSTEM
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Build coefficient matrix for actual head pressures.
+	!> @param[in] IsTimeDependant If true, the matrix is time dependant.
+	!> @param[in] option CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2,CONSIDER_ALL=3
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_build_linearsystem(this,IsTimeDependant,option)
@@ -699,8 +630,7 @@
 	integer,parameter::OPTIONBASIS_H=1,OPTIONBASIS_DH=2,OPTIONBASIS_H_H=3,OPTIONBASIS_H_DH=4,OPTIONBASIS_DH_H=5,OPTIONBASIS_DH_DH=6
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2,CONSIDER_ALL=3
 	class(ty_unsat_calc),intent(inout),target::this
-	!class(ty_sat_layers),intent(in)::layers
-	!real(kind=dpd),intent(in)::dt
+
 	logical,intent(in)::IsTimeDependant
 	integer,intent(in),optional::option
 	integer::opt,nelem,numnod,numclass,numnodclass
@@ -715,7 +645,7 @@
 	type is(ty_unsat_nodes)
 		nodes => nodescom
 	end select
-				
+
 
 	opt=CONSIDER_HNEW
 	if(present(option)) opt = option
@@ -747,12 +677,12 @@
 			!Linerization: Celia, 1990 Modified Picard linearization...
 			![MX] = [MASS1]/dt+[STIFF]
 			!{rhs}=[MASS1]{htemp}/dt-[MASS2]{thtemp-thold}/dt-[STIFF]{z}+[SINK]{sink}+{COLBOUND}
-			
+
 			!tex: Modified Picard linearization:
 			!$\left( {\frac{1}{{{\rm{\Delta }}t}}\left[ {{M_{MASSi,j}}} \right] + \left[ {{M_{Ki,j}}} \right]} \right)\left\{ {\psi _j^{k + 1,n + 1}} \right\} = \frac{1}{{{\rm{\Delta }}t}}\left[ {{M_{MASSi,j}}} \right]\left\{ {\psi _j^{k,n + 1}} \right\} - \frac{1}{{{\rm{\Delta }}t}}\left[ {{I_{i,j}}} \right]\left\{ {\theta _j^{k,n + 1} - \theta _j^n} \right\} - \left[ {{M_{Ki,j}}} \right]\left\{ {{z_j}} \right\} + \left\{ {{Q_{bound,i}}} \right\}$
-			
-				this%mx = this%mxmass1/this%time%dt+this%mxstiff
-				this%rhs=	this%mxmass1*nodes%htemp/this%time%dt-this%mxmass2*(nodes%thtemp-nodes%thold)/this%time%dt-this%mxstiff*nodes%x+this%mxsink*this%colsink+this%colbound
+
+			this%mx = this%mxmass1/this%time%dt+this%mxstiff
+			this%rhs=	this%mxmass1*nodes%htemp/this%time%dt-this%mxmass2*(nodes%thtemp-nodes%thold)/this%time%dt-this%mxstiff*nodes%x+this%mxsink*this%colsink+this%colbound
 
 
 		ELSE
@@ -785,8 +715,6 @@
 	!Returns the increment of water content from hold to htemp in coord chi of element e (for [MASS] and [SINK] matrixes)
 	function f_mass1(chi,e)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_cap_h_vec2
-	!use com_mod_hyd, only:f2_hyd_cap_h_vec !PREVIOUS
 	real(kind=dps),intent(in)::chi(:)
 	integer,intent(in)::e
 	real(kind=dps)::f_mass1(size(chi))
@@ -808,8 +736,6 @@
 	!tex:
 	!$\mathop \smallint \limits_{\rm{\Omega }} {\left. {\frac{{d\theta }}{{d\psi }}} \right|^{k,n + 1}}{\phi _j}{\phi _i}{\rm{\;}}d{\rm{\Omega }}$
 	headtemp = interp_on_element(chi,henodes)			!Returns htemp in each chi
-	!f_mass1 = f2_hyd_cap_h_vec2(headtemp,this%elements%material(e)) !IMPORTANT: Material is material(size(chi))
-	!f_mass1 = f2_hyd_cap_h_vec(headtemp,this%elements%material) !PREVIOUS: Material is material(size(chi))
 	f_mass1 = this%elements%material(e)%get_cap_vec(headtemp)
 
 	end function f_mass1
@@ -818,8 +744,6 @@
 	!Returns the increment of water content from hold to htemp in coord chi of element e (for [MASS] matrix)
 	function f_stiff(chi,e)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_k_h_vec2
-	!use com_mod_hyd, only:f2_hyd_k_h_vec
 	real(kind=dps),intent(in)::chi(:)
 	integer,intent(in)::e
 	real(kind=dps)::f_stiff(size(chi))
@@ -841,8 +765,7 @@
 	!tex:Stiffneww matrix:
 	!$\mathop \smallint \limits_{\rm{\Omega }} {k^{k,n + 1}}\frac{{\partial {\phi _j}}}{{\partial x}}\frac{{\partial {\phi _i}}}{{\partial x}}{\rm{\;}}d{\rm{\Omega }}$
 	headtemp = interp_on_element(chi,henodes)			!Returns htemp in each chi
-	!f_stiff = f2_hyd_k_h_vec2(headtemp,this%elements%material(e)) !PREVIOUS
-	!f_stiff = f2_hyd_k_h_vec(headtemp,this%elements%material) !PREVIOUS
+
 	f_stiff = this%elements%material(e)%get_k_vec(headtemp)
 
 	end function f_stiff
@@ -852,8 +775,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Procedure calculate the results in the nodes
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_results_in_nodes(this)
@@ -873,19 +795,16 @@
 	type is(ty_unsat_nodes)
 		nodes=>nodescom
 	end select
-	
-		nodes%results_qnewmann = -(this%mxinit*nodes%hnew-(this%rhsinit-this%colbound)) !Use init, before changing mx and rhs by dirichlet conditions.
+
+	nodes%results_qnewmann = -(this%mxinit*nodes%hnew-(this%rhsinit-this%colbound)) !Use init, before changing mx and rhs by dirichlet conditions.
 
 
 	end subroutine s_unsat_calc_results_in_nodes
 
-
-
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Procedure to calculate the results in the elements
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_calc_results_in_elements(this)
@@ -898,7 +817,7 @@
 	use com_mod_ty_nodes,only:ty_com_nodes
 	use unsat_mod_ty_nodes,only:ty_unsat_nodes
 	use com_mod_fem_shapefunctions,only:dphi1d
-	!use com_mod_hyd, only:f2_hyd_k_h_sca,f2_hyd_th_h_sca
+
 	class(ty_unsat_calc),intent(inout),target::this
 	class(ty_com_elements),pointer::elemcom
 	class(ty_unsat_elements),pointer::elem
@@ -914,80 +833,68 @@
 	type is (ty_unsat_elements)
 		elem => elemcom
 	end select
-	
+
 	nodescom => this%nodes
 	select type(nodescom)
 	type is (ty_unsat_nodes)
 		nodes => nodescom
 	end select
 
-			do e=1,this%elements%count
-				!elem%results_qent(e) = f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))))
-				elem%results_qent(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))))
-				!elem%results_qsal(e) = f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))))
-				elem%results_qsal(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))))
+	do e=1,this%elements%count
+		elem%results_qent(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))))
+		elem%results_qsal(e) = elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))*dot_product(nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)),dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))))
 
-				elem%results_qmed(e)			=intelement_rel_1don(f_qmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_qmed(e)			=intelement_rel_1don(f_qmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 
-				elem%hnew(e)							=intelement_rel_1don(f_hnew_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-				elem%htemp(e)							=intelement_rel_1don(f_htemp_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-				elem%hold(e)							=intelement_rel_1don(f_hold_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%hnew(e)							=intelement_rel_1don(f_hnew_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%htemp(e)							=intelement_rel_1don(f_htemp_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%hold(e)							=intelement_rel_1don(f_hold_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 
-				elem%thnew(e)							=intelement_rel_1don(f_thnew_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-				elem%thtemp(e)						=intelement_rel_1don(f_thtemp_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-				elem%thold(e)							=intelement_rel_1don(f_thold_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-				elem%results_incvoldtperm(e)	= (elem%thnew(e)-elem%thold(e))/this%time%dt
-				elem%h0(e)							= nodes%hnew(elem%idnode(e,1))
-				elem%h1(e)							= nodes%hnew(elem%idnode(e,2))
-				elem%h0old(e)						= nodes%hold(elem%idnode(e,1))
-				elem%h1old(e)						= nodes%hold(elem%idnode(e,2))
-				!elem%th0(e)							=f2_hyd_th_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))
-				elem%th0(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,1)))
-				!elem%th1(e)							=f2_hyd_th_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))
-				elem%th1(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,2)))
-				!elem%k0(e)							= f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,1)),elem%material(e))
-				elem%k0(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))
-				!elem%k1(e)							= f2_hyd_k_h_sca(nodes%hnew(elem%idnode(e,2)),elem%material(e))
-				elem%k1(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))
-				elem%dhdx0(e)						= dot_product(dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
-				elem%dhdx1(e)						= dot_product(dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
-				elem%dhxdx0(e)					= dot_product(dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
-				elem%dhxdx1(e)					= dot_product(dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
-				elem%results_dhdxmed(e)		=intelement_rel_1don(f_dhdxmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-				elem%results_dhxdxmed(e)	=intelement_rel_1don(f_dhxdxmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-				elem%results_kmed(e)			=intelement_rel_1don(f_kmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-			end do
+		elem%thnew(e)							=intelement_rel_1don(f_thnew_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%thtemp(e)						=intelement_rel_1don(f_thtemp_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%thold(e)							=intelement_rel_1don(f_thold_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_incvoldtperm(e)	= (elem%thnew(e)-elem%thold(e))/this%time%dt
+		elem%h0(e)							= nodes%hnew(elem%idnode(e,1))
+		elem%h1(e)							= nodes%hnew(elem%idnode(e,2))
+		elem%h0old(e)						= nodes%hold(elem%idnode(e,1))
+		elem%h1old(e)						= nodes%hold(elem%idnode(e,2))
+		elem%th0(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,1)))
+		elem%th1(e)							= elem%material(e)%get_th_sca(nodes%hnew(elem%idnode(e,2)))
+		elem%k0(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,1)))
+		elem%k1(e)							= elem%material(e)%get_k_sca(nodes%hnew(elem%idnode(e,2)))
+		elem%dhdx0(e)						= dot_product(dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
+		elem%dhdx1(e)						= dot_product(dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
+		elem%dhxdx0(e)					= dot_product(dphi1d(1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
+		elem%dhxdx1(e)					= dot_product(dphi1d(-1.0_dpd,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
+		elem%results_dhdxmed(e)		=intelement_rel_1don(f_dhdxmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_dhxdxmed(e)	=intelement_rel_1don(f_dhxdxmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_kmed(e)			=intelement_rel_1don(f_kmed_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+	end do
 
 	contains
 	!-----
 	function f_qmed_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element,dphi1d
-	!use com_mod_hyd, only:f2_hyd_k_h_vec2
+
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_qmed_chi(size(chi))
 	real(kind=dps)::ktemp(size(chi)),hnewtemp(size(chi)),dphi1dtemp(size(chi),size(elem%idnode(e,:))),dhdxtemp(size(chi)),hxtemp(size(elem%idnode(e,:)))
-	!Int(qent·phi)
-		!f_qmed_chi = elem%material(e)%get_k_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))*((nodes%hnew(elem%idnode(e,2))-nodes%hnew(elem%idnode(e,1)))/(nodes%x(elem%idnode(e,2))-nodes%x(elem%idnode(e,1)))+1)
-	
-	hnewtemp = interp_on_element(chi,nodes%hnew(elem%idnode(e,:))) 
-	!ktemp = 	f2_hyd_k_h_vec2(hnewtemp,elem%material(e))
+
+	hnewtemp = interp_on_element(chi,nodes%hnew(elem%idnode(e,:)))
 	ktemp = 	elem%material(e)%get_k_vec(hnewtemp)
 	dphi1dtemp = dphi1d(chi,nodes%x(elem%idnode(e,:)))
 	hxtemp = nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:))
 	dhdxtemp = matmul(dphi1dtemp,hxtemp)
 	f_qmed_chi = ktemp*dhdxtemp
-	!f_qmed_chi = elem%material(e)%get_k_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))*matmul(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
 
 	end function f_qmed_chi
 	!-----
 	function f_kmed_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_k_h_vec2
+
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_kmed_chi(size(chi))
-	!Int(qent·phi)
 
-	!f_kmed_chi = f2_hyd_k_h_vec2(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
 	f_kmed_chi = elem%material(e)%get_k_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
 
 	end function f_kmed_chi
@@ -998,9 +905,8 @@
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_dhdxmed_chi(size(chi))
-	!Int(qent·phi)
 
-		f_dhdxmed_chi = matmul(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
+	f_dhdxmed_chi = matmul(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:)))
 
 	end function f_dhdxmed_chi
 	!-----
@@ -1009,34 +915,27 @@
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_dhxdxmed_chi(size(chi))
-	!Int(qent·phi)
 
-		f_dhxdxmed_chi = matmul(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
+	f_dhxdxmed_chi = matmul(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
 
 	end function f_dhxdxmed_chi
 	!------
 	function f_thnew_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_th_h_vec2
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_thnew_chi(size(chi))
-	!Int(qent·phi)
 
-	!f_thnew_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
 	f_thnew_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
 
 	end function f_thnew_chi
 	!------
 	function f_thtemp_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_th_h_vec2
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_thtemp_chi(size(chi))
-	!Int(qent·phi)
-	
-	!f_thtemp_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%htemp(elem%idnode(e,:))),elem%material(e))
+
 	f_thtemp_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%htemp(elem%idnode(e,:))))
 
 	end function f_thtemp_chi
@@ -1044,13 +943,10 @@
 	!------
 	function f_thold_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_th_h_vec2
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_thold_chi(size(chi))
-	!Int(qent·phi)
 
-	!f_thold_chi = f2_hyd_th_h_vec2(interp_on_element(chi,nodes%hold(elem%idnode(e,:))),elem%material(e))
 	f_thold_chi = elem%material(e)%get_th_vec(interp_on_element(chi,nodes%hold(elem%idnode(e,:))))
 
 	end function f_thold_chi
@@ -1062,9 +958,8 @@
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_hnew_chi(size(chi))
-	!Int(qent·phi)
 
-		f_hnew_chi = interp_on_element(chi,nodes%hnew(elem%idnode(e,:)))
+	f_hnew_chi = interp_on_element(chi,nodes%hnew(elem%idnode(e,:)))
 
 	end function f_hnew_chi
 	!------
@@ -1073,9 +968,8 @@
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_htemp_chi(size(chi))
-	!Int(qent·phi)
 
-		f_htemp_chi = interp_on_element(chi,nodes%htemp(elem%idnode(e,:)))
+	f_htemp_chi = interp_on_element(chi,nodes%htemp(elem%idnode(e,:)))
 
 	end function f_htemp_chi
 
@@ -1085,9 +979,8 @@
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_hold_chi(size(chi))
-	!Int(qent·phi)
 
-		f_hold_chi = interp_on_element(chi,nodes%hold(elem%idnode(e,:)))
+	f_hold_chi = interp_on_element(chi,nodes%hold(elem%idnode(e,:)))
 
 	end function f_hold_chi
 
@@ -1098,8 +991,9 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Calculate the waterflow in absolute coordinate x
+	!> @param[in] x coordinate where to calculate wht waterflow
+	!> @param[in] el optional parameter to indicate the number of the element where to calculate the waterflow (where x is located)
 	!---------------------------------------------------------------------------------------------------------------------
 
 	function f_unsat_calc_q_in_x(this,x,el)
@@ -1112,7 +1006,6 @@
 	use unsat_mod_ty_nodes,only:ty_unsat_nodes
 	use com_mod_fem_shapefunctions,only:dphi1d
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_k_h_sca
 
 	class(ty_unsat_calc),intent(in),target::this
 	real(kind=dpd),intent(in)::x
@@ -1132,24 +1025,24 @@
 	type is (ty_unsat_elements)
 		elem=> elemcom
 	end select
-	
-		select type(nodescom)
+
+	select type(nodescom)
 	type is (ty_unsat_nodes)
 		nodes=> nodescom
 	end select
 
-		if(present(el)) then
-			e= el
-		else
-			e = this%get_idelement_from_x(x)
-		end if
+	if(present(el)) then
+		e= el
+	else
+		e = this%get_idelement_from_x(x)
+	end if
 
-		chi = 2.0_dpd*(x-elem%x0(e))/(elem%x1(e)-elem%x0(e))-1.0_dpd
+	chi = 2.0_dpd*(x-elem%x0(e))/(elem%x1(e)-elem%x0(e))-1.0_dpd
 
-		dhzdx = dot_product(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
-		!k = f2_hyd_k_h_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
-		k = elem%material(e)%get_k_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
-		f_unsat_calc_q_in_x = k*dhzdx
+	dhzdx = dot_product(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
+
+	k = elem%material(e)%get_k_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
+	f_unsat_calc_q_in_x = k*dhzdx
 
 
 	end function f_unsat_calc_q_in_x
@@ -1157,8 +1050,9 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Return the waterflow at the relative coodinate chi of the element e
+	!> @param[inout] chi	Relative coordinate where to get the waterflow
+	!> @param[inout] e		Element where to calculate
 	!---------------------------------------------------------------------------------------------------------------------
 
 	function f_unsat_elem_q_in_chi_elem(this,chi,e)
@@ -1169,7 +1063,6 @@
 	use com_mod_ty_nodes,only:ty_com_nodes
 	use com_mod_fem_shapefunctions,only:dphi1d
 	use com_mod_fem_shapefunctions,only:interp_on_element
-	!use com_mod_hyd, only:f2_hyd_k_h_sca
 
 	class(ty_unsat_calc),intent(in),target::this
 	real(kind=dpd),intent(in)::chi
@@ -1184,7 +1077,6 @@
 	nodes => this%nodes
 
 	dhzdx =  dot_product(dphi1d(chi,nodes%x(elem%idnode(e,:))),nodes%hnew(elem%idnode(e,:))+nodes%x(elem%idnode(e,:)))
-	!k = f2_hyd_k_h_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))),elem%material(e))
 	k = elem%material(e)%get_k_sca(interp_on_element(chi,nodes%hnew(elem%idnode(e,:))))
 	f_unsat_elem_q_in_chi_elem = k*dhzdx
 

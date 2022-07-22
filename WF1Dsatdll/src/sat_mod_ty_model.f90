@@ -1,14 +1,12 @@
 	!********************************************************************************************************************
-	!        CLASS FOR THE COLLECTION OF NODES-CLASSES IN THE SATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
+	! TITLE         : CLASS FOR THE COLLECTION OF NODES-CLASSES IN THE SATURATED MODEL
 	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
 	! MODULE        : mod_sat_ty_nodes
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
 	!> @author
 	!> Iván Campos-Guereta Díez
 	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
@@ -29,7 +27,6 @@
 	use sat_mod_ty_calc,			only: ty_sat_calc
 	use sat_mod_ty_constraints,only:ty_sat_constraints
 
-
 	implicit none
 	include 'inc_precision.fi'
 
@@ -48,15 +45,20 @@
 	procedure,public:: readfileinput		=> s_sat_model_readfileinput
 	procedure,public:: construct				=> s_sat_model_construct
 	procedure,public:: print_timestep		=> s_sat_model_print_timestep
-	!procedure,public:: set_sat_to_mesh	=> s_sat_model_set_hsat_to_mesh
-	!procedure,public:: set_qent_from_mesh_to_nodes	=> s_sat_model_put_qent_from_mesh
-	!procedure,public:: set_nrel_from_mesh_to_nodes	=> s_sat_model_put_nrel_from_mesh
 	procedure,public:: set_qent_from_constraint_to_nodes	=> s_sat_model_put_qent_from_constraint
 	procedure,public:: set_nrel_from_constraint_to_nodes	=> s_sat_model_put_nrel_from_constraint
 	procedure,public:: put_results_in_constraints	=> s_sat_model_put_results_in_constraints
 	end type ty_sat_model
 
 	contains
+	
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Read file input to build the whole model
+	!> @param fileinput Input path and filename
+	!> @param fileinput Input path and name of the file with boundary values
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_model_readfileinput(this,fileinput,fileboundary)
 	!DEC$ if defined(_DLL)
@@ -76,6 +78,13 @@
 
 	end subroutine s_sat_model_readfileinput
 
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Construct the model
+	!> @param fileinput Input path and filename
+	!> @param fileinput Input path and name of the file with boundary values
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_model_construct(this)
 	!DEC$ if defined(_DLL)
@@ -142,9 +151,6 @@
 		write(findexelem,'(A)') 't,is,ie,x0,x1,z0,z1,h0,h1,h,dhdx,dhzdx,qent,incvoldt,dqhordx,dqhordx_all,dqhordx_from_incvoldt,dqhordx_from_incvoldt_all,q,q_all'
 	end if
 
-
-	!this%time%checkprint = .false.
-	!this%time%tprint = min(this%time%tprint+this%calc%parameters%tprintinc,this%calc%parameters%tmax)
 	! Here all the code that we want for when the time is iqual to print time
 
 	satnodes = nodes
@@ -165,66 +171,12 @@
 
 	end subroutine s_sat_model_print_timestep
 
-
-	!!******************************************************************************************************************
-	!! Sub: s_sat_model_set_hsat_to_mesh(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!!******************************************************************************************************************
-	!
-	!subroutine s_sat_model_set_hsat_to_mesh(this)
-	!use com_mod_ty_nodes, only: ty_com_nodes
-	!use sat_mod_ty_nodes, only: ty_sat_nodes
-	!class(ty_sat_model),intent(inout),target::this
-	!class(ty_com_nodes),pointer::nodes
-	!
-	!integer::opt
-	!integer::iv
-	!real(kind=dpd)::htemp,hsattemp,hsatmax
-	!
-	!nodes => this%calc%nodes
-	!
-	!!opt = 0
-	!!
-	!!if(present(option)) opt = option
-	!!
-	!do iv=1,this%mesh%vmod_count
-	!!!get hsat from the bottom node of the layer
-	!!select case(opt)
-	!!case (1)
-	!!	htemp = this%calc%nodes%hold	(this%mesh%vmod_idnode(iv))
-	!!case (2)
-	!!	htemp = this%calc%nodes%htemp	(this%mesh%vmod_idnode(iv))
-	!!case default
-	!!	htemp = this%calc%nodes%hnew	(this%mesh%vmod_idnode(iv))
-	!!end select
-	!
-	!this%mesh%vmod_hsat(iv)			= this%calc%nodes%hnew(this%mesh%vmod_idnod(iv))
-	!this%mesh%vmod_hsattemp(iv) = this%calc%nodes%htemp(this%mesh%vmod_idnod(iv))
-	!this%mesh%vmod_hsatold(iv)	= this%calc%nodes%hold(this%mesh%vmod_idnod(iv))
-	!
-	!select type(nodes)
-	!	type is(ty_sat_nodes)
-	!	this%mesh%vmod_dqhordx(iv)	= nodes%results_dqhordx(this%mesh%vmod_idnod(iv))
-	!end select
-	!
-	!end do
-	!
-	!end subroutine s_sat_model_set_hsat_to_mesh
-
-	!!******************************************************************************************************************
-	!! Sub: s_sat_model_set_hsat_to_mesh(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!!******************************************************************************************************************
-	!
-	!subroutine s_sat_model_put_qent_from_mesh(this)
-	!
-	!class(ty_sat_model),intent(inout),target::this
-	!
-	!this%calc%nodes%qent = matmul(this%mesh%vmod_intep_matrix,this%mesh%vmod_qent)
-	!
-	!end subroutine s_sat_model_put_qent_from_mesh
-
-	!******************************************************************************************************************
-	! Sub: s_sat_model_set_hsat_to_mesh(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Interpolate the inflow on each node from the values of the inflow on the constraints where WF1DUNSAT submodels are
+	!> located.
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_model_put_qent_from_constraint(this)
 	!DEC$ if defined(_DLL)
@@ -240,16 +192,16 @@
 		qent(i) = this%constraints%qent(i)%p
 	end do
 
-	!!CHECK: I am doing the mean with nodes from 2 to end because the first unsaturated node gives unstabilities and to smooth the whole model:
-	!qent = sum(qent(2:size(this%constraints%idnode)))/real(size(this%constraints%idnode),dpd)
-
 	this%calc%nodes%qent = matmul(this%constraints%intep_matrix,qent)
 
 	end subroutine s_sat_model_put_qent_from_constraint
 
-	!******************************************************************************************************************
-	! Sub: s_sat_model_set_hsat_to_mesh(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Interpolate the value of nrel on each node from the values of nrel on the constraints where WF1DUNSAT submodels are
+	!> located.
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_model_put_nrel_from_constraint(this)
 	!DEC$ if defined(_DLL)
@@ -262,41 +214,21 @@
 	integer::i
 
 	do i=1,size(this%constraints%idnode)
-		nrel(i) = min(1.0_dpd,this%constraints%nrel(i)%p) !CHECK: I put this because I was getting nrel>1
+		nrel(i) = min(1.0_dpd,this%constraints%nrel(i)%p)
 	end do
-	!!CHECK: I am doing the mean with nodes from 2 to end because the first unsaturated node gives unstabilities and to smooth the whole model:
-	!nrel = sum(nrel(2:size(this%constraints%idnode)))/real(size(this%constraints%idnode),dpd)
 
 	this%calc%nrel = matmul(this%constraints%intep_matrix,nrel)
 
 	end subroutine s_sat_model_put_nrel_from_constraint
 
-	!!******************************************************************************************************************
-	!! Sub: s_sat_model_set_hsat_to_mesh(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!!******************************************************************************************************************
-	!
-	!subroutine s_sat_model_put_nrel_from_mesh(this)
-	!
-	!class(ty_sat_model),intent(inout),target::this
-	!
-	!this%calc%nrel = matmul(this%mesh%vmod_intep_matrix,this%mesh%vmod_nrel)
-	!
-	!end subroutine s_sat_model_put_nrel_from_mesh
-
 	!--------------------------------------------------------------------------------------------------------------------
 	! F: s_sat_model_put_results_in_constraints(is,iu)
 	!--------------------------------------------------------------------------------------------------------------------
-	!> @brief
-	!> Put results from elements in constraints from results in elements.
-	!> In this case results are taken from the mean values of the segments, values updated in this%constraints% are:
-	!> - hsat_mean: mean elems%hnew in interval.
-	!> - qent_mean: mean elems%results_qent in interval.
-	!> - incvoldt_mean: mean qent in interval.
-	!> @param[inout] this This class.
-	!> @param[in] is Layer where to measure hsat.
-	!> @param[in] iu UNSAT model where to measure hsat.
-	!> @return	array nxxnu with the values of dqhordx in the SAT models at each (is,iu).
 	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Put results from results in elements into the constraints.
+	!--------------------------------------------------------------------------------------------------------------------
+
 
 	subroutine s_sat_model_put_results_in_constraints(this)
 	!DEC$ if defined(_DLL)

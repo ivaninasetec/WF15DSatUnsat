@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        MODULE: CLASS OF COLLECTION OF CONSTRAINTS CALCULATIONS FOR SATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : mod_sat_ty_layers
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : UNSAT_MOD_TY_CONSTRAINTS: DERIVED TYPE TO DEFINE PROPERTIES AND METHODS OF THE CONSTRAINTS IN WF1DUNSAT MODEL
+	! PROJECT       : WF1DUNSATDLL
+	! MODULE        : UNSAT_MOD_TY_CONSTRAINTS
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type to define properties and methods of the constraints in wf1dunsat model
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class of collection of layers in horizontal saturated model
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module unsat_mod_ty_constraints
@@ -33,7 +34,7 @@
 		type(ty_com_pointer_integer),allocatable	::idnode_layer_bottom(:) !<id of node of bottom of layer assigned to 1DSAT | pointer is assigned in construct, inside model%construct in 15DSAT | points to mesh%idnode_bottom(is) in 1DUNSAT | points to mesh%vmod_idnod in 15DSATUNSAT
 		type(ty_com_pointer_integer),allocatable	::idelem_layer_bottom(:) !<Same as idnode_layer_bottom but id of element
 		type(ty_com_pointer_integer),allocatable	::idelem_layer_top(:) !<Same as idnode_layer_bottom but id of element on top of layer is
-				type(ty_com_pointer_real),allocatable	::hnew(:)			!<hsat on 1DUNSAT | need to be updated with 'update_hsat(elements)', or with update_all(calc,dt)
+		type(ty_com_pointer_real),allocatable	::hnew(:)			!<hsat on 1DUNSAT | need to be updated with 'update_hsat(elements)', or with update_all(calc,dt)
 		type(ty_com_pointer_real),allocatable	::thnew(:)			!<hsat on 1DUNSAT | need to be updated with 'update_hsat(elements)', or with update_all(calc,dt)
 
 		integer,allocatable::idelem_hsat(:)			!<id of element where watertable is located for 1DSAT simulation is
@@ -41,10 +42,8 @@
 		integer,allocatable::idelem_hsatold(:)	!<id of element where old watertable is located.
 
 		real(kind=dps),allocatable		::hsat(:)			!<hsat on 1DUNSAT | need to be updated with 'update_hsat(elements)', or with update_all(calc,dt)
-		!real(kind=dps),allocatable		::hsattemp(:)	!<hsattemp on 1DUNSAT
 		real(kind=dps),allocatable		::hsatold(:)	!<hsatold on 1DUNSAT | need to be updated with 'update_hsat(elements)', or with update_all(calc,dt)
 		real(kind=dps),allocatable		::xhsat(:)		!<location in z of hsat on 1DUNSAT | need to be updated with 'update_hsat(elements)'
-		!real(kind=dps),allocatable		::xhsattemp(:)	!<location in z of hsat on 1DUNSAT | need to be updated with 'update_hsat(elements)'
 		real(kind=dps),allocatable		::xhsatold(:) !<location in z of hsatold on 1DUNSAT | need to be updated with 'update_hsat(elements)'
 		real(kind=dps),allocatable		::chi_hsat(:)	!<relative coord chi inside the element where hsat is located in 1DUNSAT | need to be updated with 'update_hsat(elements)'
 
@@ -52,15 +51,11 @@
 		real(kind=dps),allocatable		::incvoldt(:) !<Increment of volume filled by watertable in the timestep divided by timestep | updated with update_incvoldt(calc,dt) or update_all(calc,dt)
 		type(ty_com_pointer_real),allocatable		::dqhordx(:)	!<Points to sat dqhordx, would be the flow leaving 1DSAT because of horizontal flow | always pointing ot 1DSAT(is)%contraints%dqhordx(iu)
 		real(kind=dps),allocatable		::qsat(:) !<Vertical flow just on the top of hsat | updated with update_qsat(calc) or from update_all(calc,dt)
-		real(kind=dps),allocatable		::qtop(:) !<Vertical flow just on the top of hsat or top of layer (if wt is over layer) | updated with update_qtop(calc) (CHECK: not used in this moment)
+		real(kind=dps),allocatable		::qtop(:) !<Vertical flow just on the top of hsat or top of layer (if wt is over layer) | updated with update_qtop(calc)
 		real(kind=dps),allocatable		::qinf(:) !<Vertical flow just below the layer (on the other layer element) | Updated with update_qinf(calc) or with update_all(calc,dt)
 		real(kind=dps),allocatable		::qsupinf(:) !<Vertical flow just below the layer (on the other layer element) | Updated with update_qsupinf(calc) or with update_all(calc,dt)
 		type(ty_com_pointer_real),allocatable		::qnewmann(:) !This is the result water leaving when Dirichlet conditions are imposed | pointing to nodes%results_qnewmann(idnode_layer_bottom) (nodes have to be updated
 		real(kind=dps),allocatable		::qnewmann_all(:) !Sum all qnewmann until hsat from the sum of qnewmann | updated with update_qnewmann_all()
-
-		!real(kind=dps),allocatable	::qenttemp(:) !especific flow in each vertical module node
-		!real(kind=dps),allocatable	::qentold(:) !especific flow in each vertical module node
-
 
 		real(kind=dps),allocatable	::nrel(:)								!Relative porosity of non-wetting voids [int(th,hold,hnew)/(|Hnew-hold|·(thsat-thres))]
 
@@ -105,10 +100,6 @@
 	if(.not.allocated(this% idelem_layer_bottom))		allocate(this% idelem_layer_bottom (nvmod))
 	if(.not.allocated(this% idelem_layer_top))			allocate(this% idelem_layer_top (nvmod))
 
-	!if(.not.allocated(this% idnode_hsat))		allocate(this% idnode_hsat (nvmod))
-	!if(.not.allocated(this% idnode_hsattemp))		allocate(this% idnode_hsattemp (nvmod))
-	!if(.not.allocated(this% idnode_hsatold))		allocate(this% idnode_hsatold (nvmod))
-
 	if(.not.allocated(this% idelem_hsat))		allocate(this% idelem_hsat (nvmod))
 	if(.not.allocated(this% idelem_top))		allocate(this% idelem_top (nvmod))
 	if(.not.allocated(this% idelem_hsatold))		allocate(this% idelem_hsatold (nvmod))
@@ -116,12 +107,10 @@
 	if(.not.allocated(this% hsat))			allocate(this% hsat (nvmod))
 	if(.not.allocated(this% hnew))			allocate(this% hnew (nvmod))
 	if(.not.allocated(this% thnew))			allocate(this% thnew (nvmod))
-	
+
 	if(.not.allocated(this% chi_hsat))			allocate(this% chi_hsat (nvmod))
-	!if(.not.allocated(this% hsattemp))	allocate(this% hsattemp (nvmod))
 	if(.not.allocated(this% hsatold))		allocate(this% hsatold (nvmod))
 	if(.not.allocated(this% xhsat))			allocate(this% xhsat (nvmod))
-	!if(.not.allocated(this% xhsattemp))	allocate(this% xhsattemp (nvmod))
 	if(.not.allocated(this% xhsatold))	allocate(this% xhsatold (nvmod))
 	if(.not.allocated(this% incvoldt))	allocate(this% incvoldt (nvmod))
 	if(.not.allocated(this% qver))			allocate(this% qver (nvmod))
@@ -150,9 +139,6 @@
 
 	if(allocated(this% x))						deallocate(this% x )
 	if(allocated(this% idnode_layer_bottom))				deallocate(this% idnode_layer_bottom )
-	!if(allocated(this% idnode_hsat))	deallocate(this% idnode_hsat )
-	!if(allocated(this% idnode_hsattemp))	deallocate(this% idnode_hsattemp )
-	!if(allocated(this% idnode_hsatold))	deallocate(this% idnode_hsatold )
 	if(allocated(this% idelem_hsat))	deallocate(this% idelem_hsat )
 	if(allocated(this% idelem_hsatold))	deallocate(this% idelem_hsatold )
 
@@ -160,10 +146,8 @@
 	if(allocated(this% hsat))			deallocate(this% hsat )
 	if(allocated(this% hnew))			deallocate(this% hnew )
 	if(allocated(this% chi_hsat))			deallocate(this% chi_hsat )
-	!if(allocated(this% hsattemp))	deallocate(this% hsattemp)
 	if(allocated(this% hsatold))	deallocate(this% hsatold )
 	if(allocated(this% xhsat))		deallocate(this% xhsat )
-	!if(allocated(this% xhsattemp))deallocate(this% xhsattemp )
 	if(allocated(this% xhsatold))	deallocate(this% xhsatold )
 	if(allocated(this% incvoldt))	deallocate(this% incvoldt)
 	if(allocated(this% qver))			deallocate(this% qver)
@@ -181,9 +165,8 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Deallocate all arrays
+	!> Construct the class asigning asignable properties
 	!---------------------------------------------------------------------------------------------------------------------
-
 
 	subroutine s_unsat_constraints_construct(this,idnode,nodes,dqhordx)
 	!DEC$ if defined(_DLL)
@@ -220,9 +203,7 @@
 			this%idelem_layer_top(i)%p		=> nodes%id(idnode(i+1)-1)
 		end if
 
-		!this%idnode_hsat(i) = this%idnode_layer_bottom(i)%p
 		this%idelem_hsat(i) = this%idelem_layer_bottom(i)%p
-		!this%idelem_top(i)	= this%idelem_hsat(i)
 
 		this%x(i)%p				=> nodes%x(this%idnode_layer_bottom(i)%p)
 		this%xhsat(i) = this%x(i)%p
@@ -234,12 +215,8 @@
 		this%qnewmann(i)%p => nodesunsat%results_qnewmann(this%idnode_layer_bottom(i)%p)
 	end do
 
-	!this%idnode_hsattemp = this%idnode_hsat
-	!this%idnode_hsatold	= this%idnode_hsat
 	this%hsat			= 0.0_dpd
-	!this%hsattemp = 0.0_dpd
 	this%hsatold	= 0.0_dpd
-	!this%xhsattemp = this%xhsat
 	this%xhsatold = this%xhsat
 	this%incvoldt = 0.0_dpd
 	this%qver			= 0.0_dpd
@@ -248,9 +225,12 @@
 
 	end subroutine s_unsat_constraints_construct
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Calculate hsat by using the value of hbottom on the elements
+	!> elementsarg Elements class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_model_update_hsat_from_hbottom(this,elementsarg)
 	!DEC$ if defined(_DLL)
@@ -281,7 +261,6 @@
 		end do
 		if(ielem==this%idelem_layer_bottom(ic)%p) then !Not saturated
 			this%idelem_hsat(ic)=ielem
-			!this%idelem_top(ic)=this%idelem_hsat(ic)
 			this%hsat(ic)		= 0.0_dpd
 			this%xhsat(ic)	= elements%x0(ielem)
 			this%chi_hsat(ic)	 = -1.0_dpd
@@ -289,7 +268,6 @@
 			ielem = ielem-1
 			ielemlybot = this%idelem_layer_bottom(ic)%p
 			this%idelem_hsat(ic)=ielem
-			!this%idelem_top(ic)=min(this%idelem_hsat(ic),this%idelem_layer_top(ic)%p)
 			this%hsat(ic)		= elements%h0(ielem)+(elements%x0(ielem)-elements%x0(ielemlybot))
 			this%xhsat(ic)	= elements%h0(ielem)+elements%x0(ielem)
 			this%chi_hsat(ic)	 = min(1.0_dpd,2.0_dpd*elements%h0(ielem)/(elements%x1(ielem)-elements%x0(ielem))-1.0_dpd)
@@ -305,25 +283,25 @@
 			this%idelem_hsatold(ic)=ielem
 			this%hsatold(ic)		= 0.0_dpd
 			this%xhsatold(ic)	= elements%x0(ielem)
-			!this%chi_hsatold(ic)	 = -1.0_dpd
 		else !Saturated
 			ielem = ielem-1
 			ielemlybot = this%idelem_layer_bottom(ic)%p
 			this%idelem_hsatold(ic)=ielem
 			this%hsatold(ic)		= elements%h0old(ielem)+(elements%x0(ielem)-elements%x0(ielemlybot))
 			this%xhsatold(ic)	= elements%h0old(ielem)+elements%x0(ielem)
-			!this%chi_hsatold(ic)	 = min(1.0_dpd,2.0_dpd*elements%hold(ielem)/(elements%x1(ielem)-elements%x0(ielem))-1.0_dpd)
 		end if
 	end do
 
 	end subroutine s_unsat_model_update_hsat_from_hbottom
 
 
-
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
-	!CHECK: UPDATE Hsat: From elements_hmean is not working.
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Calculate hsat by using the mean h value on the elements
+	!> @param elements	elemets class instance
+	!---------------------------------------------------------------------------------------------------------------------
+	
 	subroutine s_unsat_model_update_hsat_from_hmean(this,elements)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_unsat_model_update_hsat_from_hmean" :: s_unsat_model_update_hsat_from_hmean
@@ -345,7 +323,6 @@
 		end do
 		if(ielem==this%idelem_layer_bottom(ic)%p) then !Not saturated
 			this%idelem_hsat(ic)=ielem
-			!this%idelem_top(ic)=this%idelem_hsat(ic)
 			this%hsat(ic)		= 0.0_dpd
 			this%xhsat(ic)	= elements%x0(ielem)
 			this%chi_hsat(ic)	 = -1.0_dpd
@@ -353,7 +330,6 @@
 			ielem = ielem-1
 			ielemlybot = this%idelem_layer_bottom(ic)%p
 			this%idelem_hsat(ic)=ielem
-			!this%idelem_top(ic)=min(this%idelem_hsat(ic),this%idelem_layer_top(ic)%p)
 			this%hsat(ic)		= elements%hnew(ielem)+(elements%x0(ielem)-elements%x0(ielemlybot))
 			this%xhsat(ic)	= elements%hnew(ielem)+elements%x0(ielem)
 			this%chi_hsat(ic)	 = min(1.0_dpd,2.0_dpd*elements%hnew(ielem)/(elements%x1(ielem)-elements%x0(ielem))-1.0_dpd)
@@ -369,23 +345,23 @@
 			this%idelem_hsatold(ic)=ielem
 			this%hsatold(ic)		= 0.0_dpd
 			this%xhsatold(ic)	= elements%x0(ielem)
-			!this%chi_hsatold(ic)	 = -1.0_dpd
 		else !Saturated
 			ielem = ielem-1
 			ielemlybot = this%idelem_layer_bottom(ic)%p
 			this%idelem_hsatold(ic)=ielem
 			this%hsatold(ic)		= elements%hold(ielem)+(elements%x0(ielem)-elements%x0(ielemlybot))
 			this%xhsatold(ic)	= elements%hold(ielem)+elements%x0(ielem)
-			!this%chi_hsatold(ic)	 = min(1.0_dpd,2.0_dpd*elements%hold(ielem)/(elements%x1(ielem)-elements%x0(ielem))-1.0_dpd)
 		end if
 	end do
 
 	end subroutine s_unsat_model_update_hsat_from_hmean
 
-
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Calculate hsat from values of piezometric pore pressures on the nodes.Searching when one node has negative pressure over possitive
+	!> @param nodes	nodes class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_model_update_hsat_from_nodes(this,nodes)
 	!DEC$ if defined(_DLL)
@@ -398,14 +374,6 @@
 
 	integer::ic,inod
 	real(kind=dpd)::xsat0,xsat1,xlay,hsat0,hsat,hsat1,p0,p1,psat
-
-	!do ic=1,this%count
-	!	this%hsat(ic)			= max(0.0_dpd,nodes%hnew(this%idnode(ic)%p))
-	!	this%hsattemp(ic)	= max(0.0_dpd,nodes%htemp(this%idnode(ic)%p))
-	!	this%hsatold(ic)		= max(0.0_dpd,nodes%hold(this%idnode(ic)%p))
-	!	this%xhsat(ic)			= nodes%x(this%idnode(ic)%p)
-	!	this%idnode_hsat(ic)= this%idnode(ic)%p
-	!end do
 
 	!This is more precise (need to be precise), it searches when there is an unsat node over the saturated and then calculat hsat
 	!For hnew:
@@ -465,60 +433,6 @@
 		end if
 	end do
 
-
-
-	!!For htemp:
-	!do ic=1,this%count
-	!	this%idnode_hsattemp(ic) = this%idnode_layer_bottom(ic)%p
-	!	do inod=this%idnode_layer_bottom(ic)%p,nodes%count
-	!		if(nodes%htemp(inod)<0.0_dpd) exit
-	!	end do
-	!	if(inod==this%idnode_layer_bottom(ic)%p) then !Not saturated
-	!		this%idnode_hsattemp(ic)=inod
-	!		this%hsattemp(ic)		= 0.0_dpd
-	!		this%xhsattemp(ic)	= nodes%x(inod)
-	!	else if (inod>=nodes%count) then
-	!		inod=nodes%count
-	!		if(nodes%htemp(inod)>0.0_dpd) then !Saturation surpasses the top surface
-	!		xsat0 = nodes%x(inod)
-	!		xlay = nodes%x(this%idnode_layer_bottom(ic)%p)
-	!		hsat = nodes%htemp(inod)+xsat0-xlay
-	!
-	!		this%idnode_hsattemp(ic)=inod
-	!		this%hsattemp(ic)		= hsat
-	!		this%xhsattemp(ic)	= xlay+hsat
-	!		else !Saturation just below top surface
-	!		xsat0 = nodes%x(inod-1)
-	!		xsat1 = nodes%x(inod)
-	!		xlay = nodes%x(this%idnode_layer_bottom(ic)%p)
-	!		p0 = nodes%htemp(inod-1)
-	!		p1 = nodes%htemp(inod)
-	!		hsat0 = p0+xsat0-xlay
-	!		hsat1 = p1+xsat1-xlay
-	!		hsat = 0.5_dpd*(hsat1+hsat0)
-	!		psat = 0.0_dpd
-	!
-	!		this%idnode_hsattemp(ic)=inod-1
-	!		this%hsattemp(ic)		= hsat
-	!		this%xhsattemp(ic)	= xsat0+(xsat1-xsat0)*(psat-p0)/(p1-p0)
-	!		end if
-	!	else
-	!		xsat0 = nodes%x(inod-1)
-	!		xsat1 = nodes%x(inod)
-	!		xlay = nodes%x(this%idnode_layer_bottom(ic)%p)
-	!		p0 = nodes%htemp(inod-1)
-	!		p1 = nodes%htemp(inod)
-	!		hsat0 = p0+xsat0-xlay
-	!		hsat1 = p1+xsat1-xlay
-	!		hsat = 0.5_dpd*(hsat1+hsat0)
-	!		psat = 0.0_dpd
-	!
-	!		this%idnode_hsattemp(ic)=inod-1
-	!		this%hsattemp(ic)		= hsat
-	!		this%xhsattemp(ic)	= xsat0+(xsat1-xsat0)*(psat-p0)/(p1-p0)
-	!	end if
-	!end do
-
 	!For hold:
 	do ic=1,this%count
 		this%idelem_hsatold(ic) = this%idnode_layer_bottom(ic)%p
@@ -571,20 +485,16 @@
 		end if
 	end do
 
-	!!this%idelem_hsat		= this%idnode_hsat
-	!do ic=1,size(this%idelem_hsat)
-	!this%idelem_top			= min(this%idelem_hsat(ic),this%idelem_layer_top(ic)%p)
-	!end do
-	!this%idelem_hsatold = this%idnode_hsatold
-
 	end subroutine s_unsat_model_update_hsat_from_nodes
 
 
-
-
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Update value of incvoldt in the constraints calculating from (thnew-thold from x0 to x1)/dt
+	!> @param calc	calc class instance
+	!> @param dt	Value of the time increment
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_incvoldt(this,calc,dt)
 	!DEC$ if defined(_DLL)
@@ -606,100 +516,12 @@
 
 	end subroutine s_unsat_constraints_update_incvoldt
 
-	!!******************************************************************************************************************
-	!! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!!******************************************************************************************************************
-	!
-	!subroutine s_unsat_constraints_update_qsup_from_qmed(this,calc)
-	!use unsat_mod_ty_calc, only:ty_unsat_calc
-	!use com_mod_ty_elements,only:ty_com_elements
-	!use unsat_mod_ty_elements,only:ty_unsat_elements
-	!
-	!class(ty_unsat_constraints),intent(inout)::this
-	!class(ty_unsat_calc),intent(in),target::calc
-	!class(ty_com_elements),pointer::elements
-	!
-	!integer::i
-	!
-	!elements => calc%elements
-	!!This gets the mean flow at element where it is hsat and elements below layer
-	!	do i=1,this%count
-	!	select type (elements)
-	!		type is (ty_unsat_elements)
-	!			this%qsup(i) = elements%results_qmed(max(this%idnode_hsat(i),elements%count))
-	!		end select
-	!	end do
-	!
-	!end subroutine s_unsat_constraints_update_qsup_from_qmed
-	!
-	!!******************************************************************************************************************
-	!! Sub: s_unsat_constraints_update_qsup_from_qsat(calc):	Returns the water flow just in the watertable.
-	!!******************************************************************************************************************
-	!
-	!subroutine s_unsat_constraints_update_qsup_from_qsat(this,calc)
-	!use unsat_mod_ty_calc, only:ty_unsat_calc
-	!use com_mod_ty_elements,only:ty_com_elements
-	!use unsat_mod_ty_elements,only:ty_unsat_elements
-	!
-	!class(ty_unsat_constraints),intent(inout)::this
-	!class(ty_unsat_calc),intent(in),target::calc
-	!class(ty_com_elements),pointer::elements
-	!real(kind=dpd)::ksat
-	!integer::i,idelement
-	!
-	!elements => calc%elements
-	!!This gets the mean flow at element where it is hsat and elements below layer
-	!	do i=1,this%count
-	!	select type (elements)
-	!	type is (ty_unsat_elements)
-	!		if(this%idnode_hsat(i)>elements%count) then
-	!			ksat = 1.0_dpd
-	!			this%qsup(i) = calc%nodes%qnewmann(calc%nodes%count)
-	!		else
-	!			idelement = this%idnode_hsat(i)
-	!			this%qsup(i) = elements%material(idelement)%ksat*elements%results_dhxdxmed(idelement)
-	!		end if
-	!		end select
-	!	end do
-	!
-	!end subroutine s_unsat_constraints_update_qsup_from_qsat
-	!
-	!!******************************************************************************************************************
-	!! Sub: s_unsat_constraints_update_qsup_from_qsat(calc):	Returns the water flow just in the watertable.
-	!!******************************************************************************************************************
-	!
-	!subroutine s_unsat_constraints_update_qsup_from_qtopinf(this,calc)
-	!use unsat_mod_ty_calc, only:ty_unsat_calc
-	!use com_mod_ty_elements,only:ty_com_elements
-	!use unsat_mod_ty_elements,only:ty_unsat_elements
-	!
-	!class(ty_unsat_constraints),intent(inout)::this
-	!class(ty_unsat_calc),intent(in),target::calc
-	!class(ty_com_elements),pointer::elements
-	!real(kind=dpd)::ksat,xpercent
-	!integer::i,idelement
-	!
-	!elements => calc%elements
-	!!This gets the mean flow at element where it is hsat and elements below layer
-	!	do i=1,this%count
-	!	select type (elements)
-	!	type is (ty_unsat_elements)
-	!		if(this%idnode_hsat(i)>elements%count) then
-	!			ksat = 1.0_dpd
-	!			this%qsup(i) = calc%nodes%qnewmann(calc%nodes%count)
-	!		else
-	!			idelement = this%idnode_hsat(i)
-	!			xpercent = (this%idnode_hsat(i)-elements%h0(idelement))/(elements%h1(idelement)-elements%h0(idelement))
-	!			this%qsup(i) =  xpercent*elements%results_qsal(idelement)+(1-xpercent)*elements%results_qent(idelement)
-	!		end if
-	!		end select
-	!	end do
-	!
-	!end subroutine s_unsat_constraints_update_qsup_from_qtopinf
-
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Update value of qsat in constraint from the value of qmed in the element
+	!> @param calc	calc class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qsat_from_qmed(this,calc)
 	!DEC$ if defined(_DLL)
@@ -722,18 +544,16 @@
 		elements => elementcom
 	end select
 
-
-	!This gets the mean flow at element where it is hsat and elements below layer
-	!do i=1,this%count
 	this%qsat = elements%results_qmed(max(this%idelem_hsat,elements%count))
-	!this%qsat = elements%results_qmed(this%idelem_hsat)
-	!end do
 
 	end subroutine s_unsat_constraints_update_qsat_from_qmed
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Update value of qsat (waterflow at the watertable point) in constraint from the value of qent in the element
+	!> @param calc	calc class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qsat_from_qtop(this,calc)
 	!DEC$ if defined(_DLL)
@@ -756,17 +576,16 @@
 		elements => elementcom
 	end select
 
-
-	!This gets the mean flow at element where it is hsat and elements below layer
-	!do i=1,this%count
 	this%qsat = elements%results_qent(this%idelem_hsat)
-	!end do
 
 	end subroutine s_unsat_constraints_update_qsat_from_qtop
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Update value of qtop (waterflow at the top of the layer) in constraint from the value of qmed in the element
+	!> @param calc	calc class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qtop_from_qmed(this,calc)
 	!DEC$ if defined(_DLL)
@@ -780,7 +599,6 @@
 	class(ty_unsat_calc),intent(in),target::calc
 	class(ty_com_elements),pointer::elementcom
 	class(ty_unsat_elements),pointer::elements
-	!integer::i
 
 	elementcom => calc%elements
 	select type (elementcom)
@@ -788,16 +606,16 @@
 		elements => elementcom
 	end select
 
-	!This gets the mean flow at element where it is hsat and elements below layer
-	!do i=1,this%count
 	this%qtop = elements%results_qmed(this%idelem_top)
-	!end do
 
 	end subroutine s_unsat_constraints_update_qtop_from_qmed
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Update value of qtop (waterflow at the top of the layer) in constraint from the value of qent in the element
+	!> @param calc	calc class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qtop_from_qtop(this,calc)
 	!DEC$ if defined(_DLL)
@@ -819,16 +637,16 @@
 		elements => elementcom
 	end select
 
-	!This gets the mean flow at element where it is hsat and elements below layer
-	!do i=1,this%count
 	this%qtop = elements%results_qent(this%idelem_top)
-	!end do
 
 	end subroutine s_unsat_constraints_update_qtop_from_qtop
 
-	!******************************************************************************************************************
-	! Sub: s_unsat_constraints_update_qsup_from_qsat(calc):	Returns the water flow just in the watertable.
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Returns the water flow just in the watertable and include it into contraint%qsat
+	!> @param calc	calc class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qsat_from_satpoint(this,calc)
 	!DEC$ if defined(_DLL)
@@ -852,21 +670,19 @@
 		elements => elementcom
 	end select
 
-	!This gets the mean flow at element where it is hsat and elements below layer
-
 	do i=1,this%count
 		idelement = this%idelem_hsat(i)
 		this%qsat(i) = interp_on_element(this%chi_hsat(i),(/elements%results_qsal(idelement),elements%results_qent(idelement)/))
 	end do
 
-
 	end subroutine s_unsat_constraints_update_qsat_from_satpoint
 
-
-
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Waterflow on the bottom of the layer qinf (on the constraint) from qmed on the element
+	!> @param calc	calc class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qinf_from_qmed(this,calc)
 	!DEC$ if defined(_DLL)
@@ -883,7 +699,7 @@
 	integer::i
 
 	elements => calc%elements
-	!This gets the mean flow at element where it is hsat and elements below layer
+
 	do i=1,this%count
 		select type (elements)
 		type is (ty_unsat_elements)
@@ -897,9 +713,12 @@
 
 	end subroutine s_unsat_constraints_update_qinf_from_qmed
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Waterflow on the bottom of the layer qinf (on the constraint) from qent on the element below
+	!> @param calc	calc class instance
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qinf_from_qtop(this,calc)
 	!DEC$ if defined(_DLL)
@@ -916,7 +735,7 @@
 	integer::i
 
 	elements => calc%elements
-	!This gets the mean flow at element where it is hsat and elements below layer
+
 	do i=1,this%count
 		select type (elements)
 		type is (ty_unsat_elements)
@@ -930,9 +749,11 @@
 
 	end subroutine s_unsat_constraints_update_qinf_from_qtop
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Calculat qsupinf as qsat-qinf (water entering watertable and leaving the constraint) and asign qver=qsupinf
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qsupinf(this)
 	!DEC$ if defined(_DLL)
@@ -951,9 +772,11 @@
 
 	end subroutine s_unsat_constraints_update_qsupinf
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Calculate QNewmann_all fron QNewmann in all nodes inside the watertable
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraints_update_qnewman_all(this)
 	!DEC$ if defined(_DLL)
@@ -974,9 +797,13 @@
 
 	end subroutine s_unsat_constraints_update_qnewman_all
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Update all values in constraints: hsat, incvoldt, qsat, qinf, qsupinf, qnewman_all
+	!> @param calc calc class instance
+	!> @param dt current timestep increment
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_model_updateall(this,calc,dt)
 	!DEC$ if defined(_DLL)
@@ -991,7 +818,6 @@
 
 	integer::i
 
-	!call this%update_hsat(calc%nodes)
 	call this%update_hsat(calc%elements)
 	call this%update_incvoldt(calc,dt)
 	call this%update_qsat(calc)
@@ -1001,17 +827,17 @@
 
 	end subroutine s_unsat_model_updateall
 
-	!******************************************************************************************************************
-	! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!******************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Set values of the waterflow leaving each node inside the watertable (qnewmann) from the value of dqhor/dx
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_constraint_set_newmann_from_dqhordx(this,nodes)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_unsat_constraint_set_newmann_from_dqhordx" :: s_unsat_constraint_set_newmann_from_dqhordx
 	!DEC$ endif
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: set_newmann_from_dqhordx: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 
 	class(ty_unsat_constraints),intent(in)::this
 	class(ty_com_nodes),intent(inout)::nodes
@@ -1019,7 +845,7 @@
 	integer::l
 
 	do l=1,this%count
-		if ((this%hsat(l)>0.00_dpd).and.(this%dqhordx(l)%p>0.0_dpd)) then !CHECK: Check this if I have to put hsat>0 or dqhordx>0 as when hsat=0 there has to be no horizontal flow.
+		if ((this%hsat(l)>0.00_dpd).and.(this%dqhordx(l)%p>0.0_dpd)) then
 			nodes%qnewmann	(this%idnode_layer_bottom(l)%p)	= -this%dqhordx(l)%p
 			nodes%isnewmann	(this%idnode_layer_bottom(l)%p)	= .true.
 		else

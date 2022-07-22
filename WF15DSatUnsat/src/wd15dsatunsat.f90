@@ -1,4 +1,50 @@
-	program model_flow1d
+	!********************************************************************************************************************
+	! WF15DSATUNSAT
+	!********************************************************************************************************************
+	! TITLE         : WF15DSATUNSAT Main program
+	! PROJECT       : WF15DSATUNSAT
+	! MODULE        : -
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	!> <B>Main program to calculate the water flow on a multilayer section by using an asembly of 1D submodels</B>
+	!>
+	!> The program with one parameter equal to fileinput path: WF15DSATUNSAT.exe  xxxx
+	!>
+	!> In the same path than the input:
+	!> xxxx.wfuinp: Input textfile containing information of parameters (after heading BLOCK A), materials (after heading BLOCK B),
+	!> layers (after heading BLOCK C), mesh (after heading BLOCK D)
+	!>
+	!> xxxx.wfbound: Input textfile containing the information about boundary values in time (table: t(T),h(L), or t(T),q(L3·T-1)
+	!>
+	!> As a result, five output *.csv files are generated:
+	!>
+	!> xxxx.outcons.csv: Output at the constraints at all timesteps
+	!>
+	!> xxxx.outstat.csv: Statistics about the run
+	!>
+	!> xxxx.outnods.csv: Values at the nodes on WF1DSAT submodels at each defined print time
+	!>
+	!> xxxx.outelms.csv: Values at the elements on WF1DSAT submodels at each defined print time
+	!>
+	!> xxxx.outnodu.csv: Values at the nodes on WF1DUNSAT submodels at each defined print time
+	!>
+	!> xxxx.outelmu.csv: Values at the elements on WF1DUNSAT submodels at each defined print time
+	!
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
+	!********************************************************************************************************************
+
+
+	program WF15DSATUNSAT
 	use model_mod_ty_model,only:ty_model
 
 	implicit none
@@ -20,7 +66,7 @@
 	character*400::fileoutput_nodes_h
 	character*400::fileoutput_elements_h
 	character*400::fileoutput_constraints
-	character*400::FILEOUTPUT_STATS	
+	character*400::FILEOUTPUT_STATS
 	character*100::debugmsg_txt=''
 	character*1::printchar = ' '
 
@@ -32,20 +78,20 @@
 	integer::nunsat,nsat,iu,is, npos, nargs
 	real(kind=dpd),pointer::t
 	logical::isconvergedall,ismaxitreached
-	
+
 	!For statistics:
 	real(kind=8)	  ::cputimeinit=0.0_8,cputimeend=0.0_8,systimeinit=0.0_8,systimeend=0.0_8,totaldt=0.0_8,meandt=0.0_8,maxdt=0.0_8,mindt=1.0E10_8
 	integer(8)			::itertotal=0,itersteps=0,timemilisec=0,countrate=1000
-	
+
 
 	!---- 01 ---- read input files
 	call CPU_TIME(cputimeinit)
 	call SYSTEM_CLOCK(timemilisec,countrate)
 	systimeinit=real(timemilisec,8)/real(countrate,8)
-	
+
 	nargs = COMMAND_ARGUMENT_COUNT()
 	if (nargs==0) then
-		WRITE(*,*) 'Pease include input file as the first argument argument'
+		write(*,*) 'Pease include input filename as the first argument'
 		goto 999 !If there is no argument then end programm
 	end if
 
@@ -60,10 +106,10 @@
 	fileoutput_nodes_h		=trim(namefile)//'.outnods.csv'
 	fileoutput_elements_h	=trim(namefile)//'.outelms.csv'
 	fileoutput_constraints	=trim(namefile)//'.outcons.csv'
-	FILEOUTPUT_STATS			=trim(namefile)//'.outstat.csv'	
+	fileoutput_stats			=trim(namefile)//'.outstat.csv'
 
 	call model%readfileinput(fileinput,fileboundary)
-	
+
 	!---- 02 ---- construct all instances
 	call model%construct()
 	!---- 03 ---- open output files
@@ -108,20 +154,19 @@
 	do iu=1,nunsat
 		call model%unsat(iu)%calc%get_results_elements()
 		call model%unsat(iu)%calc%get_results_nodes()
-		call model%unsat(iu)%constraints%update_all(model%unsat(iu)%calc,model%time%dt) !CHECK
-		!call model%unsat(iu)%constraints%update_all(model%unsat(iu)%calc,model%time%dt,10.0_dpd) !CHECK
+		call model%unsat(iu)%constraints%update_all(model%unsat(iu)%calc,model%time%dt)
 	end do
 
 	!---- 06 ---- build WF1DUNSAT linear systems arrays that don’t change on time
 	do iu=1,nunsat
 		call model%unsat(iu)%calc%build_linearsystem(IS_NOT_TIME_DEPENDANT,CONSIDER_HTEMP)
 	end do
-	
+
 	!---- 07 ---- build WF1DSAT linear systems arrays that don’t change in time on time
 	do is=1,nsat
 		call model%sat(is)%calc%build_linearsystem(IS_NOT_TIME_DEPENDANT,CONSIDER_HTEMP)
 	end do
-	
+
 	!Initialize some variables...
 	if(.not.allocated(ishsatover0)) allocate(ishsatover0(nsat))
 	if(.not.allocated(isfirsthsat)) allocate(isfirsthsat(nsat))
@@ -142,7 +187,7 @@
 	TIMESTEPPING: do while(model%time%t < model%parameters%Tmax)
 		!---- 09.01 ---- increase time
 		call model%time%increase_time()
-		
+
 		!---- 09.02 ---- read boundary properties on top of 1DUNSAT elements (but don’t apply yet)
 		if (model%layers%topboundbyh) htop =  model%boundary%get_hbound_file(model%time%t)
 		if (model%layers%topboundbyq) qtop =  model%boundary%get_qbound_file(model%time%t)
@@ -161,12 +206,12 @@
 			if (model%layers%topboundbyh) call model%unsat(iu)%calc%set_dirichlet_to_node(model%unsat(iu)%calc%nodes%count,htop)
 			if (model%layers%topboundbyq) call model%unsat(iu)%calc%set_newmann_to_node(model%unsat(iu)%calc%nodes%count,qtop)
 		end do
-		
-		!---- 09.03.03 ---- impose boundary on top and bottom of WF1DUNSAT	
+
+		!---- 09.03.03 ---- impose boundary on top and bottom of WF1DUNSAT
 		do iu=1,nunsat
 			call model%unsat(iu)%calc%assign_newmann()
 		end do
-		
+
 		!---- 09.03.04 ---- CONVERGENCE_WF1DUNSAT: iterate WF1DUNSAT while not converged or min dt or max iterations reached --------------
 		!PARALLEL COSIMULATION (CAN BE DONE IN PARALLEL) ----------------------------------------------------------------------------------------
 		isconvergedall = .true.
@@ -180,7 +225,6 @@
 				model%time%iter_total = model%time%iter_total + 1
 				iterconverg = iterconverg+1
 				call model%unsat(iu)%calc%update_th_from_h(CONSIDER_HNEW)
-				!call model%unsat(iu)%calc%iterate(isconverged,isconvergedall)
 				itertotal=itertotal+1
 				call model%unsat(iu)%calc%iterate(isconverged)
 				if (iterconverg<model%parameters%it_min) isconverged=.false.
@@ -192,13 +236,11 @@
 			iterconvergmax=max(iterconverg,iterconvergmax)
 		end do WFUNSAT1
 
-		
-		
-		!---- 09.04 ---- estimate hnew for new timestep	
+		!---- 09.04 ---- estimate hnew for new timestep
 		do is=1,nsat
 			call model%sat(is)%calc%estimate_hnew_for_new_timestep()
 		end do
-		
+
 		!---- 09.05 ---- check if WF1DSAT is activated (a water-table appears)
 		!---- 09.06 ---- if first time activated-> set initial conditions to 0 in WF1DSAT
 		do is=1,nsat
@@ -224,13 +266,13 @@
 		!---- 09.06 ---- run WF1DSAT: With qvtb_sat and nrel from WF1DUNSAT
 		!---- 09.06.01 ----  put nrel and qvtb from constraints to nodes
 		do is=1,nsat
-			call model%sat(is)%set_qent_from_constraint_to_nodes() !Check the value of qent in sat(is)%constraints%qent(iu) and interpolate linearly along x in 1DSAT 
-			call model%sat(is)%set_nrel_from_constraint_to_nodes() !Check the value of nrel in sat(is)%constraints%qent(iu) and interpolate linearly along x in 1DSAT 
-		end do		
-		
+			call model%sat(is)%set_qent_from_constraint_to_nodes() 
+			call model%sat(is)%set_nrel_from_constraint_to_nodes()
+		end do
+
 		!---- 09.06.02 ----  SAT_CONVERGENCE: do while not converge or dtminor itmax not reached
 		!(CAN BE DONE IN PARALLEL)
-		itersat=0	
+		itersat=0
 		do is=1,nsat
 			if(ishsatover0(is)) then
 				isconverged = .false.
@@ -238,11 +280,9 @@
 				do while(.not.(isconverged .or. (model%time%dt<=model%parameters%dtmin .and. iterconverg==(model%parameters%it_max-1))))
 					model%time%iter_total = model%time%iter_total + 1
 					iterconverg = iterconverg+1
-					!call model%sat(is)%calc%iterate(isconverged,isconvergedall)
 					itertotal=itertotal+1
 					call model%sat(is)%calc%iterate(isconverged)
 					if(.not.isconverged .and. iterconverg==model%parameters%it_max) exit
-					!if (iterconverg<model%parameters%it_min) isconverged=.false.
 				end do
 				itersat = max(iterconverg,itersat)
 				if (.not.isconverged) isconvergedall=.false.
@@ -258,10 +298,6 @@
 			call model%time%factor_timestep(1/3.0_dpd) !Update timestep with boundaries on tmin and tmax (dt=factor·dtold)
 			do iu=1,nunsat
 				call model%unsat(iu)%calc%revert_to_old()
-				!call model%unsat(iu)%calc%get_results_nodes()
-				!call model%unsat(iu)%calc%get_results_elements()
-				!call model%unsat(iu)%calc%get_results_nodes()
-				!call model%unsat(iu)%constraints%update_all(model%unsat(iu)%calc,model%time%dt)
 			end do
 			do is=1,nsat
 				call model%sat(is)%calc%revert_to_old()
@@ -269,9 +305,6 @@
 					isfirsthsat(is)= .false.
 					ishsatover0(is)=.false.
 				end if
-				!call model%sat(is)%calc%get_results_nodes()
-				!call model%sat(is)%calc%get_results_elements() !Need nodes to be calculated previously
-				!call model%sat(is)%put_results_in_constraints() !Update: hsat_mean, qent_mean, incvoldt_mean, dqhordx_mean,  dqhordx_all_mean
 			end do
 			cycle
 		end if
@@ -279,7 +312,7 @@
 		!---- 09.09 ---- run WF1DUNSAT: With imposed watertable height from WF1DSAT
 		!---- 09.09.01 ---- impose the water-table height on constraints from WF1DSAT (as Dirichlet boundary)
 		call model%constraints%set_dirichlet_from_hsat_h(1.0_dpd)
- 
+
 		!---- 09.09.02 ---- UNSAT_CONVERGENCE: do while not converge or dtminor itmax not reached
 		!(CAN BE DONE IN PARALLEL)
 		isconvergedall = .true.
@@ -294,7 +327,6 @@
 				call model%unsat(iu)%calc%update_th_from_h(CONSIDER_HNEW)
 				itertotal=itertotal+1
 				call model%unsat(iu)%calc%iterate(isconverged)
-				!call model%unsat(iu)%calc%iterate(isconverged,isconvergedall)
 				if (iterconverg<model%parameters%it_min) isconverged=.false.
 				if(.not.isconverged .and. iterconverg==model%parameters%it_max) exit
 			end do
@@ -303,10 +335,8 @@
 			iterconvergmax=max(iterconverg,iterconvergmax)
 		end do
 
-		
 		!---- 09.10 ---- Check if increment on hsat is within the tolerance. If not set converged to false
 		maxhsat = maxval(model%constraints%get_hsatv_mat())
-		!epshsat = abs(maxhsat-maxhsattemp)
 		inchsat = abs(maxhsat-maxhsatold)
 		if(inchsat>model%parameters%maxhsatinc) isconvergedall=.false.
 
@@ -339,28 +369,23 @@
 			call model%sat(is)%calc%get_results_nodes()
 			!call model%sat(is)%put_results_in_constraints()
 		end do
-		
+
 		!---- 09.14 ---- Update the value of hsat in constraints
 		do iu=1,nunsat
-		call model%unsat(iu)%constraints%update_hsat(model%unsat(iu)%calc%elements)
+			call model%unsat(iu)%constraints%update_hsat(model%unsat(iu)%calc%elements)
 		end do
-		
+
 		!---- 09.15 ---- Update the value of nrel from WF1DUNSAT
-		!nrel=(q'v,u_old-Q'newman,u_new)/inchunsat_new
 		do iu=1,nunsat
-		call model%constraints%update_nrel_to_fit_inc_hunsat(model%time%dt)
+			call model%constraints%update_nrel_to_fit_inc_hunsat(model%time%dt)
 		end do
 		!---- 09.16 ---- Update the value of nrel from WF1DUNSAT
 		do iu=1,nunsat
 			call model%unsat(iu)%constraints%update_all(model%unsat(iu)%calc,model%time%dt)
-			!call model%unsat(iu)%constraints%update_all(model%unsat(iu)%calc,model%time%dt,1.0_dpd) !CHECK
 		end do
 		do is=1,nsat
 			call model%sat(is)%put_results_in_constraints()
 		end do
-				
-		
-		
 
 		!---- 09.17 ---- If t=tprint: Print output
 		if (model%time%checkprint) then
@@ -382,7 +407,6 @@
 		WRITE(*,'(A2					," IM: ",i3.3	," IU: ",i3.3	," IS: ",i3.3	," t: ", f10.4	," dt: "	,E10.3	," hu(1,2): ",E10.3																								," hsatv(1,2): ",E10.3							," hsath(1,2): ",E10.3						," qverv(1,2): ",E10.3							," dqdxh: ",E10.3,A40)') &
 			&				printchar		,itermodel		,iterunsat		,itersat			, model%time%t	,model%time%dt	,model%unsat(2)%calc%nodes%hnew(model%constraints%get_idnodev(1,2))	, model%constraints%get_hsatv(1,2)	, model%constraints%get_hsath(1,2), model%constraints%get_qverv(1,2)	, model%constraints%get_dqhordxh(1,2), trim(debugmsg_txt)
 
-		
 		!---- 09.18 ---- Update timestep dt, and set old values from calculated new values
 		call model%time%update_dt(iterconvergmax)
 		!set all values to old
@@ -399,7 +423,7 @@
 		totaldt=totaldt+model%time%dt
 		mindt=min(mindt,model%time%dt)
 		maxdt=max(maxdt,model%time%dt)
-		
+
 	end do TIMESTEPPING
 
 	close(31)
@@ -407,16 +431,16 @@
 	close(33)
 	close(34)
 	close(51)
-	
+
 	!Print and log statistics...
 	call CPU_TIME(cputimeend)
 	call SYSTEM_CLOCK(timemilisec,countrate)
 	systimeend=real(timemilisec,8)/real(countrate,8)
 	meandt=totaldt/real(itersteps,8)
-	
+
 	open (33,file=FILEOUTPUT_STATS,status='unknown')
 	write(33,'("itertotal,nsteps,cputime_s,systime_s,mintimestep,meantimestep,maxtimestep")')
 	write(33,'(i6,",",i6,",",F10.3,",",F10.3,",",E10.3,",",E10.3,",",E10.3)') itertotal,itersteps,cputimeend-cputimeinit,systimeend-systimeinit,mindt,meandt,maxdt
 	close(33)
 
-999	end program model_flow1d
+999 end program WF15DSATUNSAT

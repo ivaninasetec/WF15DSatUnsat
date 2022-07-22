@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        CLASS FOR THE COLLECTION OF CLASSES IN THE UNSATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : mod_sat_ty_nodes
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : UNSAT_MOD_TY_MODEL: DERIVED TYPE TO DEFINE PROPERTIES AND METHODS SPECIFIC TO THE MODEL WF1DUNSAT
+	! PROJECT       : WF1DUNSATDLL
+	! MODULE        : UNSAT_MOD_TY_MODEL
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type to define properties and methods specific to the model wf1dunsat
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for the collection of nodes-classes in the saturated model
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module unsat_mod_ty_model
@@ -49,13 +50,9 @@
 	procedure,public:: readfileinput => s_unsat_model_readfileinput
 	procedure,public:: construct=> s_unsat_model_construct
 	procedure,public:: print_timestep=> s_unsat_model_print_timestep
-	!procedure,public:: set_hsat_to_mesh => s_unsat_model_set_hsat_to_mesh
-	!procedure,public:: set_satvalues_to_mesh => s_unsat_model_set_satvalues_to_mesh
-	!procedure,public:: set_newmann_from_mesh_hsat => s_unsat_model_set_Newmann_from_mesh_hsat
 	end type ty_unsat_model
 
 	contains
-
 
 	!---------------------------------------------------------------------------------------------------------------------
 	! READFILEINPUT
@@ -63,9 +60,8 @@
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
 	!> Subroutine to construct the model from the inputs.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> @param[in] fileinput
+	!> @param[in] fileboundary
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_model_readfileinput(this,fileinput,fileboundary)
@@ -91,10 +87,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Subroutine to construct the model from the inputs.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Assign asignable properties to the class instance.
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_unsat_model_construct(this)
@@ -122,12 +115,12 @@
 	call this%calc%construct()
 
 	!Construct mesh:
-	do i=1, size(this%mesh%nelemv) !CHECK: This doesnt consider multiple nodes in an element
+	do i=1, size(this%mesh%nelemv)
 		this%mesh%idnode_bottom(i) = sum(this%mesh%nelemv(1:i-1))+1
 		this%mesh%idnode_top(i) = sum(this%mesh%nelemv(1:i))
 	end do
 
-	do i=1, size(this%mesh%nelemv) !CHECK: This doesnt consider multiple nodes in an element
+	do i=1, size(this%mesh%nelemv)
 		this%mesh%idnode_bottom(i) = sum(this%mesh%nelemv(1:i-1))+1
 		this%mesh%idnode_top(i) = sum(this%mesh%nelemv(1:i))+1
 	end do
@@ -139,7 +132,6 @@
 
 	call this%constraints%allocateall(size(this%mesh%nelemv)-1,this%calc%nodes%count)
 
-	!call this%constraints%construct(this%mesh,this%calc%nodes,this%mesh%dqhordx)
 	call this%constraints%construct(this%mesh%idnode_bottom(2:),this%calc%nodes,this%mesh%dqhordx)
 
 	end subroutine s_unsat_model_construct
@@ -150,9 +142,9 @@
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
 	!> Subroutine to print a time step in the output file.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> @param[in] findexnode
+	!> @param[in] findexelem
+	!> @param[in] iu
 	!---------------------------------------------------------------------------------------------------------------------
 
 
@@ -196,13 +188,8 @@
 		write(findexelem,'(A)') 't,iu,nelem,x0,x1,hnew,hold,thnew,thold,qent,qsal,qmed,incvoldt,kmed,h0,h1,th0,th1,k0,k1,dhdx0,dhdx1,dhxdx0,dhxdx1,dhdxmed,dhxdxmed'
 	end if
 
-
-	!this%time%checkprint = .false.
-	!this%time%tprint = min(this%time%tprint+this%calc%parameters%tprintinc,this%calc%parameters%tmax)
-	! Here all the code that we want for when the time is iqual to print time
-
 	unsatnodes = nodes
-	!write(*,'("Printing... t= ",E10.3)') this%calc%time%t
+
 	do i=1,nodes%count
 		write(findexnode,'(E15.5E3,",",I2,",",E15.5E3,",",E15.5E3,",",E15.5E3,",",E15.5E3)', ADVANCE = 'YES') this%calc%time%t,iu, nodes%x(i), nodes%z(i),nodes%hnew(i),nodes%thnew(i)
 	end do
@@ -216,160 +203,5 @@
 	end do
 
 	end subroutine s_unsat_model_print_timestep
-
-
-	!!******************************************************************************************************************
-	!! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!!******************************************************************************************************************
-	!
-	!subroutine s_unsat_model_set_hsat_to_mesh(this,option)
-	!use unsat_mod_ty_layers,only:ty_unsat_layers
-	!
-	!class(ty_unsat_model),intent(inout)::this
-	!integer,intent(in),optional::option
-	!
-	!integer::opt
-	!integer::i,l,idnode
-	!real(kind=dpd)::htemp,hsattemp,hsatmax
-	!
-	!opt = 0
-	!
-	!if(present(option)) opt = option
-	!
-	!do l=1,this%layers%count
-	!idnode = sum(this%mesh%nelemv(1:l-1))+1
-	!!get hsat from the bottom node of the layer
-	!select case(opt)
-	!case (1)
-	!	htemp = this%calc%nodes%hold(idnode)
-	!case (2)
-	!	htemp = this%calc%nodes%htemp(idnode)
-	!case default
-	!	htemp = this%calc%nodes%hnew(idnode)
-	!end select
-	!
-	!if (htemp > 0.0_dpd) then
-	!	this%mesh%hsat(l) = htemp
-	!	this%mesh%idnodsat(l) = idnode
-	!	this%mesh%idnodlayer(l) = idnode
-	!else
-	!	this%mesh%hsat(l) = 0.0_dpd
-	!	this%mesh%idnodsat(l) = 0
-	!	this%mesh%idnodlayer(l) = idnode
-	! end if
-	!
-	!this%mesh%hsatold(l) = max(0.0_dpd,this%calc%nodes%hold(idnode))
-	!	end do
-	!
-	!!this is another method to get hsat (from the top node)
-	!!this%hsat = -0.0_dpd
-	!!hsatmax = -0.0
-	!!this%nnodsat = 0
-	!!
-	!!do i=this%nnodes,1,-1
-	!!	select case(opt)
-	!!	case (1)
-	!!		htemp = this%nodeptr(i)%node%hold
-	!!	case (2)
-	!!		htemp = this%nodeptr(i)%node%htemp
-	!!		case default
-	!!		htemp = this%nodeptr(i)%node%hnew
-	!!	end select
-	!!		!hsatmax is going to be the max of hsats on nodes below
-	!!		htemp = max(hsatmax-(this%nodeptr(i)%node%x-this%hbottom),htemp)
-	!!
-	!!	if (htemp > 1.0e-8) then
-	!!		this%nnodsat = this%nnodsat + 1
-	!!		hsatmax = htemp+(this%nodeptr(i)%node%x-this%hbottom)
-	!!	else
-	!!		exit
-	!!	end if
-	!!end do
-	!!
-	!!this%hsat = hsatmax
-	!
-	!end subroutine s_unsat_model_set_hsat_to_mesh
-
-
-
-
-
-	!!******************************************************************************************************************
-	!! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!!******************************************************************************************************************
-	!
-	!subroutine s_unsat_model_set_satvalues_to_mesh(this,option)
-	!use unsat_mod_ty_layers,only:ty_unsat_layers
-	!use com_mod_linear_interpolation,only:linearinterpolation_ordered
-	!use com_mod_fem_intelement, only:intelement_abs_1don_sca
-	!
-	!integer,parameter::INTEGRATION_ORDER=10
-	!class(ty_unsat_model),intent(inout)::this
-	!integer,intent(in),optional::option
-	!real(kind=dpd)::xsat(2)
-	!
-	!integer::opt
-	!integer::i,l,idnode
-	!real(kind=dpd)::htemp,hsattemp,hsatmax
-	!
-	!do l=1,this%layers%count
-	!	if (this%mesh%hsat(l).ne.0.0_dpd) then
-	!		xsat(2) = this%calc%nodes%x(this%mesh%idnodlayer(l))+this%mesh%hsat(l) !This is x for hsatnew
-	!		xsat(1) = this%calc%nodes%x(this%mesh%idnodlayer(l))+this%mesh%hsatold(l)	!!This is x for hsatold
-	!     if (xsat(2)==xsat(1)) then
-	!		this%mesh%incvsat(l)=0.0_dpd
-	!		this%mesh%qvsat(l)	= this%mesh%incvsat(l)/this%calc%time%dt+this%mesh%dqhordx(l)	!CHECK for when more than 1 layer. Vertical waterflow that will enter to saturated model due to the increment of water from hsatold to hsat
-	!     !this%mesh%nmean(l) = this%mesh%nmean(l)
-	!     !this%mesh%nrel(l) = this%mesh%nrel(l)
-	!     else
-	!     this%mesh%incvsat(l)=intelement_abs_1don_sca(f_th_in_x,xsat,INTEGRATION_ORDER)			!Increment of water content from xsatold to xsatnew
-	!     this%mesh%qvsat(l)	= this%mesh%incvsat(l)/this%calc%time%dt+this%mesh%dqhordx(l)	!CHECK for when more than 1 layer. Vertical waterflow that will enter to saturated model due to the increment of water from hsatold to hsat
-	!     this%mesh%nmean(l)	= abs(this%mesh%incvsat(l)/(xsat(2)-xsat(1)))										!Mean non-wetting porosity available between xsatold and xsatnew (to pass it to sat model in this layer)
-	!		this%mesh%nrel(l)		= this%mesh%nmean(l)/(this%calc%nodes%material(this%calc%get_idelement_from_x(xsat(2)))%thsat-this%calc%nodes%material(this%calc%get_idelement_from_x(xsat(2)))%thres) !CHECK because n maybe has to be integrated from hsat to hsatold
-	!     end if
-	!
-	!	else
-	!		this%mesh%incvsat(l)=0.0_dpd	!CHECK for the case when h goes from hsatold to 0.0
-	!		this%mesh%qvsat(l)=0.0_dpd		!In this case no vertical flow is passed to horizontal model as there is no saturated layer.
-	!		this%mesh%nmean(l)=this%layers%material(l)%thsat-this%layers%material(l)%thres
-	!		this%mesh%nrel(l)=1.0_dpd
-	!	end if
-	!end do
-	!
-	!contains
-	!function f_th_in_x(x)
-	!use com_mod_linear_interpolation,only:linearinterpolation_ordered
-	!use com_mod_hyd,only:f_hyd_th_h_sca
-	!
-	!real(kind=dpd),intent(in)::x
-	!real(kind=dpd)::f_th_in_x
-	!!CHECK: Check this because we are integrating with the material in node, but the equations are being done with material in element.
-	!f_th_in_x =		f_hyd_th_h_sca(linearinterpolation_ordered(x,this%calc%nodes%x,this%calc%nodes%hnew),this%calc%nodes%material(this%calc%get_idelement_from_x(x)))-&
-	!						&	f_hyd_th_h_sca(linearinterpolation_ordered(x,this%calc%nodes%x,this%calc%nodes%hold),this%calc%nodes%material(this%calc%get_idelement_from_x(x)))
-	!
-	!end function f_th_in_x
-	!
-	!end subroutine s_unsat_model_set_satvalues_to_mesh
-
-	!!******************************************************************************************************************
-	!! Sub: s_layer_get_hsat(layer,option):	Update hsat in the layer (saturation height from nodes with h>0)
-	!!******************************************************************************************************************
-	!
-	!subroutine s_unsat_model_set_Newmann_from_mesh_hsat(this)
-	!class(ty_unsat_model),intent(inout)::this
-	!
-	!integer::l
-	!
-	!do l=2,this%layers%count
-	!if (this%mesh%idnodsat(l)>0) then
-	!	this%calc%nodes%qnewmann(this%mesh%idnodsat(l)) = this%mesh%dqhordx(l)
-	!	this%calc%nodes%isnewmann(this%mesh%idnodsat(l)) = .true.
-	!else
-	!	this%calc%nodes%qnewmann(this%mesh%idnodlayer(l)) = 0.0_dpd
-	!	this%calc%nodes%isnewmann(this%mesh%idnodlayer(l)) = .false.
-	!end if
-	!end do
-	!
-	!end subroutine s_unsat_model_set_Newmann_from_mesh_hsat
 
 	end module unsat_mod_ty_model
