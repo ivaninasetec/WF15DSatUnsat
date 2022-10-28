@@ -62,7 +62,7 @@
 	procedure,public:: shapematrix					=> s_com_calc_shapematrix
 	procedure,public:: allocate_matrix			=> s_com_calc_allocate_other_matrix !<Initializes nn,nc, and count and allocate all matrix
 	procedure,public:: buildcoefmatrix			=> s_com_calc_buildcoefmatrix
-	procedure,public:: build_linearsystem		=>	s_com_buildlinearsystem
+	procedure,public:: build_linearsystem		=>	s_com_buildlinearsystem	
 	procedure,public:: iterate							=>	s_com_calc_iteration
 	procedure,public:: set_to_initial				=>	s_com_calc_set_to_initial
 	procedure,public:: revert_to_old				=>	s_com_calc_revert_to_old
@@ -77,16 +77,27 @@
 
 	end type ty_com_calc
 
-	interface
+	!interface
+	!subroutine s_com_buildlinearsystem(this,IsTimeDependant,option)
+	!import::ty_com_calc,dpd
+	!class(ty_com_calc),intent(inout),target::this
+	!logical,intent(in)::IsTimeDependant
+	!integer,intent(in),optional::option
+	!end subroutine s_com_buildlinearsystem
+	!end interface
+
+	contains
+	
+	!Instead of an interface to allow external overriding outside the dll (in this case a blank subroutine).
 	subroutine s_com_buildlinearsystem(this,IsTimeDependant,option)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_com_buildlinearsystem" :: s_com_buildlinearsystem
+	!DEC$ endif
 	import::ty_com_calc,dpd
 	class(ty_com_calc),intent(inout),target::this
 	logical,intent(in)::IsTimeDependant
 	integer,intent(in),optional::option
 	end subroutine s_com_buildlinearsystem
-	end interface
-
-	contains
 
 	!---------------------------------------------------------------------------------------------------------------------
 	! Set Dirichlet to node
