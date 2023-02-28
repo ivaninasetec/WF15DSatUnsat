@@ -618,7 +618,7 @@
 		boundary%timestepscount=boundary%timestepscount-1
 		!boundary%timestepscount=boundary%timestepscount-2
 
-		write(*,*) 'allocating boundary array q...'
+		!write(*,*) 'C allocating boundary array q...'
 		if (allocated(boundary%timebound)) deallocate(boundary%timebound)
 		allocate(boundary%timebound(boundary%timestepscount))
 		allocate(boundary%qbound(boundary%timestepscount))

@@ -91,7 +91,7 @@
 
 	nargs = COMMAND_ARGUMENT_COUNT()
 	if (nargs==0) then
-		write(*,*) 'Pease include input filename as the first argument'
+		write(*,*) 'C Pease include input filename as the first argument'
 		goto 999 !If there is no argument then end programm
 	end if
 
@@ -246,7 +246,7 @@
 		do is=1,nsat
 			if(model%constraints%get_sum_hsatv_on_is(is)>0.0_dpd) then
 				if  (.not.ishsatover0(is)) then
-					!write(*,*) "Calculating saturated layers"
+					!write(*,*) "C Calculating saturated layers"
 					model%sat(is)%calc%nodes%hnew=0.0_dpd
 					model%sat(is)%calc%nodes%hold=0.0_dpd
 					model%sat(is)%calc%nodes%qent=0.0_dpd
@@ -293,7 +293,7 @@
 
 		!---- 09.08 ----  If not converged reduce timestep, revert to old and restart in 09
 		if (.not.isconvergedall) then
-			write(*,*) 'REVERT TO OLD: Not converge...'
+			write(*,*) 'C REVERT TO OLD: Not converge...'
 			model%time%checkprint = .false.
 			call model%time%factor_timestep(1/3.0_dpd) !Update timestep with boundaries on tmin and tmax (dt=factor·dtold)
 			do iu=1,nunsat
@@ -342,7 +342,7 @@
 
 		!---- 09.11 ---- If not converged reduce timestep, revert to old and restart in 09
 		if (.not.isconvergedall) then
-			if(inchsat>model%parameters%maxhsatinc) write(*,*) 'REVERT TO OLD: inchsat>incmax...'
+			if(inchsat>model%parameters%maxhsatinc) write(*,*) 'C REVERT TO OLD: inchsat>incmax...'
 			model%time%checkprint = .false.
 			call model%time%factor_timestep(1/3.0_dpd) !Update timestep with boundaries on tmin and tmax (dt=factor·dtold)
 			do iu=1,nunsat
@@ -398,15 +398,18 @@
 			end do
 			model%time%checkprint = .false.
 		else
-			printchar = ' '
+			printchar = '·'
 		end if
 		call model%print_alltimes(51)
 
 		!Write console...
 		!					printchar		,itermodel		,iterunsat,		,itersat			,t,							,dt							,hnew_u																															,hsat_u															,hsat_s														,qv																	,dqhdx_s
-		WRITE(*,'(A2					," IM: ",i3.3	," IU: ",i3.3	," IS: ",i3.3	," t: ", f10.4	," dt: "	,E10.3	," hu(1,2): ",E10.3																								," hsatv(1,2): ",E10.3							," hsath(1,2): ",E10.3						," qverv(1,2): ",E10.3							," dqdxh: ",E10.3,A40)') &
-			&				printchar		,itermodel		,iterunsat		,itersat			, model%time%t	,model%time%dt	,model%unsat(2)%calc%nodes%hnew(model%constraints%get_idnodev(1,2))	, model%constraints%get_hsatv(1,2)	, model%constraints%get_hsath(1,2), model%constraints%get_qverv(1,2)	, model%constraints%get_dqhordxh(1,2), trim(debugmsg_txt)
-
+		!WRITE(*,'(A2					," IM: ",i3.3	," IU: ",i3.3	," IS: ",i3.3	," t: ", f10.4	," dt: "	,E10.3	," hu(1,2): ",E10.3																								," hsatv(1,2): ",E10.3							," hsath(1,2): ",E10.3						," qverv(1,2): ",E10.3							," dqdxh: ",E10.3,A40)') &
+		!	&				printchar		,itermodel		,iterunsat		,itersat			, model%time%t	,model%time%dt	,model%unsat(2)%calc%nodes%hnew(model%constraints%get_idnodev(1,2))	, model%constraints%get_hsatv(1,2)	, model%constraints%get_hsath(1,2), model%constraints%get_qverv(1,2)	, model%constraints%get_dqhordxh(1,2), trim(debugmsg_txt)
+		WRITE(*,'(A2					," IM: ",i4.4	," IU: ",i4.4	," IS: ",i4.4	," t: ", E10.3	," dt: "	,E10.3	)') &
+		& printchar		,itermodel		,iterunsat		,itersat			, model%time%t	,model%time%dt	
+		
+		
 		!---- 09.18 ---- Update timestep dt, and set old values from calculated new values
 		call model%time%update_dt(iterconvergmax)
 		!set all values to old

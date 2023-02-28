@@ -77,16 +77,35 @@
 
 	end type ty_com_calc
 
-	interface
-	subroutine s_com_buildlinearsystem(this,IsTimeDependant,option)
-	import::ty_com_calc,dpd
-	class(ty_com_calc),intent(inout),target::this
-	logical,intent(in)::IsTimeDependant
-	integer,intent(in),optional::option
-	end subroutine s_com_buildlinearsystem
-	end interface
+	!interface
+	!subroutine s_com_buildlinearsystem(this,IsTimeDependant,option)
+	!import::ty_com_calc,dpd
+	!class(ty_com_calc),intent(inout),target::this
+	!logical,intent(in)::IsTimeDependant
+	!integer,intent(in),optional::option
+	!end subroutine s_com_buildlinearsystem
+	!end interface
 
 	contains
+	
+	!---------------------------------------------------------------------------------------------------------------------
+	! buildlinearsystem
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Empty subroutine to buildlinearsystem. Must be overriden depending of the system to build, but with the same structure
+	!> @param[in] idnode			ID of the node
+	!> @param[in] hdirichlet	Piezometric pressure to impose at the node
+	!---------------------------------------------------------------------------------------------------------------------	
+	subroutine s_com_buildlinearsystem(this,istimedependant,option)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"s_com_buildlinearsystem" :: s_com_buildlinearsystem
+	!DEC$ endif
+	import::ty_com_calc,dpd
+	class(ty_com_calc),intent(inout),target::this
+	logical,intent(in)::istimedependant
+	integer,intent(in),optional::option
+	end subroutine s_com_buildlinearsystem
 
 	!---------------------------------------------------------------------------------------------------------------------
 	! Set Dirichlet to node
