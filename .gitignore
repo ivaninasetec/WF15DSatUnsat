@@ -366,3 +366,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/WF15SatUnsat_installer/WF15SatUnsat_installer.vdproj
+/.gitignore
+/.gitignore
