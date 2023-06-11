@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        MODULE TO INPUT ALL DATA IN THE SATURATED MODEL AND POLULATE ALL CLASS INSTANCES
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : MOD_SAT_TY_LAYER
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : SAT_MOD_INPUTS: FUNCTIONS TO INPUT ALL DATA IN THE SATURATED MODEL AND POPULATE ALL CLASS INSTANCES
+	! PROJECT       : WF1DSAT
+	! MODULE        : WF1DSATDLL
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Functions to input all data in the saturated model and populate all class instances
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid
-	!  PhD Student by University of Nottingham
-	!  eMBA by International Institute San Telmo in Seville
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for horizontal saturated layer. Extend common class of layers.
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module sat_mod_inputs
@@ -31,12 +32,13 @@
 	contains
 
 	!---------------------------------------------------------------------------------------------------------------------
-	! s_sat_inputs_parameters(materials)
+	! s_sat_inputs_parameters(parameters,FileINPUT)
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_materials. Input all data in class from file.
-	!> @param[in] nmat
+	!> Input parameters from file to the class instance parameters
+	!> @param[inout] parameters	Class instance with the parameters
+	!> @param[in] FileINPUT		Input file name
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_inputs_parameters(parameters,FileINPUT)
@@ -44,7 +46,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT :: s_sat_inputs_parameters
 	!DEC$ endif
 	use com_mod_ty_parameters, only: ty_com_parameters
-	!use com_mod_inputs, only:s_com_inputs_locateblock,s_com_inputs_nextrecord
 
 	integer,parameter::STORAGE_DENSE=1,STORAGE_CSR=2,STORAGE_BANDED=3
 	integer,parameter::PRECONDITIONER_NONE=0,PRECONDITIONER_JACOBI=1,PRECONDITIONER_ILU0=2,PRECONDITIONER_ILUT=3
@@ -63,7 +64,7 @@
 	integer::       param_itmax
 	real(kind=dps)::param_crelax
 	logical::       param_masslump
-	logical::       param_erroronnode
+	logical::       param_isModifiedPicard
 	integer::       param_quadratureorder
 	integer::       param_typesolution !0 for dense, 1 csr-dss, 2 csr-fgmres, 3 banded-direct
 	integer::       param_typematrixstorage !type of matrix sparsity: 1 for dense, 2 sparse csr, 3 banded
@@ -86,8 +87,6 @@
 	open(40, file=fileinput, status='old')
 	call s_com_inputs_locateblock(40, 'A', readerror)
 
-	!read(40,*)
-	!read(40,*)
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_epsh_tol, param_epsth_tol
 	call s_com_inputs_nextrecord(40,readerror)
@@ -95,18 +94,11 @@
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_crelax
 	call s_com_inputs_nextrecord(40,readerror)
-	read(40,*) param_masslump, param_erroronnode
+	read(40,*) param_masslump, param_isModifiedPicard
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_quadratureorder
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_typesolution
-	!read(40,*)
-	!read(40,*) param_typematrixstorage
-	!read(40,*)
-	!read(40,*) param_typepreconditioner
-	!read(40,*)
-	!read(40,*) param_typesolver
-	!read(40,*)
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) param_ccourant
 	call s_com_inputs_nextrecord(40,readerror)
@@ -186,8 +178,7 @@
 		param_typepreconditioner = PRECONDITIONER_JACOBI
 	end select
 
-
-	CLOSE(40)
+	close(40)
 
 	!Assing readings to parameters instance...
 	parameters%epsh_tol		= PARAM_EPSH_TOL ! Tolerance in pressure head [L]
@@ -198,7 +189,7 @@
 	parameters%it_max			= PARAM_ITMAX ! Max number of iterations, over which time step restart decreased
 	parameters%crelax			= PARAM_CRELAX ! Relaxation coefficient in the update pressure head in each iteration
 	parameters%masslump		= PARAM_MASSLUMP ! Mass lumping used? (.true. or .false.)
-	parameters%erroronnode				= PARAM_ERRORONNODE ! Is used the error on node or error on element? (.true.= error on node)
+	parameters%isModifiedPicard				= PARAM_isModifiedPicard ! Is used the error on node or error on element? (.true.= error on node)
 	parameters%quadratureorder		=	PARAM_QUADRATUREORDER ! Quadrature order for integration inside element
 	parameters%typesolution				= PARAM_TYPESOLUTION ! Type of matrix solver (0 for dense, 1 csr-dss, 2 csr-fgmres, 3 banded-direct)
 	parameters%typematrixstorage	= PARAM_TYPEMATRIXSTORAGE ! Type of matrix sparsity: 1 for dense, 2 sparse csr, 3 banded
@@ -223,12 +214,13 @@
 
 
 	!---------------------------------------------------------------------------------------------------------------------
-	! s_sat_inputs_materials(materials)
+	! s_sat_inputs_materials(material,FileINPUT)
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_materials. Input all data in class from file.
-	!> @param[in] nmat
+	!> Input materials from file to the class instance material (array)
+	!> @param[inout] material	Array of Class instances with the materials on each layer 
+	!> @param[in] FileINPUT		Input file name
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_inputs_materials(material,fileinput)
@@ -288,10 +280,8 @@
 
 	close(40)
 
-
-	!Assing values to materials instance...
+	!Passing values to materials instance...
 	if(.not.allocated(material)) allocate(material(PARAM_MATERIALS_COUNT))
-	!call materials%allocateall(PARAM_MATERIALS_COUNT)
 
 	do i=1, param_materials_count
 		material(i)%id = i
@@ -319,13 +309,13 @@
 
 
 	!---------------------------------------------------------------------------------------------------------------------
-	! s_sat_inputs_layers(layers)
+	! s_sat_inputs_layers(layers,FileINPUT)
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Build the instance layers from the data in file.
-	!> @param[in] fileinput
-	!> @param[in] materials
+	!> Input layers from file to the class instance layers
+	!> @param[inout] layer				Class instance with the layers 
+	!> @param[in] FileINPUT		Input file name
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_inputs_layers(layers,fileinput,material)
@@ -334,7 +324,6 @@
 	!DEC$ endif
 	use com_mod_ty_layers, only: ty_com_layers
 	use com_mod_ty_material,only:ty_com_material
-	!use com_mod_inputs, only:s_com_inputs_locateblock,s_com_inputs_nextrecord
 
 	class(ty_com_layers),intent(inout)::layers
 	character*400,intent(in)::fileinput
@@ -369,10 +358,6 @@
 	READ(40,*) (param_mod_layer_nmaterial(i),i=1,param_mod_layers_count)
 	call s_com_inputs_nextrecord(40,readerror)
 	READ(40,*) (param_mod_layer_slope(i),i=1,param_mod_layers_count+1)
-	!call s_com_inputs_nextrecord(40,readerror)
-	!READ(40,*) layers%topboundbyh
-	!call s_com_inputs_nextrecord(40,readerror)
-	!READ(40,*) layers%topboundbyq
 	close(40)
 
 	!Build layers instance with readings...
@@ -406,12 +391,13 @@
 	end subroutine s_sat_inputs_layers
 
 	!---------------------------------------------------------------------------------------------------------------------
-	! s_sat_inputs_mesh(mesh)
+	! s_sat_inputs_mesh(mesh,FileINPUT)
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Build the instance layers from the data in file.
-	!> @param[in] nmat
+	!> Input mesh properties from file to the class instance mesh
+	!> @param[inout] mesh				Class instance with mesh properties and methods
+	!> @param[in] FileINPUT		Input file name
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_inputs_mesh(mesh,fileinput,layers)
@@ -435,9 +421,6 @@
 	integer:: PARAM_NELEMENTS
 	integer:: PARAM_MOD_NMODVER
 
-	!real(kind=dps),parameter:: total_length = 10.0
-	!real(kind=dps),parameter:: mesh_slope = 0.03
-
 	integer,allocatable:: NUMELEM_VMOD(:)
 	real(kind=dps),allocatable::PARAM_X_VMOD(:) !checkthis: the boundaries definition will be in an specific function
 
@@ -456,8 +439,6 @@
 	read(40,*) (NUMELEM_VMOD(i),i=1,param_mod_nmodver)
 	call s_com_inputs_nextrecord(40,readerror)
 	read(40,*) (PARAM_X_VMOD(i),i=1,param_mod_nmodver)
-	!call s_com_inputs_nextrecord(40,readerror)
-	!read(40,*) (PARAM_QENTVMOD(i),i=1,param_mod_nmodver)
 	close(40)
 
 
@@ -472,7 +453,6 @@
 	mesh%nnodclassh_count	= mesh%nnodh_count*(mesh%nc+1)
 
 	mesh%width = layers%width
-	!mesh%slope	= layers%slope(1)
 
 	call mesh%allocateall(PARAM_MOD_NMODVER)
 
@@ -492,43 +472,15 @@
 
 	end subroutine s_sat_inputs_mesh
 
-	!!---------------------------------------------------------------------------------------------------------------------
-	!!> @author Iván Campos-Guereta Díez
-	!!> @brief
-	!!> Procedure inside the class ty_sat_nodes. Subroutine to input all values from file.
-	!!> @param[in] ne
-	!!> @param[in] nn
-	!!> @param[in] nc
-	!!---------------------------------------------------------------------------------------------------------------------
-	!
-	!subroutine s_sat_inputs_constraints(constraints, mesh,nodes)
-	!use sat_mod_ty_mesh, only: ty_sat_mesh
-	!use com_mod_ty_nodes, only: ty_com_nodes
-	!use sat_mod_ty_constraints, only: ty_sat_constraints
-	!
-	!class(ty_sat_constraints),intent(inout)::constraints
-	!class(ty_sat_mesh),intent(inout)::mesh
-	!class(ty_com_nodes),intent(inout)::nodes
-	!
-	!integer::i
-	!
-	!call constraints%allocateall(size(mesh%vmod_idnod),mesh%nnodclassh_count)
-	!call constraints%construct(mesh%vmod_idnod,nodes,mesh%vmod_qent)
-	!
-	!!mesh%vmod_qent			= PARAM_QENTVMOD
-	!!mesh%vmod_qenttemp	= PARAM_QENTVMOD
-	!!mesh%vmod_qentold		= PARAM_QENTVMOD
-	!
-	!
-	!end subroutine s_sat_inputs_constraints
-
+	!---------------------------------------------------------------------------------------------------------------------
+	! s_sat_inputs_nodes(nodesarg,mesh,layers)
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_nodes. Subroutine to input all values from file.
-	!> @param[in] ne
-	!> @param[in] nn
-	!> @param[in] nc
+	!> Input nodesarg properties from file to the class instance nodesarg
+	!> @param[inout] nodesarg				Class instance with nodes properties and methods
+	!> @param[in] mesh				Class instance with mesh properties and methods
+	!> @param[in] FileINPUT		Input file name
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_inputs_nodes(nodesarg,mesh,layers)
@@ -595,7 +547,6 @@
 		end do
 	end do
 
-
 	!Assign z to nodes...
 	call nodes%set_z(layers%slope(1),mesh%width)
 
@@ -649,12 +600,15 @@
 
 
 	!---------------------------------------------------------------------------------------------------------------------
-	!> @author iván campos-guereta díez
+	! s_sat_inputs_elements(elements,mesh,nodes,material)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> procedure inside the class ty_com_elements. fill all elements data. first nodes has to be filled.
-	!> @param[in] ne
-	!> @param[in] nn
-	!> @param[in] nc
+	!> Update elements properties from mesh, nodes and material classess
+	!> @param[inout] nodesarg				Class instance with nodes properties and methods
+	!> @param[in] mesh		Class instance with mesh properties and methods
+	!> @param[in] nodes		Class instance with nodes properties and methods
+	!> @param[in] material	Class instance with material properties and methods
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_inputs_elements(elements,mesh,nodes,material)
@@ -674,7 +628,6 @@
 	integer::ne !number of elements
 	integer::nn !number of nodes per element
 	integer::nc !class number of nodes
-
 
 	integer::nnc,i,j
 
@@ -709,12 +662,14 @@
 	end subroutine s_sat_inputs_elements
 
 	!---------------------------------------------------------------------------------------------------------------------
-	!> @author iván campos-guereta díez
+	! s_sat_inputs_boundary(elements,mesh,nodes,material)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> This subroutine reads boundary condition file and fill the class "ty_com_boundary".
-	!> @param[in] ne
-	!> @param[in] nn
-	!> @param[in] nc
+	!> Update boundary properties from file
+	!> @param[in] fileboundary		Input filename
+	!> @param[inout] boundary		Class instance with mesh properties and methods
+	!> @param[in] layers		Class instance with layer properties and methods
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_inputs_boundary(fileboundary,boundary,layers)
@@ -743,22 +698,16 @@
 		do while (readerror==0)
 			read (40,*, iostat=readerror) dumb,dumb
 			boundary%timestepscount=boundary%timestepscount+1
-			!write(*,*) mo%bd%timestepscount
 		end do
-		!boundary%timestepscount=boundary%timestepscount-1
 
-		!write(*,*) 'finish read bound_h'
 		write(*,*) 'allocating boundary array...'
 		allocate(boundary%timebound(boundary%timestepscount))
 		allocate(boundary%hbound(boundary%timestepscount))
 
 		rewind(55)
 		read(55,'(a)')
-		!write(*,*) 'rewinded'
-		!write(*,*) 'timestep count: ', mo%bd%timestepscount
 		do i=1, boundary%timestepscount
 			read (40,*) boundary%timebound(i), boundary%hbound(i)
-			!write(*,*) i
 		end do
 
 		close(55)
@@ -798,13 +747,18 @@
 
 	end subroutine s_sat_inputs_boundary
 
-	!********************************************************************************************************************
-	! S: LOCATEBLOCK(FileIndex, Bloq, Readerror)
-	!--------------------------------------------------------------------------------------------------------------------
-	! This subROUTine rewind the file with index "FileIndex" and search for the line with the word: 'Block '+Bloq
-	! that will define the initial line for the input of that block.
-	! In case of error returns Readerror<>0
-	!********************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	! s_com_inputs_locateblock(fileindex, bloq, readerror)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> This subROUTine rewind the file with index "FileIndex" and search for the line with the word: 'Block '+Bloq
+	!> that will define the initial line for the input of that block.
+	!> In case of error returns Readerror<>0
+	!> @param[in] fileindex		Index of the opened fileinput
+	!> @param[in] bloq		Leter of the block to search
+	!> @param[inout] readerror		If error, return Readerror<>0
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_com_inputs_locateblock(fileindex, bloq, readerror)
 	! search for 'block x' in a file and let the file pointer at that row
@@ -821,7 +775,6 @@
 	checkblock=.false.
 	do while (.not.checkblock)
 		read (fileindex,'(A)', iostat=readerror) chblock
-		!read (fileindex,'(A)') chblock
 		if (readerror.ne.0) then
 			write(*,*) 'BLOCK '//bloq//' not found on input file'
 			stop
@@ -831,13 +784,16 @@
 
 	end subroutine s_com_inputs_locateblock
 
-	!********************************************************************************************************************
-	! S: NEXTRECORD(FileIndex, Readerror)
-	!--------------------------------------------------------------------------------------------------------------------
-	! This subROUTine rewind the file with index "FileIndex" and search for the line with the word: 'Block '+Bloq
-	! that will define the initial line for the input of that block.
-	! In case of error returns Readerror<>0
-	!********************************************************************************************************************
+	!---------------------------------------------------------------------------------------------------------------------
+	! s_com_inputs_nextrecord(FileIndex, Readerror)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> This subroutine search the next record without comments
+	!> In case of error returns Readerror<>0
+	!> @param[in] fileindex		Index of the opened fileinput
+	!> @param[inout] readerror		If error, return Readerror<>0
+	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_com_inputs_nextrecord(fileindex, readerror)
 	! search for 'block x' in a file and let the file pointer at that row

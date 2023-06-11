@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        EXTENSION OF CLASS TY_COM_NODES FOR HORIZONTAL SATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : MOD_SAT_TY_LAYER
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : SAT_MOD_TY_NODES: EXTENDED DERIVED TYPE OF COM_MOD_TY_NODES TO INCLUDE PROPERTIES AND METHODS OF WF1DSAT
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_CALC
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Extended derived type of com_mod_ty_elements to include properties and methods of wf1dsat
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for horizontal saturated layer. Extend common class of layers.
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module sat_mod_ty_nodes
@@ -29,6 +30,9 @@
 
 	type,extends(ty_com_nodes),public::ty_sat_nodes	!< CLASS: Definition of the layer in saturated model
 		real(kind=dpd),allocatable::results_qent(:)
+		real(kind=dpd),allocatable::results_qsat(:)
+		real(kind=dpd),allocatable::results_qinf(:)
+		real(kind=dpd),allocatable::results_inchnew(:) !drop in pressure due to waterflow
 		real(kind=dpd),allocatable::results_incvoldt(:)
 		real(kind=dpd),allocatable::results_qhor(:)
 		real(kind=dpd),allocatable::results_dqhordx(:)
@@ -48,7 +52,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_nodes. Subroutine to define the initial h.
+	!> Subroutine to define the initial h.
 	!> @param[in] ne
 	!> @param[in] nn
 	!> @param[in] nc
@@ -68,10 +72,9 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_nodes. To put the z to the nodes given the slope and lenght.
-	!> @param[in] ne
-	!> @param[in] nn
-	!> @param[in] nc
+	!> Procedure to update the coordinate z from slope and lenght of the layer
+	!> @param[in] slope
+	!> @param[in] lenght
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_set_z(this,slope,lenght)

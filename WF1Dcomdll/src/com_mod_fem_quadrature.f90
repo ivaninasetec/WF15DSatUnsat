@@ -1,28 +1,31 @@
 	!********************************************************************************************************************
-	!*                                                                                                                  *
-	!*                                 MODULE: MOD_COM_QUADRATURE                                                       *
-	!*                                                                                                                  *
+	! TITLE         : MOD_COM_QUADRATURE: FUNCTIONS TO CALCULATE THE GAUSS LEGENDRE QUADRATURE OF ORDER 1 TO 60
+	! PROJECT       : WF1DCOMDLL
+	! MODULE        : MOD_COM_QUADRATURE
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> This module include a function to calculate the gauss legendre quadrature of order no (1 to 60) for a function
+	!> of the relative coord of an element
+	!>
+	!>    Quadrature1D_sca(func,NO): calculate the Gauss-Legendre quadrature of order NO (1 to 60) for the function
+	!>                               func(chi). Being chi the relative coordinate on the element from -1 to 1
+	!>
+	!>    Quadrature1D(func,NO):   calculate the Gauss-Legendre quadrature of order NO (1 to 60) for the function
+	!>                               func(chi). In this case chi is defined as a vector
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
-	!* THIS MODULE THE FUNCTION THAT CALCULATE THE GAUSS LEGENDRE QUADRATURE OF ORDER NO (1 TO 60) FOR A FUNCTION       *
-	!* OF THE RELATIVE COORD OF AN ELEMENT                                                                              *
-	!*                                                                                                                  *
-	!*    Quadrature1D(func,NO):   calculate the Gauss-Legendre quadrature of order NO (1 to 60) for the function     *
-	!*                               func(chi). chi is a scalar equal to the                                          *
-	!*                                                                                                                  *
-	!* It uses the modules:                                                                                             *
-	!*    MOD_COM_QUADRATURE                                                                                            *
-	!*    MOD_COM_JACOBIAN                                                                                              *
-	!*    MOD_COM_SHAPEFUNCTIONS                                                                                        *
-	!*                                                                                                                  *
-	!*    Iván Campos-Guereta Díez                                                                                      *
-	!*    MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!*    PhD Student by University of Nottingham                                                                       *
-	!*    eMBA by International Institute San Telmo in Seville                                                          *
-	!*    ivan.camposguereta@nottingham.ac.uk                                                                           *
-	!*                                                                                                                  *
-	!*    This software is copyrighted 2019(C)                                                                          *
-	!********************************************************************************************************************
-
 
 	module com_mod_fem_quadrature
 
@@ -34,28 +37,27 @@
 	include 'inc_legendre_parameters.fi'
 	include 'inc_legendre_weights.fi'
 
-	!!interface for quadratrue in case of multiple variants
-	!interface quadrature1d
-	!module procedure quadrature1d_on !quadrature1d((:)fn(),no)
-	!module procedure quadrature1d_on_v !quadrature1d((:)fn(),no)
-	!end interface quadrature1d
-
 	public::quadrature1d,quadrature1d_sca
 
 	contains
 	!DEFINE ALL THE OPERATORS FOR A PIECEWISE LINEAR BASIS ***************************************************************
 
-	!--------------------------------------------------------------------------------------------------------
+	!---------------------------------------------------------------------------------------------------------------------
+	! quadrature1d(func,no)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Calculate the Gauss-Legendre quadrature in 1D element for a function func fo an order 'no' between 1 and 61
+	!> @param[in] func  real function (function to integrate) of one real vector argument
+	!> @param[in] no    quadrature order of the integral
+	!> @return A vector with the values of the integral on the element
+	!---------------------------------------------------------------------------------------------------------------------
 
 	real(kind=dpd) function quadrature1d(func,no)
 	!DEC$ if defined(_DLL)
-!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"quadrature1d" :: quadrature1d
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"quadrature1d" :: quadrature1d
 	!DEC$ endif
 
-	!calculate de gauss-legendre quadrature in 1d element for a function func of an order no between 1 and 61
-
-	!real(kind=dps)::func
-	!real(kind=dpd),intent(in)::func(:) !procedure that returns a real(:)
 	interface
 	function func(ch)
 	include 'inc_precision.fi'
@@ -194,15 +196,22 @@
 
 	end function quadrature1d
 
+	!---------------------------------------------------------------------------------------------------------------------
+	! quadrature1d(func,no)
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Calculate the Gauss-Legendre quadrature in 1D element for a function func fo an order 'no' between 1 and 61
+	!> @param[in] func  real function (function to integrate) of one real scalar argument
+	!> @param[in] no    quadrature order of the integral
+	!> @return					A scalar with the values of the integral on the element
+	!---------------------------------------------------------------------------------------------------------------------
+
 	real(kind=dpd) function quadrature1d_sca(func,no)
 	!DEC$ if defined(_DLL)
-!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"quadrature1d_sca" :: quadrature1d_sca
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"quadrature1d_sca" :: quadrature1d_sca
 	!DEC$ endif
 
-	!calculate de gauss-legendre quadrature in 1d element for a function func of an order no between 1 and 61
-
-	!real(kind=dps)::func
-	!real(kind=dpd),intent(in)::func(:) !procedure that returns a real(:)
 	interface
 	function func(ch)
 	include 'inc_precision.fi'
@@ -338,21 +347,21 @@
 		case default
 		quadrature1d_sca = dot_product(wi20,func_mat(chii20))
 	end select
-	
+
 	contains
-	
+
 	function func_mat(chi)
 	real(kind=dpd),intent(in)::chi(:)
 	real(kind=dpd)::func_mat(size(chi))
 	integer::i
-	
+
 	do i=1,size(chi)
 		func_mat(i) = func(chi(i))
 	end do
-	
-	
+
+
 	end function func_mat
 
-	end function quadrature1d_sca	
-	
+	end function quadrature1d_sca
+
 	end module com_mod_fem_quadrature

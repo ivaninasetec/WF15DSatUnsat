@@ -14,8 +14,8 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="Debug|x64" ConfigurationType="typeDynamicLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" PreprocessorDefinitions="DEBUG" ErrorLimit="200" WarnDeclarations="true" WarnUndeclaredExternals="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" WarnInterfaces="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklParallel"/>
+		<Configuration Name="Debug|x64" OutputDirectory="$(SolutionDir)\bin\Debug\x64\$(TargetName)" IntermediateDirectory="$(SolutionDir)\bin\Debug\x64\$(TargetName)\temp" ConfigurationType="typeDynamicLibrary">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" PreprocessorDefinitions="DEBUG" ErrorLimit="200" WarnDeclarations="true" WarnUndeclaredExternals="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" WarnInterfaces="true" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklParallel"/>
 				<Tool Name="VFLinkerTool" AdditionalOptions="/IGNORE:4217" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -34,7 +34,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="Release|x64" ConfigurationType="typeDynamicLibrary">
+		<Configuration Name="Release|x64" OutputDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)" IntermediateDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)\temp" ConfigurationType="typeDynamicLibrary">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Parallelization="true" OpenMP="OpenMPParallelCode" F2003Semantics="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
 				<Tool Name="VFLinkerTool" AdditionalOptions="/IGNORE:4217" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 				<Tool Name="VFResourceCompilerTool"/>
@@ -66,6 +66,10 @@
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
 	<Files>
 		<Filter Name="Header Files" Filter="fi;fd;h;inc">
+		<File RelativePath=".\src\com_mod_hyd_ba.fi"/>
+		<File RelativePath=".\src\com_mod_hyd_bc.fi"/>
+		<File RelativePath=".\src\com_mod_hyd_pw.fi"/>
+		<File RelativePath=".\src\com_mod_hyd_vg.fi"/>
 		<File RelativePath=".\src\inc_legendre_parameters.fi"/>
 		<File RelativePath=".\src\inc_legendre_weights.fi"/>
 		<File RelativePath=".\src\inc_precision.fi"/></Filter>
@@ -76,17 +80,11 @@
 		<File RelativePath=".\src\com_mod_fem_intelement.f90"/>
 		<File RelativePath=".\src\com_mod_fem_quadrature.f90"/>
 		<File RelativePath=".\src\com_mod_fem_shapefunctions.f90"/></Filter>
-		<Filter Name="HYD">
-		<File RelativePath=".\src\com_mod_hyd.f90"/>
-		<File RelativePath=".\src\com_mod_hyd_bc.f90"/>
-		<File RelativePath=".\src\com_mod_hyd_pw.f90"/>
-		<File RelativePath=".\src\com_mod_hyd_vg.f90"/></Filter>
 		<Filter Name="MX">
 		<File RelativePath=".\src\com_mod_mx_datatypes.f90"/>
 		<File RelativePath=".\src\com_mod_mx_solvers.f90"/></Filter>
 		<Filter Name="OTHERS">
 		<File RelativePath=".\src\com_mod_others_custom_functions.f90"/>
-		<File RelativePath=".\src\com_mod_others_external_functions.f90"/>
 		<File RelativePath=".\src\com_mod_others_inputs.f90"/>
 		<File RelativePath=".\src\com_mod_others_linear_interpolation.f90"/></Filter>
 		<Filter Name="TY">

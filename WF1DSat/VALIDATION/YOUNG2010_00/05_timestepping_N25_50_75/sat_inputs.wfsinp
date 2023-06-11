@@ -1,0 +1,89 @@
+!*********************************************************************************
+! VALIDATION AGAINST Roushton and Youngs, 2010: ONE LAYER TRANSIENT
+!**********************************************************************************
+!****** BLOCK A: PARAMETERS **************************************
+!GENERAL PARAMETERS
+!(epsh_tol) Tolerancia en h | (epsh_tol) Tolerancia en th
+1.0E-6						 1.0E-4
+!Minimum iterations | (itinc_dt) Iteration to increase dt  | (itdec_dt) Iterations to decrease dt | (maxit) Max iterations for time step (if surpassed restart timestep and decrease dt)
+1		25					50					75
+!(crelax) Relaxation coefficient (updates of values in each iterations equal to: (1-crelax)·hn+(crelax)·hn+1
+1.0
+!(IsMassLump) ¿Use mass lumping in mass matrix? | (IsModifiedPicard) ¿Use Modified Picard Method of linearization?
+.false.										     .false.
+!(quadratureorder) Order of quadrature for integration in element
+1
+!(typesolution) Type of solution used in calcs: 
+!Number	| sparsity | solver | preconditioner
+!	1     dense      gauss    none
+!	2     dense      gauss    jacobi
+!	3     csr        DSS      none
+!	4     csr        DSS      jacobi
+!	5     csr        DSS      ilu0
+!	6     csr        DSS      ilut
+!	7     csr        PARADISO none
+!	8     csr        PARADISO jacobi
+!	9     csr        PARADISO ilu0
+!	10    csr        PARADISO ilut
+!	11    csr        FGMRES   none
+!	12    csr        FGMRES   jacobi
+!	13    csr        FGMRES   ilu0
+!	14    csr        FGMRES   ilut
+!	15    banded     gauss	  none
+!	16    banded     gauss	  jacobi
+14
+!(courant) Coefficient of courant: 2.0 (Use a very high value to avoid limiting stepsize by courant condition)
+1000.0
+!(multksal) Multiplication factor for the permeability at the seepage surface
+1.075
+!
+!TIME PARAMETERS:
+!(tinit) Initial time | (dtinit) dt at first step | (tmax) t at end of simulation | (dtmin) Min value for dt | (dtmax) Max value for dt 
+0.0						1.0E-6						 0.2							1.0E-20						0.0005
+!(Cdtinc) Factor to increase time | (Cdtdec) Factor to decrease time
+1.2							       0.8
+!(dtprintinc) time increment to print results
+0.001
+!
+!****** BLOCK B: MATERIALS **************************************
+!(count) Number of different of materials (Ud)
+1
+!(kindmat) Kind of material (1= Mualem-Van Genuchten, 2= Exponential Hydraulic Function)
+1						
+!(thsat) Saturated volumetric water content (cm3/cm3) (Specific yield in this case)
+0.04		
+!(thres) Residual volumetric water content (cm3/cm3)
+0.00	
+!(ksat)	Saturated permeability (m/d)
+4.00
+!(a)		a parameter of Van Genuchten (m-1) or a parameter of other hydraulic function
+14.5
+!(n)		n parameter of Van Genuchten (-) or n parameter of other hydraulic function
+2.68		
+!(m)		m parameter of Van Genuchten (-) or m parameter of other hydraulic function
+0.626	
+!(l)		l parameter of Mualem-Van Genuchten or m parameter of other hydraulic function
+0.5
+!
+!****** BLOCK C: LAYERS **************************************
+!(count) Number of layers
+1
+!(width) Witdh of layers
+2.25
+!(height): Height of each layer (at left side, from bottom to top) (m)
+1.0		
+!(material) Material number on the layer as defined in block B
+1	
+!(slope)	Slope on the floor of the layer (m/m) (number=nlayers+1)
+0.00	0.00
+!
+!****** BLOCK D: MESH **************************************
+!(nn) Nodes per element | (nc) Class of nodes
+2						 0
+!(nvmod) Number of vertical modules
+3
+!(vmod_count) Number of elements between vertical modules
+20	20	20	
+!(vmod_x) Coord x of each vertical module(first always cero)
+0.0	1.00	2.00
+

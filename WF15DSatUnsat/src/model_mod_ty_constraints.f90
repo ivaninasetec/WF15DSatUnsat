@@ -56,6 +56,8 @@
 		procedure,public:: get_hsath		=> f_model_constraints_get_hsat_h_i_j
 		procedure,public:: get_hsath_mean_mat=> f_model_constraints_get_hsat_h_mean
 		procedure,public:: get_hsath_mean		=> f_model_constraints_get_hsat_h_mean_i_j
+		procedure,public:: get_hnewh_mean_mat=> f_model_constraints_get_hnew_h_mean
+		procedure,public:: get_hnewh_mean		=> f_model_constraints_get_hnew_h_mean_i_j
 		procedure,public:: get_idnodeh	=> f_model_constraints_get_idnode_h_i_j
 		procedure,public:: get_idnodev	=> f_model_constraints_get_idnode_v_i_j
 		
@@ -65,6 +67,8 @@
 		procedure,public:: get_qnewmannv	=> f_model_constraints_get_qnewmann_v_i_j
 		procedure,public:: get_dqhordxh_mat	=> f_model_constraints_get_dqhordx_h
 		procedure,public:: get_dqhordxh	=> f_model_constraints_get_dqhordx_h_i_j
+		procedure,public:: get_dqhordxh_mean_mat	=> f_model_constraints_get_dqhordx_mean_h
+		procedure,public:: get_dqhordxh_mean	=> f_model_constraints_get_dqhordx_mean_h_i_j
 		procedure,public:: update_nrel_to_fit_inc_hunsat	=> s_model_constraints_calc_nrel_to_fit_inc_hunsat
 		procedure,public:: update_nrel_to_fit_inc_hsat		=> s_model_constraints_calc_nrel_to_fit_inc_hsat
 		
@@ -98,6 +102,8 @@
 	do ih=1,size(this%sat)
 		do iv=1,size(this%unsat)
 			this%sat(ih)%constraints%qent(iv)%p				=> this%unsat(iv)%constraints%qver(ih)
+			this%sat(ih)%constraints%qsat(iv)%p				=> this%unsat(iv)%constraints%qsat(ih)
+			this%sat(ih)%constraints%qinf(iv)%p				=> this%unsat(iv)%constraints%qinf(ih)
 			this%sat(ih)%constraints%nrel(iv)%p				=> this%unsat(iv)%constraints%nrel(ih)
 			
 			this%unsat(iv)%constraints%dqhordx(ih)%p	=> this%sat(ih)%constraints%dqhordx(iv)%p
@@ -183,6 +189,37 @@
 			f_model_constraints_get_hsat_h_mean_i_j = this%sat(is)%constraints%hsat_mean(iu)
 
 	end function f_model_constraints_get_hsat_h_mean_i_j	
+	
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Allocate all arrays
+	!---------------------------------------------------------------------------------------------------------------------
+	function f_model_constraints_get_hnew_h_mean(this)
+	class(ty_model_constraints),intent(inout)::this
+	real(kind=dpd)::f_model_constraints_get_hnew_h_mean(size(this%sat),size(this%unsat))
+	integer::iu,is
+	do is=1,size(this%sat)
+		do iu=1,size(this%unsat)
+			f_model_constraints_get_hnew_h_mean(is,iu)=this%sat(is)%constraints%hsat_mean(iu)-this%sat(is)%constraints%inchnew_mean(iu)
+		end do
+	end do
+	end function f_model_constraints_get_hnew_h_mean
+	
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Allocate all arrays
+	!---------------------------------------------------------------------------------------------------------------------
+	function f_model_constraints_get_hnew_h_mean_i_j(this,is,iu)
+	class(ty_model_constraints),intent(inout)::this
+	integer,intent(in)::is,iu
+	real(kind=dpd)::f_model_constraints_get_hnew_h_mean_i_j
+
+			f_model_constraints_get_hnew_h_mean_i_j = this%sat(is)%constraints%hsat_mean(iu)-this%sat(is)%constraints%inchnew_mean(iu)
+
+	end function f_model_constraints_get_hnew_h_mean_i_j	
+	
 	
 	
 	!---------------------------------------------------------------------------------------------------------------------
@@ -334,6 +371,37 @@
 
 	end function f_model_constraints_get_dqhordx_h_i_j
 	
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Allocate all arrays
+	!---------------------------------------------------------------------------------------------------------------------
+	function f_model_constraints_get_dqhordx_mean_h(this)
+	class(ty_model_constraints),intent(inout)::this
+	real(kind=dpd)::f_model_constraints_get_dqhordx_mean_h(size(this%sat),size(this%unsat))
+	integer::iu,is
+	do is=1,size(this%sat)
+		do iu=1,size(this%unsat)
+			f_model_constraints_get_dqhordx_mean_h(is,iu)=this%sat(is)%constraints%dqhordx_mean(iu)
+		end do
+	end do
+	end function f_model_constraints_get_dqhordx_mean_h
+	
+	!---------------------------------------------------------------------------------------------------------------------
+	!> @author Iván Campos-Guereta Díez
+	!> @brief
+	!> Allocate all arrays
+	!---------------------------------------------------------------------------------------------------------------------
+	function f_model_constraints_get_dqhordx_mean_h_i_j(this,is,iu)
+	class(ty_model_constraints),intent(inout)::this
+	integer,intent(in)::is,iu
+	real(kind=dpd)::f_model_constraints_get_dqhordx_mean_h_i_j
+
+			f_model_constraints_get_dqhordx_mean_h_i_j = this%sat(is)%constraints%dqhordx_mean(iu)
+
+	end function f_model_constraints_get_dqhordx_mean_h_i_j
+
+	
 	!!---------------------------------------------------------------------------------------------------------------------
 	!!> @author Iván Campos-Guereta Díez
 	!!> @brief
@@ -364,7 +432,6 @@
 	nsat		= size(this%sat)
 	nunsat	= size(this%unsat)
 	
-	!CHECK: Calc of nrel: nrel maintains last one if no variation in hsat: (qver-qnewmann)·dt/{(thsat-thres)·(hsat-hsatold)} 
 	!This it to get the nrel needed to increase in sat model from hsat_u to hsatold_u with given qver entering-leaving.
 	!dt·(qent-qsal-qnewmann)=nrel·(thsat-threl)·(hsat_u-hsatold_u)
 	do is=1,nsat
@@ -379,7 +446,6 @@
 					!Maintain previous nrel.
 					!this%unsat(iu)%constraints%nrel(is)=1.0_dpd !CHECK
 				else
-					!CHECK: Calc of nrel: min=0.001, max=0.1
           !this%unsat(iu)%constraints%nrel(is) = 0.01_dpd
 					this%unsat(iu)%constraints%nrel(is) = max(this%unsat(iu)%parameters%nrelmin,min(this%unsat(iu)%parameters%nrelmax,abs((qver-qnewmann)*dt/(sat_waterinc_med(1)*(hsat_u-hsatold_u))))) 
 				end if
@@ -427,7 +493,6 @@
 	nsat		= size(this%sat)
 	nunsat	= size(this%unsat)
 	
-	!CHECK: Calc of nrel: nrel maintains last one if no variation in hsat: (qver-qnewmann)·dt/{(thsat-thres)·(hsat-hsatold)} 
 	!This it to get the nrel needed to increase in sat model from hsat_u to hsatold_u with given qver entering-leaving.
 	!dt·(qent-qsal-qnewmann)=nrel·(thsat-threl)·(hsat_u-hsatold_u)
 	epshsathunsat = 0.0_dpd
@@ -460,7 +525,6 @@
 
 	subroutine s_model_constraint_set_dirichlet_from_hsat_h(this)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
 	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
@@ -474,7 +538,7 @@
 	do iu=1,nunsat
 		!idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
     idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
-	if ((this%get_hsath(is,iu)>1E-10_dpd)) then !CHECK: Check this if I have to put hsat>0 or dqhordx>0 as when hsat=0 there has to be no horizontal flow.
+	if ((this%get_hsath(is,iu)>1E-10_dpd)) then 
 		this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= this%get_hsath(is,iu) !******We put as dirichlet hsath, not hsath_mean
 		this%unsat(iu)%calc%nodes%isdirichlet	(idnode_u)	= .true.
 	else
@@ -492,8 +556,6 @@
 
 	subroutine s_model_constraint_set_dirichlet_from_hsath_mean(this,krelax)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd),optional::krelax	
@@ -515,8 +577,10 @@
     idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
 		this%unsat(iu)%calc%nodes%qnewmann	(idnode_u)		= 0.0_dpd
 		this%unsat(iu)%calc%nodes%isnewmann	(idnode_u)		= .false.
-	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then !CHECK: Check this if I have to put hsat>0 or dqhordx>0 as when hsat=0 there has to be no horizontal flow.
+	!if (this%get_hsath_mean(is,iu)>1.0E-3_dpd) then !Only acttivate dirichlet on watertables over 1E-3_dpd
+	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then 
 		this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= (1.0_dpd-krelx)*this%get_hsatv(is,iu)+krelx*this%get_hsath_mean(is,iu) !******We put as dirichlet the mean, not hsat
+		!this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= (1.0_dpd-krelx)*this%get_hsath(is,iu)+krelx*this%get_hnewh_mean(is,iu) !CHECK:******We put as dirichlet the mean, not hsat
 		this%unsat(iu)%calc%nodes%isdirichlet	(idnode_u)	= .true.
 	else
 		this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= 0.0_dpd
@@ -533,8 +597,6 @@
 
 	subroutine s_model_constraint_set_newmann_from_sath_with_relaxation(this,krelax)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd),optional::krelax
@@ -552,12 +614,12 @@
 	
 	do is=1,nsat
 	do iu=1,nunsat
-		!idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
     idnode_u = this%unsat(iu)%constraints%idnode_layer_bottom(is)%p
 		this%unsat(iu)%calc%nodes%hdirichlet	(idnode_u)	= 0.0_dpd
 		this%unsat(iu)%calc%nodes%isdirichlet	(idnode_u)	= .false.		
-	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then !CHECK: Check this if I have to put hsat>0 or dqhordx>0 as when hsat=0 there has to be no horizontal flow.
+	if ((this%get_hsath_mean(is,iu)>1E-10_dpd)) then 
 		this%unsat(iu)%calc%nodes%qnewmann	(idnode_u)		= (1.0_dpd-krelx)*this%get_qnewmannv(is,iu)+krelx*(this%get_dqhordxh(is,iu))
+		!this%unsat(iu)%calc%nodes%qnewmann	(idnode_u)		= krelx*(-this%get_dqhordxh_mean(is,iu))+(1.0_dpd-krelx)*(-this%get_dqhordxh(is,iu)) !CHECK.Changed (sign?)
 		this%unsat(iu)%calc%nodes%isnewmann	(idnode_u)		= .true.		
 	else
 		this%unsat(iu)%calc%nodes%qnewmann	(idnode_u)		= 0.0_dpd
@@ -575,8 +637,6 @@
 
 	function f_get_error_in_hsat(this)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd)::f_get_error_in_hsat
@@ -602,8 +662,6 @@
 
 	function f_get_error_in_q(this)
 	use com_mod_ty_nodes,only:ty_com_nodes
-	!CHECK: This procedure put the boundary only in the bottom node of the layer, it would be better to distribute over
-	!idnode to idnode_hsat
 	
 	class(ty_model_constraints),intent(inout)::this
 	real(kind=dpd)::f_get_error_in_q

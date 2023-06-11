@@ -1,31 +1,12 @@
-	!------------------------------------------------------------------------------
-	!        MOD_COM_DATATYPES_MATRIX
-	!------------------------------------------------------------------------------
-	! TITLE         : project name
-	! PROJECT       : 1.5D MULTILAYER FLOW MODEL
-	! MODULE        : MOD_COM_DATATYPES_MATRIX
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.15
-	! @author
-	! Iván Campos-Guereta Díez
-	!
-	! DESCRIPTION:
-	! Module to include matrix datatype and operations.
-	!------------------------------------------------------------------------------
-
 	!********************************************************************************************************************
-	! COM_MOD_MX_DATATYPES
-	!********************************************************************************************************************
-	! TITLE         : LIBRARY OF COMMON FUNCTIONS AND CLASSES TO USE IN FLOW1DSAT, FLOW1DUNSAT AND FLOW15DSATUNSAT.
-	! PROJECT       : FLOW15DSATUNSAT
+	! TITLE         : DERIVED TYPE TO DEFINE PROPERTIES, METHODS AND OPERATIONS WITH MATRIX
+	! PROJECT       : WF1DCOMDLL
 	! MODULE        : COM_MOD_MX_DATATYPES
-	! URL           : ...
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
 	! AFFILIATION   : The University of Nottingham
-	! DATE          : 13/2/2020
+	! DATE          : 13/2/2022
 	! REVISION      : 1.0
-	! LICENSE       : This software is copyrighted 2019(C)
+	! LICENSE       : This software is copyrighted 2022(C)
 	!
 	!> <B>MODULE TO INCLUDE MATRIX DATATYPE AND OPERATIONS</B>
 	!> This module define an abstract class \b ty_mx, that need to be subclassed in one of three possible classes:
@@ -411,7 +392,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"permute_cols_dns" :: permute_cols_dns
 	!DEC$ endif
 
-
 	class(ty_mx_dense),intent(in)::this
 	integer,intent(in)::p(:)
 	class(ty_mx),allocatable::permute_cols_dns
@@ -434,7 +414,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"permute_rows_cols_dns" :: permute_rows_cols_dns
 	!DEC$ endif
-
 
 	class(ty_mx_dense),intent(in)::this
 	integer,intent(in)::p(:)
@@ -495,7 +474,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"mulmv_csr" :: mulmv_csr
 	!DEC$ endif
-
 
 	real(kind=dpd),parameter::alpha = 1.0_dpd, beta = 0.0_dpd
 	class(ty_mx_csr),intent(in)::this
@@ -770,9 +748,7 @@
 		mul_sca8m_dns%mx = sca*this%mx
 	end select
 
-
 	end function mul_sca8m_dns
-
 
 	function mul_sca8m_bnd(sca,this)
 	!DEC$ if defined(_DLL)
@@ -872,9 +848,9 @@
 
 	end function mul_sca16m_csr
 
-	! !********************************************************************************************************************
-	!	! f: division matrix by scalar
-	!	!********************************************************************************************************************
+	!********************************************************************************************************************
+	! f: division matrix by scalar
+	!********************************************************************************************************************
 
 
 	function div_msca4_dns(this,sca)
@@ -1054,9 +1030,9 @@
 
 	end function div_msca16_csr
 
-	! !********************************************************************************************************************
-	!	! F: MULTIPLICATION OF TWO MATRIX (DENSE)
-	!	!********************************************************************************************************************
+	!********************************************************************************************************************
+	! F: MULTIPLICATION OF TWO MATRIX (DENSE)
+	!********************************************************************************************************************
 
 	function mul_mm_dns(this,mx)
 	!DEC$ if defined(_DLL)
@@ -1082,10 +1058,9 @@
 
 	end function mul_mm_dns
 
-
-	! !********************************************************************************************************************
-	!	! F: TRANSPOSE OF A MATRIX (DENSE)
-	!	!********************************************************************************************************************
+	!********************************************************************************************************************
+	! F: TRANSPOSE OF A MATRIX (DENSE)
+	!********************************************************************************************************************
 
 	function transpose_dns(this)
 	!DEC$ if defined(_DLL)
@@ -1107,17 +1082,10 @@
 
 	end function transpose_dns
 
-
-
-
-
-
-
-
-	!  !********************************************************************************************************************
-	!	! F: TWO MATRIX SUM OF THE SAME KIND AND SAME SPARSITY
-	!	!********************************************************************************************************************
-	! !
+  !********************************************************************************************************************
+  ! F: TWO MATRIX SUM OF THE SAME KIND AND SAME SPARSITY
+	!********************************************************************************************************************
+	!
 
 
 	function sum_mm_dns(this,mx)
@@ -1145,7 +1113,6 @@
 	end function sum_mm_dns
 
 
-
 	function sum_mm_bnd(this,mx)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"sum_mm_bnd" :: sum_mm_bnd
@@ -1169,7 +1136,6 @@
 	end select
 
 	end function sum_mm_bnd
-
 
 
 	function sum_mm_csr(this,mx)
@@ -1197,11 +1163,10 @@
 	end function sum_mm_csr
 
 
-	!
-	!  !********************************************************************************************************************
-	!	! F: TWO MATRIX SUBTRACT OF THE SAME KIND AND SAME SPARSITY
-	!	!********************************************************************************************************************
-	! !
+	!********************************************************************************************************************
+	! F: TWO MATRIX SUBTRACT OF THE SAME KIND AND SAME SPARSITY
+	!********************************************************************************************************************
+	
 	function sub_mm_dns(this,mx)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"sub_mm_dns" :: sub_mm_dns
@@ -1214,7 +1179,6 @@
 	select type (mx)
 	type is (ty_mx_dense)
 		allocate(ty_mx_dense::sub_mm_dns)
-		!allocate(sub_mm,source=ty_mx_dense())
 		call sub_mm_dns%init(size(this%mx,1),size(this%mx,2)) !constructor
 		select type(sub_mm_dns)
 		type is (ty_mx_dense)
@@ -1238,7 +1202,6 @@
 	select type (mx)
 	type is (ty_mx_banded)
 		allocate(ty_mx_banded::sub_mm_bnd)
-		!allocate(sub_mm,source=ty_mx_banded(kl=this%kl,ku=this%ku))
 		call sub_mm_bnd%init(size(this%mx,2),this%kl,this%ku) !constructor
 		select type(sub_mm_bnd)
 		type is (ty_mx_banded)
@@ -1249,7 +1212,6 @@
 	end select
 
 	end function sub_mm_bnd
-
 
 	function sub_mm_csr(this,mx)
 	!DEC$ if defined(_DLL)
@@ -1263,7 +1225,6 @@
 	select type (mx)
 	type is (ty_mx_csr)
 		allocate(ty_mx_csr::sub_mm_csr)
-		!allocate(sub_mm,source=ty_mx_csr())
 		call sub_mm_csr%init(size(this%mxval),size(this%csrrows)-1) !constructor
 		select type(sub_mm_csr)
 		type is (ty_mx_csr)
@@ -1275,8 +1236,6 @@
 
 	end function sub_mm_csr
 
-
-	!
 	!********************************************************************************************************************
 	! s: MATRIXCONSTRUCTORS
 	!********************************************************************************************************************
@@ -1345,10 +1304,9 @@
 
 	end subroutine init_csr
 
-	!
-	!  !********************************************************************************************************************
-	!	! s: ASSIGNMENT OVERRIDE
-	!	!********************************************************************************************************************
+	!********************************************************************************************************************
+	! s: ASSIGNMENT OVERRIDE
+	!********************************************************************************************************************
 
 	! MATRIX CLASS TO ARRAY
 
@@ -1360,12 +1318,9 @@
 	class(ty_mx_dense),intent(in)::this
 	real(kind=dpd),intent(inout)::mx(:,:)
 
-
-
 	mx = this%mx
 
 	end subroutine assign_matrix_to_array_dns
-
 
 	subroutine assign_matrix_to_array_bnd(mx,this)
 	!DEC$ if defined(_DLL)
@@ -1420,11 +1375,6 @@
 
 	end subroutine assign_matrix_to_array_csr
 
-
-
-
-
-
 	! ARRAY TO MATRIX CLASS
 
 	subroutine assign_array_to_matrix_dns(this,mx)
@@ -1435,12 +1385,9 @@
 	class(ty_mx_dense),intent(inout)::this
 	real(kind=dpd),intent(in)::mx(:,:)
 
-
-
 	this%mx=mx
 
 	end subroutine assign_array_to_matrix_dns
-
 
 	subroutine assign_array_to_matrix_bnd(this,mx)
 	!DEC$ if defined(_DLL)
@@ -1492,7 +1439,6 @@
 
 	end subroutine assign_array_to_matrix_csr
 
-
 	!MATRIX CLASS TO MATRIX CLASS....
 
 	subroutine assign_array_to_array_dns(this,mx)
@@ -1529,7 +1475,6 @@
 
 	end subroutine assign_array_to_array_bnd
 
-
 	subroutine assign_array_to_array_csr(this,mx)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"assign_array_to_array_csr" :: assign_array_to_array_csr
@@ -1546,7 +1491,6 @@
 	end select
 
 	end subroutine assign_array_to_array_csr
-
 
 	!SCALAR TO MATRIX CLASS....
 	!
@@ -1596,8 +1540,9 @@
 
 	this%mxval=sca
 	end subroutine assign_array_to_sca4_csr
-	! !----------------------------------------------------------------------
-	!
+	
+	!----------------------------------------------------------------------
+	
 	subroutine assign_array_to_sca8_dns(this,sca)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"assign_array_to_sca8_dns" :: assign_array_to_sca8_dns
@@ -1630,9 +1575,9 @@
 
 	this%mxval=sca
 	end subroutine assign_array_to_sca8_csr
-	!
-	!   !----------------------------------------------------------------------
-	!
+	
+	!----------------------------------------------------------------------
+	
 	subroutine assign_array_to_sca16_dns(this,sca)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"assign_array_to_sca16_dns" :: assign_array_to_sca16_dns
@@ -1666,7 +1611,6 @@
 	this%mxval=sca
 	end subroutine assign_array_to_sca16_csr
 
-
 	!********************************************************************************************************************
 	! s: GET VALUES AT GIVEN ROW AND COLUMN IN THE MATRIX
 	!********************************************************************************************************************
@@ -1680,8 +1624,6 @@
 	integer,intent(in)::nrow
 	integer,intent(in)::ncol
 	real(kind=dpd)::get_dns
-
-
 
 	get_dns = this%mx(nrow,ncol)
 
@@ -1697,8 +1639,6 @@
 	integer,intent(in)::nrow
 	integer,intent(in)::ncol
 	real(kind=dpd)::get_bnd
-
-
 
 	if ((1+this%ku+nrow-ncol).ge.1.and.(1+this%ku+nrow-ncol).le.(1+this%ku+this%kl)) then
 		get_bnd = this%mx(1+this%ku+nrow-ncol,ncol)
@@ -1719,59 +1659,13 @@
 	integer,intent(in)::ncol
 	real(kind=dpd)::get_csr
 
-
-
 	if(this%pos(nrow,ncol).ne.0) then
 		get_csr = this%mxval(this%pos(nrow,ncol))
 	else
 		get_csr = 0.0_dpd
 	end if
 
-
-	!npos = FINDLOC(this%csrcols(this%csrrows(nrow):this%csrrows(nrow+1)-1),ncol)
-	!if (npos(1).NE.0) then
-	!  npos(1) = this%csrrows(nrow) + npos(1)-1
-	!  get_csr = this%mxval(npos(1))
-	!else
-	!  get_csr = 0.0_dpd
-	!end if
-
 	end function get_csr
-	!
-	!********************************************************************************************************************
-	! s: SET VALUES AT GIVEN ROW AND COLUMN IN THE MATRIX
-	!********************************************************************************************************************
-	!
-	!  SUBROUTINE set_generic(this,nrow,ncol,val)
-	!  CLASS(ty_mx),INTENT(INOUT)::this
-	!  INTEGER,INTENT(IN)::nrow
-	!  INTEGER,INTENT(IN)::ncol
-	!  REAL(dpd),intent(in)::val
-	!
-	!  INTEGER::npos(1),ku,kl
-	!
-	!  SELECT TYPE (this)
-	!  type IS (ty_mx_dense)
-	!      this%mx(nrow,ncol)=val
-	!	type IS (ty_mx_banded)
-	!		ku = this%ku
-	!		kl = this%kl
-	!    if ((1+this%ku+nrow-ncol).GE.1.AND.(1+this%ku+nrow-ncol).LE.(1+this%ku+this%kl)) THEN
-	!      this%mx(1+this%ku+nrow-ncol,ncol)=val
-	!    ELSE
-	!      STOP('TRIED TO FILL OUTSIDE SPARSITY OF THE MATRIX')
-	!    END IF
-	!  type IS (ty_mx_csr)
-	!    npos = FINDLOC(this%csrcols(this%csrrows(nrow):this%csrrows(nrow+1)-1),ncol)
-	!    if (npos(1).NE.0) then
-	!      npos(1) = this%csrrows(nrow) + npos(1)-1
-	!      this%mxval(npos(1)) = val
-	!    else
-	!      STOP('TRIED TO FILL OUTSIDE SPARSITY OF THE MATRIX')
-	!    end if
-	!  END SELECT
-	!
-	!  END SUBROUTINE set_generic
 
 	subroutine set_dns(this,nrow,ncol,val)
 	!DEC$ if defined(_DLL)
@@ -1783,12 +1677,9 @@
 	integer,intent(in)::ncol
 	real(dpd),intent(in)::val
 
-
-
 	this%mx(nrow,ncol)=val
 
 	end subroutine set_dns
-
 
 	subroutine set_bnd(this,nrow,ncol,val)
 	!DEC$ if defined(_DLL)
@@ -1823,16 +1714,7 @@
 	integer,intent(in)::ncol
 	real(dpd),intent(in)::val
 
-
-
 	this%mxval(this%pos(nrow,ncol)) = val
-	!npos = findloc(this%csrcols(this%csrrows(nrow):this%csrrows(nrow+1)-1),ncol)
-	!if (npos(1).ne.0) then
-	!  npos(1) = this%csrrows(nrow) + npos(1)-1
-	!  this%mxval(npos(1)) = val
-	!else
-	!  stop('tried to fill outside sparsity of the matrix')
-	!end if
 
 	end subroutine set_csr
 

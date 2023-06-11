@@ -1,3 +1,26 @@
+	!********************************************************************************************************************
+	! TITLE         : COM_MOD_TY_BOUNDARY: DERIVED TYPE THAT DEFINES COMMON PROPERTIES AND METHODS OF BOUNDARY CONDITIONS
+	! PROJECT       : WF1DCOMDLL
+	! MODULE        : COM_MOD_TY_BOUNDARY
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	!> <B>INCLUDE THE DERIVED TYPE(CLASS) WITH BOUNDARY CONDITIONS</B>
+	!>
+	!> The module include an only derived type: <B>ty_com_boundary</B> to define boundary conditions.
+	!
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
+	!********************************************************************************************************************
+
 	module com_mod_ty_boundary
 
 	implicit none
@@ -60,8 +83,6 @@
 	class(ty_com_boundary),intent(inout)::this
 	real(kind=dpd)::f_h_top_file
 
-	!real(kind=dpd)::t0,t1,q0,q1
-
 	!adjust index for actual time
 	if(this%index>1) then
 		do while(t<this%timebound(this%index).or.this%index==1)
@@ -95,7 +116,6 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_q_top_file" :: f_q_top_file
 	!DEC$ endif
-
 
 	real(kind=dps),intent(in)::t
 	class(ty_com_boundary),intent(inout)::this

@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        INCLUDE FUNCTIONS FOR LINEAR INTERPOLATION
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : mod_sat_ty_nodes
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : LIBRARY OF FUNCTIONS TO PERFORM LINEAR INTERPOLATIONS
+	! PROJECT       : WF1DCOMDLL
+	! MODULE        : COM_MOD_LINEAR_INTERPOLATION
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Module with a function to perform a linear interpolation
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid
-	!  PhD Student by University of Nottingham
-	!  eMBA by International Institute San Telmo in Seville
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for the collection of nodes-classes in the saturated model
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 
@@ -31,11 +32,12 @@
 	contains
 
 	!********************************************************************************************************************
-	! F: LINEARINTERPOLATION(FUNC1D,XVAL(:),YVAL(:))
+	! F: linearinterpolation_ordered(X,XVAL(:),YVAL(:))
 	!--------------------------------------------------------------------------------------------------------------------
-	!		Function that returns the integral in the element. In this case the function is in absolute coords to the element.
-	!   func1d(x):         Is the relative coord at wich calculate the jacobian
-	!   xne(nnodes): Is the absolute coodinates of the nodes of element.
+	!		Linear interpolation at x given values of points xval(:) and yval(:)
+	!   x:					real value where to get the interpolated value
+	!   XVAL(:)  Coordinate x of known points
+	!   YVAL(:)  Known function values at x
 	!********************************************************************************************************************
 
 	function linearinterpolation_ordered(x,xval,yval)

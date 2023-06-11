@@ -1,31 +1,35 @@
 ﻿	!********************************************************************************************************************
-	!*                                                                                                                  *
-	!*                                 MODULE: MOD_LINALG_SOLVERS                                                       *
-	!*                                                                                                                  *
-	!********************************************************************************************************************
-	!* THIS MODULE INCLUDE VARIABLY SATURATED HYDRAULIC FUNCTIONS BY VAN GENUCHTEN                                      *
-	!*    SOLVE_LINALG(MX,SOLVER):   Calculate linear system								                                            *
-	!*                                                                                                                  *
-	!*    SOLVER = 0 Dense Matrix                                                                                       *
-	!*    SOLVER = 1 CSR Matrix solver by Intel Direct Sparse Solver (Intel DSS)                                        *
-	!*    SOLVER = 2 CSR MATRIX solved by FMGRES Iterative solver with ILUT Preconditioning                             *
-	!*    SOLVER = 3 BANDED MATRIX solved by direct gaussian method                                                     *
-	!*                                                                                                                  *
-	!*    Iván Campos-Guereta Díez                                                                                      *
-	!*    MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!*    PhD Student by University of Nottingham                                                                       *
-	!*    eMBA by International Institute San Telmo in Seville                                                          *
-	!*    ivan.camposguereta@nottingham.ac.uk                                                                           *
-	!*                                                                                                                  *
-	!*    This software is copyrighted 2019(C)                                                                          *
+	! TITLE         : COM_MOD_MX_SOLVERS: MODULE CONTAINING A FUNCITON TO SOLVE A LINEAR SYSTEM BY DIFFERENT APPROACHES
+	! PROJECT       : WF1DCOMDLL
+	! MODULE        : COM_MOD_MX_SOLVERS
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> This module contains a unique function to solve a linear system with different apporaches:
+	!>    SOLVE_LINALG(MX,SOLVER):   Calculate linear system
+	!>
+	!>    SOLVER = 0 Dense Matrix
+	!>    SOLVER = 1 CSR Matrix solver by Intel Direct Sparse Solver (Intel DSS)
+	!>    SOLVER = 2 CSR MATRIX solved by FMGRES Iterative solver with ILUT Preconditioning
+	!>    SOLVER = 3 BANDED MATRIX solved by direct gaussian method
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	include 'mkl_dss.f90' ! include the standard dss "header file."
 	include 'mkl_spblas.f90' !Sparse blas
-	!!include 'mkl_pardiso.f90'
-	!
+	!include 'mkl_pardiso.f90'
 	!include	'lapack.f90'
-
 	!include	'blas.f90'
 
 	module com_mod_mx_solvers
@@ -44,43 +48,9 @@
 	! SOLVE_CSR (MX,RHS,SOLUTION,SOLVER,CSRROWS,CSRCOLS,PERM)	: Sparse CSR storage
 	!********************************************************************************************************************
 
-	!interface SOLVE_LINALG
-	!module procedure SOLVE_DENSE !MATRIX VECTOR MULTIPLICATION OF BANDED MATRIX
-	!module procedure SOLVE_BANDED !MATRIX VECTOR MULTIPLICATION OF BANDED MATRIX
-	!module procedure SOLVE_CSR !MATRIX VECTOR MULTIPLICATION OF BANDED MATRIX
-	!end interface SOLVE_LINALG
-
 	public:: solve_linalg
 
 	contains
-
-	!SUBROUTINE SOLVE_LINALG(MX,SOLVER)
-	!!Solve a línear system given matrix in a given format
-	!USE DATATYPES,ONLY:TYLINALG
-	!
-	!TYPE(TYLINALG),INTENT(INOUT)::MX
-	!INTEGER,INTENT(IN)::SOLVER
-	!!REAL(KIND=dpd),INTENT(IN)::MX(:),RHS(:)
-	!!INTEGER,INTENT(IN),OPTIONAL::CSRROWS(:),CSRCOLS(:)
-	!!INTEGER,INTENT(INOUT),OPTIONAL,ALLOCATABLE::PERM(:)
-	!
-	!!REAL(KIND=dpd),INTENT(OUT)::SOLUTION(:)
-	!
-	!SELECT CASE (SOLVER)
-	!CASE (0) !General dense matrix (general matrix, dense storage)
-	!     CALL SOLVE_DENSE(MX%MXDENSE,MX%RHS,MX%SOLUTION)
-	!CASE (1) !CSR Sparse Direct DSS solver (general matrix, CSR storage)
-	!		 CALL SOLVE_DSS(MX%MXCSR,MX%CSRROWS,MX%CSRCOLS,MX%RHS,MX%SOLUTION,MX%PERM)
-	!CASE (2) !CSR iterative FMGRES with ILUT preconditioning (general matrix, CSR storage)
-	!	   CALL SOLVE_FGMRES(MX%MXCSR,MX%CSRROWS,MX%CSRCOLS,MX%RHS,MX%SOLUTION)
-	!CASE (3) !BANDED iterative FMGRES with preconditioning (general matrix, CSR storage)
-	!	   CALL SOLVE_BANDED(MX%MXBANDED,MX%RHS,MX%SOLUTION,MX%MXBANDEDLS,MX%kl,MX%ku)
-	!CASE DEFAULT
-	!		STOP('No proper Linear Algebra Solver selected')
-	!END SELECT
-	!
-	!END SUBROUTINE SOLVE_LINALG
-
 
 	!********************************************************************************************************************
 	! S: SOLVE_DENSE(MX,RHS,SOLUTION,SOLVER)
@@ -157,10 +127,7 @@
 
 	numnod = size(rhs)
 
-	!call dgesv( n, nrhs, a, lda, ipiv, b, ldb, info )
 	solution = rhs
-
-	!call gesv(  mx, solution, ipiv, info )
 
 	call dgesv( numnod, 1, mx, numnod, ipiv, solution, numnod, info ) !v_rhs is overwritten with solution
 
@@ -269,7 +236,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"solve_csr" :: solve_csr
 	!DEC$ endif
 
-
 	use mkl_dss
 
 	implicit none
@@ -280,14 +246,13 @@
 	integer,intent(in)::csrrows(:),csrcols(:)
 	integer,intent(inout),allocatable,optional::perm(:)
 
-
 	select case (solver)
 	case (1) !general dense matrix (general matrix, dense storage)
 		call solve_csr_dss(mx,rhs,solution,csrrows,csrcols,perm)
 	case (3) !general dense matrix (general matrix, dense storage)
 		call solve_csr_fgmres_ilut(mx,rhs,solution,csrrows,csrcols)
 		case default
-		stop("arguments dont match for banded matrix linear algebra solver")
+		stop("This solver is not yet implemented")
 	end select
 
 	contains
@@ -298,19 +263,15 @@
 
 	implicit none
 
-
 	real(kind=dpd),intent(in)::mx(:),rhs(:)
 	integer,intent(in)::csrrows(:),csrcols(:)
 	integer,intent(inout),allocatable,optional::perm(:)
 	real(kind=dpd2),intent(inout)::solution(:)
-	!type(tymatrix),intent(inout)::	mx
-	!type(mkl_pardiso_handle)::pt(64)
 
 	integer :: error,i,optcreate,nrhs,optstructure,optfactor,optsolve, opt, numnp,ncount
 	! define the data arrays and the solution and rhs vectors.
 	type(mkl_dss_handle) :: handle ! allocate storage for the solver handle.
 	character*15::statin
-
 
 	numnp = size(csrrows)-1
 	opt = mkl_dss_defaults
@@ -410,8 +371,6 @@
 	real(kind=dpd):: dnrm2,dvar
 	real(kind=dpd2)::bilut((2*maxfil+1)*(size(csrrows)-1)-maxfil*(maxfil+1)+1)
 	integer::ibilut(size(csrrows)),jbilut((2*maxfil+1)*(size(csrrows)-1)-maxfil*(maxfil+1)+1)
-	!real(kind=dpd2)::bilut((2*maxfil+1)*(size(csrrows)-1)-maxfil*(maxfil+1)+1)
-	!integer::ibilut(size(csrrows)),jbilut((2*maxfil+1)*(size(csrrows)-1)-maxfil*(maxfil+1)+1)
 
 	!numilu = (2*maxfil+1)*(size(csrrows)-1)-maxfil*(maxfil+1)+1
 	numnp = size(csrrows)-1
@@ -439,7 +398,6 @@
 	descra % mode = sparse_fill_mode_upper
 	descra % diag = sparse_diag_non_unit
 
-
 	!   create csr matrix
 	i = mkl_sparse_d_create_csr(csra,sparse_index_base_one,numnp,numnp,csrrows(1:numnp),csrrows(2:numnp+1),csrcols,mx)
 	!rhs = mx%bx
@@ -453,8 +411,7 @@
 	!---------------------------------------------------------------------------
 	solution=rhs
 	info = mkl_sparse_d_mv(sparse_operation_non_transpose,alpha,csra,descra,expected_solution,beta,solution)
-	!solution=rhs
-	!rhs = mx%bx
+
 	!---------------------------------------------------------------------------
 	! initialize the solver
 	!---------------------------------------------------------------------------
@@ -462,9 +419,7 @@
 
 	call dfgmres_init(numnp, computed_solution, rhs, rci_request, ipar, dpar, tmp)
 
-
 	if (rci_request .ne. 0) go to 999
-
 
 	!---------------------------------------------------------------------------
 	! calculate ilut preconditioner.
@@ -658,304 +613,6 @@
 
 1000 end subroutine solve_csr_fgmres_ilut
 
-
-
 	end subroutine solve_csr
-
-
-
-	!---------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-	! *******************************************************************************************************************************
-
-
-
-	!	!*************************************************************************************************************************************
-	!
-	!	SUBROUTINE SOLVE_GMRES_SCALED(NO,MX)
-	!
-	!	USE MKL_SPBLAS
-	!
-	!	IMPLICIT NONE
-	!
-	!
-	!	TYPE(TYMATRIX),INTENT(INOUT)::	MX
-	!	TYPE(TYNOD),INTENT(INOUT)::	NO
-	!
-	!	TYPE(SPARSE_MATRIX_T)::csrA,csrD,csrAScaled ! Structure with sparse matrix
-	!	TYPE(MATRIX_DESCR)::descrA,descrD,descrAScaled    ! Sparse matrix descriptor
-	!
-	!	INTEGER, PARAMETER::SIZE=128
-	!	INTEGER::i,j,INFO,RCI_REQUEST
-	!	REAL(KIND=dpd2)::alpha, beta, rhs(NO%NumNP),residual(NO%NumNP),B(NO%NumNP)
-	!	REAL(KIND=dpd2),ALLOCATABLE::tmp(:)
-	!	REAL(KIND=dpd)::EXPECTED_SOLUTION(NO%NumNP),COMPUTED_SOLUTION(NO%NumNP),DPAR(SIZE)
-	!	REAL(KIND=dpd)::D(NO%NumNP)
-	!	INTEGER::DROW(NO%NumNP+1)
-	!	INTEGER::DCOL(NO%NumNP)
-	!
-	!	INTEGER:: IPAR(SIZE)
-	!	INTEGER:: ITERCOUNT
-	!	INTEGER:: SIZETMP
-	!	REAL(KIND=dpd):: DNRM2,DVAR
-	!
-	!	alpha = 1.0_dpd
-	!	beta  = 0.0_dpd
-	!	DROW = (/(i,i=1,NO%NumNP+1)/)
-	!	DCOL = (/(i,i=1,NO%NumNP)/)
-	!
-	!
-	!	! Parameters IPAR defined in: https://software.intel.com/en-us/mkl-developer-reference-c-fgmres-interface-description#RCI_ID_COMMONPARAMETERS
-	!	IPAR(15) = 2 !Restart after X iterations
-	!	ipar(4) =  100 !Maximum iterations
-	!	IPAR(8) = 0 !if 0 do not do the stopping test for the maximal number of iterations. Stopping is when ipar[3]≤ipar[4] (ipar(3) is current iteration number)
-	!	IPAR(11) = 0 !if the value is 0.0, the dfgmres ROUTine runs the non-preconditioned version of the FGMRES method. Otherwise preconditioned. And need step setting RCI_request=3.
-	!	DPAR(1) = 1.0D-20 !Specifies the relative tolerance. The default value is 1.0e-6.
-	!	!DPAR(2) = 1.0D-8 !Specifies the absolute tolerance. The default value is 0.0e+0.
-	!
-	!	!IF(.NOT.ALLOCATED(tmp)) ALLOCATE(tmp(NO%NumNp*(2*NO%NumNp+1)+(NO%NumNp*(NO%NumNp+9))/2+1))
-	!	SIZETMP=NO%NumNp*(2*NO%NumNp+1)+(NO%NumNp*(NO%NumNp+9))/2+1
-	!	IF(.NOT.ALLOCATED(tmp)) ALLOCATE(tmp(SIZETMP))
-	!
-	!	!   Create matrix descriptor
-	!	descrA % TYPE = SPARSE_MATRIX_TYPE_GENERAL
-	!	descrA % MODE = SPARSE_FILL_MODE_UPPER
-	!	descrA % DIAG = SPARSE_DIAG_NON_UNIT
-	!	descrD % TYPE = SPARSE_MATRIX_TYPE_GENERAL
-	!	descrD % MODE = SPARSE_FILL_MODE_UPPER
-	!	descrD % DIAG = SPARSE_DIAG_NON_UNIT
-	!	descrAScaled % TYPE = SPARSE_MATRIX_TYPE_GENERAL
-	!	descrAScaled % MODE = SPARSE_FILL_MODE_UPPER
-	!	descrAScaled % DIAG = SPARSE_DIAG_NON_UNIT
-	!
-	!
-	!
-	!
-	!
-	!
-	!	!!Also modifie AR matrix by diagonally multiply for D: (Preconditioning scale)
-	!	!DO i=1,NO%NumNP
-	!	!	DO j=1,NO%NumNP
-	!	!			IF(MX%AR_POS(i,j) .NE. 0) MX%AR_values(mx%AR_POS(i,j))=MX%AR_values(mx%AR_POS(i,j))*D(i)
-	!	!	END DO
-	!	!END DO
-	!
-	!	!!   Create CSR matrix
-	!	i = MKL_SPARSE_D_CREATE_CSR(csrA,SPARSE_INDEX_BASE_ONE,NO%numnp,NO%numnp,MX%AR_CSR3_rowindex(1:NO%NumNP),MX%AR_CSR3_rowindex(2:NO%NumNP+1),MX%AR_CSR3_col,MX%AR_values)
-	!
-	!	!Scaling matrix is a diagonal matrix with the inverse of NO%HNew, doing that for all expected solution are aproximated to 1. Except for 0 values in which scale is not performed.
-	!
-	!	!Scale preconditioner:
-	!	!D = MERGE(ABS(NO%HNew),1.0_dpd,ABS(NO%HNew)>1.0E-10_dpd)
-	!
-	!
-	!	!JACOBI PRECONDITIONER:-------------------------------------------------------
-	!	!DO i=1,NO%NumNP
-	!	!D = MERGE(1/MX%AR_values(mx%AR_POS(i,i)),1.0_dpd,abs(MX%AR_values(mx%AR_POS(i,i)))>1.0E-10_dpd)
-	!	!END DO
-	!
-	!	D = 1.0_dpd
-	!
-	!	descrA % TYPE = SPARSE_MATRIX_TYPE_DIAGONAL
-	!	i = MKL_SPARSE_D_MV(SPARSE_OPERATION_NON_TRANSPOSE,1.0_dps,csrA,descrA,D,0.0_dps,D)
-	!	descrA % TYPE = SPARSE_MATRIX_TYPE_GENERAL
-	!
-	!
-	!	D = MERGE(D,1.0_dpd,ABS(D)>1.0E-10)
-	!	D = 1/D
-	!
-	!	i = MKL_SPARSE_D_CREATE_CSR(csrD,SPARSE_INDEX_BASE_ONE,NO%numnp,NO%numnp,DROW(1:NO%NumNP),DROW(2:NO%NumNP+1),DCOL,D)
-	!
-	!
-	!	!MX%BX = MX%BX/D !Scaled RHS as preconditioner
-	!	residual = 0.0_dpd
-	!	tmp = 0.0_dpd
-	!
-	!
-	!	!Multiply sparse matrix.
-	!	!stat = mkl_sparse_spmm (operation, A, B, C)
-	!	i = mkl_sparse_spmm (SPARSE_OPERATION_NON_TRANSPOSE,csrA,csrD,csrAScaled)
-	!
-	!	!descrA % TYPE = SPARSE_MATRIX_TYPE_SYMMETRIC
-	!	!descrA % MODE = SPARSE_FILL_MODE_UPPER
-	!	!descrA % DIAG = SPARSE_DIAG_NON_UNIT
-	!	!
-	!	!descrD % TYPE = SPARSE_MATRIX_TYPE_DIAGONAL
-	!	!descrD % MODE = SPARSE_FILL_MODE_UPPER
-	!	!descrD % DIAG = SPARSE_DIAG_NON_UNIT
-	!	!i = mkl_sparse_sp2m (SPARSE_OPERATION_NON_TRANSPOSE, descrA, csrA, SPARSE_OPERATION_NON_TRANSPOSE, descrD, csrD, SPARSE_STAGE_FULL_MULT, csrAScaled)
-	!	!IF (i .NE. SPARSE_STATUS_SUCCESS) STOP
-	!
-	!
-	!	EXPECTED_SOLUTION=NO%HNew/D !Expected to be 1.0 except for values near to 0.0
-	!	!COMPUTED_SOLUTION=NO%HNew
-	!	COMPUTED_SOLUTION=EXPECTED_SOLUTION
-	!	!---------------------------------------------------------------------------
-	!	! Initialize variables and the right hand side through matrix-vector product
-	!	!---------------------------------------------------------------------------
-	!	!info = MKL_SPARSE_D_MV(SPARSE_OPERATION_NON_TRANSPOSE,alpha,csrA,descrA,EXPECTED_SOLUTION,beta,RHS)
-	!	B=MX%BX !Temporal right hand side
-	!	!rhs = MX%BX
-	!	!---------------------------------------------------------------------------
-	!	! Initialize the solver
-	!	!---------------------------------------------------------------------------
-	!	CALL DFGMRES_INIT(NO%NumNP, COMPUTED_SOLUTION, MX%BX, RCI_REQUEST, IPAR, DPAR, TMP)
-	!	IF (RCI_REQUEST .NE. 0) GO TO 999
-	!	!---------------------------------------------------------------------------
-	!	! Set the desired parameters:
-	!	! do the restart after 2 iterations
-	!	! LOGICAL parameters:
-	!	! do not do the stopping test for the maximal number of iterations
-	!	! do the Preconditioned iterations of FGMRES method
-	!	! DOUBLE PRECISION parameters
-	!	! set the relative tolerance to 1.0D-3 instead of default value 1.0D-6
-	!	!---------------------------------------------------------------------------
-	!	!! Parameters IPAR defined in: https://software.intel.com/en-us/mkl-developer-reference-c-fgmres-interface-description#RCI_ID_COMMONPARAMETERS
-	!	!        IPAR(15) = 5000 !Restart after X iterations
-	!	!        IPAR(8) = 0 !if 0 do not do the stopping test for the maximal number of iterations. Stopping is when par[3]≤ipar[4]
-	!	!        IPAR(11) = 0 !if the value is 0.0, the dfgmres ROUTine runs the non-preconditioned version of the FGMRES method. Otherwise preconditioned. And need step setting RCI_request=3.
-	!	!        DPAR(1) = 1.0D-20 !Specifies the relative tolerance. The default value is 1.0e-6.
-	!	!        !DPAR(2) = 1.0D-10 !Specifies the absolute tolerance. The default value is 0.0e+0.
-	!
-	!
-	!	!---------------------------------------------------------------------------
-	!	! Check the correctness and consistency of the newly set parameters
-	!	!---------------------------------------------------------------------------
-	!	CALL DFGMRES_CHECK(NO%NumNP, COMPUTED_SOLUTION, MX%BX, RCI_REQUEST, IPAR, DPAR, TMP)
-	!	IF (RCI_REQUEST .NE. 0) GO TO 999
-	!	!---------------------------------------------------------------------------
-	!	! Compute the solution by RCI (P)FGMRES solver with preconditioning
-	!	! Reverse Communication starts here
-	!	!---------------------------------------------------------------------------
-	!1	CALL DFGMRES(NO%NumNP, COMPUTED_SOLUTION, MX%BX, RCI_REQUEST, IPAR, DPAR, TMP)
-	!	!---------------------------------------------------------------------------
-	!	! If RCI_REQUEST=0.0, then the SOLUTION WAS FOUND with the required precision
-	!	!---------------------------------------------------------------------------
-	!	IF (RCI_REQUEST .EQ. 0) GO TO 3
-	!	!---------------------------------------------------------------------------
-	!	! If RCI_REQUEST=1, then compute the vector A*TMP(ipar[22]-1:ipar[22]+n-2)
-	!	! and put the result in vector TMP(IPAR(23)-1:ipar[23]+n-2)
-	!	!---------------------------------------------------------------------------
-	!	IF (RCI_REQUEST .EQ. 1) THEN
-	!		info = MKL_SPARSE_D_MV(SPARSE_OPERATION_NON_TRANSPOSE,alpha,csrAScaled,descrA,TMP(IPAR(22)),beta,TMP(IPAR(23)))
-	!		GO TO 1
-	!	END IF
-	!	!---------------------------------------------------------------------------
-	!	! If RCI_request=2, then do the user-defined stopping test
-	!	! The RESIDUAL STOPPING TEST for the computed solution is performed here
-	!	!---------------------------------------------------------------------------
-	!	! NOTE: from this point vector B(N) is no longer containing the right-hand
-	!	! side of the problem! It contains the current FGMRES approximation to the
-	!	! solution. If you need to keep the right-hand side, save it in some other
-	!	! vector before the call to DFGMRES ROUTine. Here we saved it in vector
-	!	! RHS(N). The vector B is used instead of RHS to preserve the original
-	!	! right-hand side of the problem and guarantee the proper restart of FGMRES
-	!	! method. Vector B will be altered when computing the residual stopping
-	!	! criterion!
-	!	!---------------------------------------------------------------------------
-	!	IF (RCI_REQUEST .EQ. 2) THEN
-	!		! Request to the DFGMRES_GET ROUTine to put the solution into B(N) via IPAR(13)
-	!		IPAR(13) = 1 !if 0 updates de solution to vector x, if positive write the solution to B
-	!		! Get the current FGMRES solution in the vector B(N)
-	!		CALL DFGMRES_GET(NO%NumNP, COMPUTED_SOLUTION, B, RCI_REQUEST, IPAR,DPAR, TMP, ITERCOUNT)
-	!		! Compute the current true residual via Intel(R) MKL (Sparse) BLAS ROUTines
-	!		info = MKL_SPARSE_D_MV(SPARSE_OPERATION_NON_TRANSPOSE,alpha,csrAScaled,descrA,B,beta,RESIDUAL)
-	!		CALL DAXPY(NO%NumNP, -1.0D0.0, MX%BX, 1, RESIDUAL, 1)
-	!		DVAR = DNRM2(NO%NumNP, RESIDUAL, 1)
-	!		IF (DVAR .LT. 1.0E-20) THEN !Initially 1.0E-3
-	!			GO TO 3 !Go to 3 if Success
-	!		ELSE
-	!			GO TO 1 !Start new iteration
-	!		END IF
-	!	END IF
-	!	!---------------------------------------------------------------------------
-	!	! If RCI_REQUEST=3, then apply the preconditioner on the vector
-	!	! TMP(IPAR(22)-1:ipar(22)+n-2) and put the result in vector TMP(IPAR(23)-1:ipar(23)+n-2)
-	!	!---------------------------------------------------------------------------
-	!	IF (RCI_REQUEST .EQ. 3) THEN
-	!		IF (IPAR(4) .EQ. 3) THEN !ipar[4] is current iteration number
-	!			TMP(IPAR(23)+0)=-2.0D0 !ipar(23) specifies memory location which second vector (output start)
-	!			TMP(IPAR(23)+1)= 0.08519601586107672D0
-	!			TMP(IPAR(23)+2)=-1.1590871369607090D0
-	!			TMP(IPAR(23)+3)=-0.65791939687456980D0
-	!			TMP(IPAR(23)+4)= 0.75660051476696133D0
-	!		ELSE
-	!			IF(IPAR(4).EQ.4) THEN
-	!				TMP(IPAR(23)+0)= 0.0D0
-	!				TMP(IPAR(23)+1)= 0.0D0
-	!				TMP(IPAR(23)+2)= 0.0D0
-	!				TMP(IPAR(23)+3)= 1.0D0
-	!				TMP(IPAR(23)+4)=-1.0D0
-	!			ELSE
-	!				DO I = 0.0, NO%NumNP-1
-	!					TMP(IPAR(23)+I) = I * TMP(IPAR(22)+I)
-	!				END DO
-	!			END IF
-	!		END IF
-	!		GO TO 1
-	!	END IF
-	!	!---------------------------------------------------------------------------
-	!	! If RCI_REQUEST=4, then check if the norm of the next generated vector is
-	!	! not zero up to rounding and computational errors. The norm is contained
-	!	! in DPAR(7) parameter
-	!	!---------------------------------------------------------------------------
-	!	IF (RCI_REQUEST .EQ. 4) THEN
-	!		IF (DPAR(7) .LT. 1.0D-12) THEN
-	!			GO TO 3
-	!		ELSE
-	!			GO TO 1
-	!		END IF
-	!		!---------------------------------------------------------------------------
-	!		! If RCI_REQUEST=anything else, then DFGMRES subROUTine failed
-	!		! to compute the solution vector: COMPUTED_SOLUTION(N)
-	!		!---------------------------------------------------------------------------
-	!	ELSE
-	!		GO TO 999
-	!	END IF
-	!	!---------------------------------------------------------------------------
-	!	! Reverse Communication ends here
-	!	! Get the current iteration number and the FGMRES solution. (DO NOT FORGET to
-	!	! call DFGMRES_GET ROUTine as computed_solution is still containing
-	!	! the initial guess!). Request to DFGMRES_GET to put the solution into
-	!	! vector COMPUTED_SOLUTION(N) via IPAR(13)
-	!	!---------------------------------------------------------------------------
-	!3	IPAR(13) = 0 !IF 0 updates the solution to vector x, positive to the RHS vector B.
-	!	CALL DFGMRES_GET(NO%NumNP, COMPUTED_SOLUTION, MX%BX, RCI_REQUEST, IPAR, DPAR, TMP, ITERCOUNT)
-	!	!---------------------------------------------------------------------------
-	!	! Release internal Intel(R) MKL memory that might be used for computations
-	!	! NOTE: It is important to call the ROUTine below to avoid memory leaks
-	!	! unless you disable Intel(R) MKL Memory Manager
-	!	!---------------------------------------------------------------------------
-	!
-	!    info = MKL_SPARSE_DESTROY(csrA)
-	!	info = MKL_SPARSE_DESTROY(csrD)
-	!	info = MKL_SPARSE_DESTROY(csrAScaled)
-	!
-	!	CALL MKL_FREE_BUFFERS
-	!
-	!	!DVAR = DNRM2(N,EXPECTED_SOLUTION,1) !Euclidean Norm
-	!
-	!	MX%BSol=COMPUTED_SOLUTION*D
-	!
-	!	GO TO 1000
-	!
-	!	!---------------------------------------------------------------------------
-	!	! Release internal Intel(R) MKL memory that might be used for computations
-	!	! NOTE: It is important to call the ROUTine below to avoid memory leaks
-	!	! unless you disable Intel(R) MKL Memory Manager
-	!	!---------------------------------------------------------------------------
-	!999 WRITE( *,'(A,A,I5)') 'This example FAILED as the solver has', &
-	!		&  ' returned the ERROR code', RCI_REQUEST
-	!	info = MKL_SPARSE_DESTROY(csrD)
-	!	info = MKL_SPARSE_DESTROY(csrAScaled)
-	!	CALL MKL_FREE_BUFFERS
-	!	STOP 1
-	!
-	!1000 END SUBROUTINE SOLVE_GMRES_SCALED
 
 	end module com_mod_mx_solvers

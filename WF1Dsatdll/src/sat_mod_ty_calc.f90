@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        EXTENSION OF CLASS CALC FOR HORIZONTAL SATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : MOD_SAT_TY_LAYER
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : SAT_MOD_TY_CALC: EXTENDED DERIVED TYPE OF COM_MOD_TY_CALC TO INCLUDE PROPERTIES AND METHODS OF WF1DSAT
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_CALC
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Extended derived type of com_mod_ty_calc to include properties and methods of wf1dsat
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for horizontal saturated layer. Extend common class of layers.
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module sat_mod_ty_calc
@@ -34,8 +35,6 @@
 	type,extends(ty_com_calc),public::ty_sat_calc	!< CLASS: Definition of the layer in saturated model
 		type(ty_com_layers)	,pointer::layers
 
-		!real(kind=dps),allocatable::colbound(:)	!<Vector with the imposed dirichlet conditions?
-		!real(kind=dps),allocatable::colqent(:)	!<Vector with the imposed flows as newmann conditions
 		real(kind=dps),allocatable::nrel(:)	!<Factor to correct the relative porosity when coupling with the unsaturated model on an increasing waterlevel.
 
 		class(ty_mx),allocatable::mxmass	!<Mass matrix: of the FEM linear system
@@ -50,8 +49,6 @@
 	procedure,public:: construct 								=> s_sat_calc_construct
 	procedure,public:: deallocateall 						=> s_sat_calc_deallocateall
 	procedure,public:: build_linearsystem 			=> s_sat_calc_build_linearsystem
-	!procedure,public:: iterate									=> s_sat_calc_iteration
-	!procedure,public:: update_load 							=> s_sat_calc_update_load
 	procedure,public:: update_hnew_from_solution	=> s_sat_calc_update_hnew_from_solution
 	procedure,public:: estimate_htemp_for_new_iteration	=> s_sat_calc_estimate_htemp_for_new_iteration
 	procedure,public:: get_results_elements			=> s_sat_calc_results_in_elements
@@ -65,10 +62,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Allocate all allocatable properties of the class
 	!---------------------------------------------------------------------------------------------------------------------
 	subroutine s_sat_calc_allocateall(this)
 	!DEC$ if defined(_DLL)
@@ -78,18 +72,10 @@
 	use sat_mod_ty_elements, only:ty_sat_elements
 	use com_mod_ty_parameters, only:ty_com_parameters
 
-	!integer,parameter::KU=1,KL=1
-
 	class(ty_sat_calc),intent(inout)::this
-	!class(ty_com_nodes),pointer::nodes
-	!class(ty_com_elements),pointer::elements
-	!class(ty_com_parameters),pointer::parameters
-
-	!integer::nnc !<Number of nodes-classes
 
 	if(.not.allocated(this%nodes))allocate(ty_sat_nodes::this%nodes)
 	if(.not.allocated(this%elements))allocate(ty_sat_elements::this%elements)
-	!if(.not.allocated(this%parameters))allocate(ty_com_parameters::this%parameters)
 
 	end subroutine s_sat_calc_allocateall
 
@@ -98,7 +84,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
+	!> Construct the class.
 	!> @param[in] ntype
 	!> @param[inout] mx
 	!> @param[in] option
@@ -119,7 +105,6 @@
 	class(ty_com_nodes),pointer::nodescom
 	class(ty_sat_nodes),pointer::nodes
 	integer::nnc !<Number of nodes-classes
-	!integer,intent(in)::sparsity !<Sparsity of matrix (1=dense, 2=csr, 3= banded)
 
 	nnc=this%nodes%count
 	elemcom=>this%elements
@@ -135,8 +120,6 @@
 	end select
 
 	!Allocate all vectors
-	!if(.not.allocated(this%colbound)) allocate(this%colbound(nnc))
-	!if(.not.allocated(this%colqent))	allocate(this%colqent(nnc))
 	if(.not.allocated(this%nrel))	allocate(this%nrel(nnc))
 	this%nrel = 1.0_dpd
 	if(.not.allocated(this%slopeold)) allocate(this%slopeold(nnc))
@@ -145,6 +128,9 @@
 	if(.not.allocated(this%perm))			allocate(this%perm(nnc)) !If perm is not allocated then it is not used.
 
 	if(.not.allocated(elem%results_qent))		allocate(elem%results_qent(this%elements%count))
+	if(.not.allocated(elem%results_qsat))		allocate(elem%results_qsat(this%elements%count))
+	if(.not.allocated(elem%results_qinf))		allocate(elem%results_qinf(this%elements%count))
+	if(.not.allocated(elem%results_inchnew))		allocate(elem%results_inchnew(this%elements%count))
 	if(.not.allocated(elem%results_incvoldt)) allocate(elem%results_incvoldt(this%elements%count))
 	if(.not.allocated(elem%results_dqhordx))allocate(elem%results_dqhordx(this%elements%count))
 	if(.not.allocated(elem%results_dqhordx_from_incvoldt))allocate(elem%results_dqhordx_from_incvoldt(this%elements%count))
@@ -178,15 +164,19 @@
 	if(.not.allocated(elem%k))		allocate(elem%k(this%elements%count))
 
 	elem%results_qent=0.0_dpd
+	elem%results_qsat=0.0_dpd
+	elem%results_qinf=0.0_dpd
+	elem%results_inchnew=0.0_dpd	
 	elem%results_incvoldt=0.0_dpd
 	elem%results_dqhordx=0.0_dpd
 	elem%results_dqhordx_from_incvoldt=0.0_dpd
 	elem%results_dqhordx_all=0.0_dpd
 	elem%results_dqhordx_from_incvoldt_all=0.0_dpd
 
-
-
 	if(.not.allocated(nodes%results_qent))		allocate(nodes%results_qent(nodes%count))
+	if(.not.allocated(nodes%results_qsat))		allocate(nodes%results_qsat(nodes%count))
+	if(.not.allocated(nodes%results_qinf))		allocate(nodes%results_qinf(nodes%count))
+	if(.not.allocated(nodes%results_inchnew))		allocate(nodes%results_inchnew(nodes%count))
 	if(.not.allocated(nodes%results_incvoldt))	allocate(nodes%results_incvoldt(nodes%count))
 	if(.not.allocated(nodes%results_qhor))		allocate(nodes%results_qhor(nodes%count))
 	if(.not.allocated(nodes%results_dqhordx))	allocate(nodes%results_dqhordx(nodes%count))
@@ -195,14 +185,16 @@
 	if(.not.allocated(nodes%results_dqhordx_from_incvoldt))	allocate(nodes%results_dqhordx_from_incvoldt(nodes%count))
 	if(.not.allocated(nodes%results_dqhordx_from_incvoldt_all))	allocate(nodes%results_dqhordx_from_incvoldt_all(nodes%count))
 	nodes%results_qent								=0.0_dpd
+	nodes%results_qsat								=0.0_dpd
+	nodes%results_qinf								=0.0_dpd
+	nodes%results_inchnew							=0.0_dpd
+	nodes%results_incvoldt						=0.0_dpd
 	nodes%results_incvoldt							=0.0_dpd
 	nodes%results_qhor								=0.0_dpd
 	nodes%results_dqhordx							=0.0_dpd
 	nodes%results_qhor_all						=0.0_dpd
 	nodes%results_dqhordx_all					=0.0_dpd
 	nodes%results_dqhordx_from_incvoldt_all	=0.0_dpd
-
-
 
 	!allocate matrix
 	select case(this%parameters%typematrixstorage)
@@ -221,9 +213,6 @@
 	call this%allocate_matrix(this%mxbound)
 
 	this%slopeold = 0.0_dpd
-	!this%slopeold = 1.0E-3*this%parameters%dtinit !Not 0 to avoid not updating hnew
-
-
 
 	end subroutine s_sat_calc_construct
 
@@ -233,10 +222,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Deallocate all allocatable properties of the class
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_calc_deallocateall(this)
@@ -246,8 +232,6 @@
 
 	class(ty_sat_calc),intent(inout)::this
 
-	!if(allocated(this%colbound))		deallocate(this%colbound)
-	!if(allocated(this%colqent))		deallocate(this%colqent)
 	if(allocated(this%slopeold))		deallocate(this%slopeold)
 	if(allocated(this%rhs))				deallocate(this%rhs)
 	if(allocated(this%solution))		deallocate(this%solution)
@@ -270,18 +254,6 @@
 		deallocate(this%nodes)
 	end if
 
-	!if(allocated(this%parameters)) then
-	!	!call this%parameters%deallocateall()
-	!	deallocate(this%parameters)
-	!end if
-	!
-	!select type(elem)
-	!type is(ty_sat_elements)
-	!	if(allocated(elem%results_qent)) deallocate(elem%results_qent)
-	!	if(allocated(elem%results_incvol)) deallocate(elem%results_incvol)
-	!	if(allocated(elem%results_incqhor)) deallocate(elem%results_incqhor)
-	!end select
-
 	end subroutine s_sat_calc_deallocateall
 
 	!---------------------------------------------------------------------------------------------------------------------
@@ -289,10 +261,9 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_model. Build coefficient matrix for actual head pressures.
-	!> @param[in] ntype
-	!> @param[inout] mx
-	!> @param[in] option
+	!> Build the linear system of the FEM methods
+	!> @param[in] IsTimeDependant If true, the matrix depend on time
+	!> @param[in] option OPTIONBASIS_H=1,OPTIONBASIS_DH=2,OPTIONBASIS_H_H=3,OPTIONBASIS_H_DH=4,OPTIONBASIS_DH_H=5,OPTIONBASIS_DH_DH=6
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_calc_build_linearsystem(this,IsTimeDependant,option)
@@ -300,20 +271,18 @@
 	!DEC$ ATTRIBUTES DLLEXPORT :: s_sat_calc_build_linearsystem
 	!DEC$ endif
 	use com_mod_mx_datatypes, only:ty_mx,ty_mx_dense,ty_mx_csr,ty_mx_banded
-	!use com_mod_fem_intelement,only:intelement_1don
-	!use sat_mod_ty_layers,only:ty_sat_layers
 
 	integer,parameter::COEF_MASS=1,COEF_STIFF=2,COEF_LOAD=3,COEF_BOUND=4
 	integer,parameter::OPTIONBASIS_H=1,OPTIONBASIS_DH=2,OPTIONBASIS_H_H=3,OPTIONBASIS_H_DH=4,OPTIONBASIS_DH_H=5,OPTIONBASIS_DH_DH=6
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDERHOLD=2
+	logical,parameter::IS_EQ_FIRST_VERSION=.TRUE.
 	class(ty_sat_calc),intent(inout),target::this
-	!class(ty_sat_layers),intent(in)::layers
-	!real(kind=dpd),intent(in)::dt
 	logical,intent(in)::IsTimeDependant
 	integer,intent(in),optional::option
 	integer::opt,nelem,numnod,numclass,numnodclass
 
 	real(kind=dpd)::henodes(this%elements%nn*(this%elements%nc+1))
+	real(kind=dpd)::dhzenodes(this%elements%nn*(this%elements%nc+1))
 	real(kind=dpd)::henodesold(this%elements%nn*(this%elements%nc+1))
 	real(kind=dpd)::nrelnodes(this%elements%nn*(this%elements%nc+1))
 
@@ -325,19 +294,52 @@
 	numclass		=this%elements%nc+1
 	numnodclass =numnod*numclass
 
+	!Mass matrix:
+	!tex:\[\left[ {{M_{MASSi,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {{\overline {{n_{nw}}} }^{k,n + 1}}{\phi _j}{\phi _i}d{\rm{\Omega }}} \right] = \left[ {{M_{MASSi,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {r_{rel}}\cdot\frac{{\sum\limits_l {({\theta _{sat,l}} - {\theta _{res,l}})\Delta {h_l}} }}{{\Delta h}}{\phi _j}{\phi _i}d{\rm{\Omega }}} \right]{\overline {{n_{nw}}} ^{k,n + 1}}\]
 	if(IsTimeDependant)				call this%buildcoefmatrix(f_mass,this%mxmass,this%parameters%masslump,OPTIONBASIS_H_H)	!Build mass matrix
-	if(IsTimeDependant)				call this%buildcoefmatrix(f_stiff,this%mxstiff,.false.,OPTIONBASIS_DH_DH)								!Build stiff matrix
+	!Stiffness matrix:
+
+
+	!1st version:
+	!tex:
+	!$\left[ {{M_{Ki,j}}} \right] = \left[ {\int\limits_\Omega  {k_{eff}^{k,n + 1} \cdot {h^{k,n + 1}}\cdot\frac{{\partial {\phi _j}}}{{\partial x}}\frac{{\partial {\phi _i}}}{{\partial x}}} d\Omega } \right]$
+
+	!2nd version (not working):
+	!tex:
+	!\[\left[ {{M_{Ki,j}}} \right] = \left[ {\int\limits_\Omega  {k_{eff}^{k,n + 1} \cdot \left( {\frac{{\partial {h^{k,n + 1}}}}{{\partial x}} + \frac{{\partial z}}{{\partial x}}} \right) \cdot {\phi _j}\frac{{\partial {\phi _i}}}{{\partial x}}} d\Omega } \right]\]
+
+	if(IS_EQ_FIRST_VERSION.and.IsTimeDependant)				call this%buildcoefmatrix(f_stiffA,this%mxstiff,.false.,OPTIONBASIS_DH_DH)
+	if(.not.IS_EQ_FIRST_VERSION.and.IsTimeDependant)	call this%buildcoefmatrix(f_stiffB,this%mxstiff,.false.,OPTIONBASIS_H_DH)								!Build stiff matrix
+
+
+	!Identity matrix for the waterflow:
+	!tex:$\left[ {{I_{i,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {\phi _j}{\phi _i}{\rm{\;}}d{\rm{\Omega }}} \right]$
 	if(.not.IsTimeDependant)	call this%buildcoefmatrix(f_identity,this%mxload,.false.,OPTIONBASIS_H_H)								!Build load matrix
-	if(IsTimeDependant)	call s_aux_buildcoefbound(this,this%mxbound)																						!Build boundary matrix (in this case pressure pass from h to 0 in a length of kmul·h)
-	!if(IsTimeDependant)	call s_aux_buildcoefbound_multk(this,this%mxbound)																			!Second method assigning an increased permeability at boundary.
+	!Boundary matrix:
+	!tex:
+	!	$\left[ {{M_{boundi,j}}} \right] = \left[ {\begin{array}{*{20}{c}}$
+	!0&0&0\\
+	!0& \ddots & \vdots \\
+	!0& \cdots &{C·k_{eff}^{k,n + 1}}
+	!\end{array}} \right]$
+	if(IsTimeDependant)				call s_aux_buildcoefbound(this,this%mxbound)																						!Build boundary matrix (in this case pressure pass from h to 0 in a length of kmul·h)
 
 	if (isTimeDependant) then
+		!1st version:
+		!tex: \[\left( {\frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right] + \left[ {{M_{Ki,j}}} \right] + \left[ {{M_{boundi,j}}} \right]} \right)\left\{ {\psi _j^{k + 1,n + 1}} \right\} = \frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right]\left\{ {\psi _j^n} \right\} - \left[ {{M_{Ki,j}}} \right]\left\{ {{z_j}} \right\} + \left[ {{I_{i,j}}} \right]\left\{ {{{\rm{q}}_{{\rm{vtb}},{\rm{j}}}}} \right\}\]
+
+		!2nd version:
+		!tex:
+		!$\left( {\frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right] + \left[ {{M_{Ki,j}}} \right] + \left[ {{M_{boundi,j}}} \right]} \right)\left\{ {\psi _j^{k + 1,n + 1}} \right\} = \frac{1}{{\Delta t}}\left[ {{M_{MASSi,j}}} \right]\left\{ {\psi _j^n} \right\} + \left[ {{I_{i,j}}} \right]\left\{ {{{\rm{q}}_{{\rm{vtb}},{\rm{i}}}}} \right\}$
+
 		!create mx matrix: [mx]=[mass]/dt+[stiff]+[bound]
-		!call construct_mx_dt(dt,mx,param%typesolution)
 		this%mx = this%mxmass/this%time%dt+this%mxstiff+this%mxbound
 
-		!create {rhs} vector: {rhs} = [mass]{hold}/dt-[stiff]{zsoil}+[load]{colqent} Note:(-[qbound]·{z} if what's fixed is dh/dx instead of d(h+z)/dx)
-		this%rhs = this%mxmass*this%nodes%hold/this%time%dt-this%mxstiff*this%nodes%z+this%mxload*this%nodes%qent
+		!1dt version:
+		if(IS_EQ_FIRST_VERSION)				this%rhs = this%mxmass*this%nodes%hold/this%time%dt-this%mxstiff*this%nodes%z+this%mxload*this%nodes%qent
+		!2nd version:
+		if(.not.IS_EQ_FIRST_VERSION)	this%rhs = this%mxmass*this%nodes%hold/this%time%dt												   +this%mxload*this%nodes%qent
+
 	end if
 
 	contains
@@ -382,31 +384,23 @@
 	headold		= interp_on_element(chi,henodesold)	!Returns hold in each chi
 	nreltemp	= interp_on_element(chi,nrelnodes)	!Return relative porosity in chi. (non-wettin voids divided by total voids as calculated in the unsaturated vertical model)
 
-	!where (headtemp==headold)
-	!	waterincnodes = this%layers%material(1)%thsat-this%layers%material(1)%thres
-	!else where
-	!!waterincnodes = this%layers%get_water_inc(headold,headtemp)
-	!waterincnodes = this%layers%get_water_inc(headold,headtemp)/max(1e-10,(headtemp-headold))
-	!f_mass = nreltemp*this%layers%get_water_inc_med(headold,headtemp)
+	!tex:
+	!$\left[ {{M_{MASSi,j}}} \right] = \left[ {\mathop \smallint \limits_{\rm{\Omega }} {{\overline {{n_{nw}}} }^{k,n + 1}}{\phi _j}{\phi _i}d{\rm{\Omega }}} \right]$
+	!tex:
+	!\[{\overline {{n_{nw}}} ^{k,n + 1}} = {r_{rel}}\cdot\overline {({\theta _{sat,l}} - {\theta _{res,l}})}  = {r_{rel}}\cdot\frac{{\sum\limits_l {({\theta _{sat,l}} - {\theta _{res,l}})\Delta {h_l}} }}{{\Delta h}}\]
 	f_mass = nreltemp*this%layers%get_water_inc_med(headold,headtemp)
-	!	!check waterinc:
-	!	!write(*,*) lays%get_water_inc(0.0_dpd,0.2_dpd)
-	!end where
-	!waterincnodes = max(waterincnodes,this%layers%material(1)%thsat-this%layers%material(1)%thres)
-	!waterinc = interp_on_element(chi,waterincnodes) !Interpolate the water increment in nodes to the chi values
 
-	!f_mass = this%layers%material(1)%thsat-this%layers%material(1)%thres !Use this when no unsat behaviour in increasing watertable (bad assumption)
 	end function f_mass
 
 	!-----------------------------------------------------------------------------------------
 	!Returns ksat·head... (for [stiff] matrix)
-	function f_stiff(chi,e)
+	function f_stiffA(chi,e)
 	use com_mod_fem_shapefunctions,only:interp_on_element
 
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2
 	real(kind=dps),intent(in)::chi(:)
 	integer,intent(in)::e
-	real(kind=dps)::f_stiff(size(chi))
+	real(kind=dps)::f_stiffA(size(chi))
 	integer::nstartelem,nendelem
 	real(kind=dps)::head(size(chi),this%layers%count+1),ksat(this%layers%count+1),headonchi(size(chi)),kmed(size(chi)),headoldonchi(size(chi))
 
@@ -428,10 +422,8 @@
 
 	!Get a matrix for the height of water in each layer (for each value of chi) and over the top layer
 	headonchi = interp_on_element(chi,henodes)
-	headoldonchi = interp_on_element(chi,this%nodes%hold(nstartelem : nendelem))
+	!headoldonchi = interp_on_element(chi,this%nodes%hold(nstartelem : nendelem))
 	head = this%layers%get_inc_h_from0_vec(headonchi)
-	!head = this%layers%get_hvector(interp_on_element(chi,henodes))
-	!head = min(interp_on_element(chi,henodes),this%layers%height(1)) !assume that water only flow horizontally in the first layer
 	kmed = matmul(head,ksat)
 	where (headonchi<=0)
 		kmed = ksat(1)
@@ -439,13 +431,59 @@
 		kmed = abs(kmed/headonchi)
 	end where
 
-	f_stiff = kmed * headonchi
+	f_stiffA = kmed * headonchi
 
-	![stiff]=ksat·h·dphi_i/dx·dphi_j/dx=ksat·h·dphi_i/dchi·dchi/dx·dphi_j/dchi·dchi/dx=ksat·h(chi)·dN_i(chi)/J(chi)·dN_j(chi)/J(chi)
-	!f_stiff = matmul(head,ksat) !CHECK: Put abs to not getting bad things in the boundary or equal 0? (this is ksat_med·h)
-	!f_stiff = this%layers%material(1)%ksat*head
-	!		fun_quad = layers%material(1)%ksat*head*(dshapefunresult(ishape)*2.0/this%elements%lenght(e))*(dshapefunresult(jshape)*2.0/this%elements%lenght(e))
-	end function f_stiff
+	end function f_stiffA
+
+	!-----------------------------------------------------------------------------------------
+	!Returns ksat·head... (for [stiff] matrix)
+	function f_stiffB(chi,e)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+	use com_mod_fem_shapefunctions,only:dphi1d
+
+	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2
+	real(kind=dps),intent(in)::chi(:)
+	integer,intent(in)::e
+	real(kind=dps)::f_stiffB(size(chi))
+	integer::nstartelem,nendelem
+	real(kind=dps)::head(size(chi),this%layers%count+1),ksat(this%layers%count+1),headonchi(size(chi)),kmed(size(chi)),headoldonchi(size(chi)),dhzonchi(size(chi))
+
+	nstartelem	= this%elements%idnode(e,1)
+	nendelem		= this%elements%idnode(e,numnodclass)
+	select case (opt)
+	case (CONSIDER_HNEW)
+		henodes = this%nodes%hnew(nstartelem : nendelem)
+		dhzenodes= matmul(dphi1d(chi,this%nodes%x(nstartelem : nendelem)),this%nodes%hnew(nstartelem : nendelem)+this%nodes%z(nstartelem : nendelem))
+	case (CONSIDER_HTEMP)
+		henodes = this%nodes%hnew(nstartelem : nendelem)
+		dhzenodes= matmul(dphi1d(chi,this%nodes%x(nstartelem : nendelem)),this%nodes%htemp(nstartelem : nendelem)+this%nodes%z(nstartelem : nendelem))
+	case (CONSIDER_HOLD)
+		henodes = this%nodes%hnew(nstartelem : nendelem)
+		dhzenodes= matmul(dphi1d(chi,this%nodes%x(nstartelem : nendelem)),this%nodes%hold(nstartelem : nendelem)+this%nodes%z(nstartelem : nendelem))
+		case default
+		stop('Matrix cannot be builded from old values in nodes')
+	end select
+
+	!Get a vector of ksat for every layer and another ksat=1.0 over the top layer
+	ksat(1:this%layers%count) = this%layers%material(:)%ksat
+	ksat(this%layers%count+1) = 1.0_dpd !Assumed that permeatility over the top layer is 1m3/2
+
+	!Get a matrix for the height of water in each layer (for each value of chi) and over the top layer
+	headonchi = interp_on_element(chi,henodes)
+	dhzonchi =  interp_on_element(chi,dhzenodes)
+	head = this%layers%get_inc_h_from0_vec(headonchi)
+
+	kmed = matmul(head,ksat)
+	where (headonchi<=0)
+		kmed = ksat(1)
+	else where
+		kmed = abs(kmed/headonchi)
+	end where
+
+	!tex:${k_{eff}^{k,n + 1}\cdot\left( {\frac{{\partial {h^{k,n + 1}}}}{{\partial x}} + \frac{{\partial z}}{{\partial x}}} \right)\cdot}$
+	f_stiffB = kmed * dhzonchi
+
+	end function f_stiffB
 
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
@@ -464,18 +502,22 @@
 	real(kind=dpd)::ksal,multksal
 	real(kind=dpd)::ktemp(this%layers%count+1),htemp(this%layers%count+1)
 
-	multksal = min(this%parameters%multksal,(this%nodes%hold(this%nodes%count-1)/2.0_dpd+this%nodes%z(this%nodes%count-1)-this%nodes%z(this%nodes%count))/abs(this%nodes%x(this%nodes%count)-this%nodes%x(this%nodes%count-1))) !As boundary dh/dx is the min between multk and (0.5·hi-1+(zi-1-zi))/(xi-1-xi) (CHECK: Put hold, maybe can put htemp)
+	multksal = min(this%parameters%multksal,(this%nodes%hold(this%nodes%count-1)/2.0_dpd+this%nodes%z(this%nodes%count-1)-this%nodes%z(this%nodes%count))/abs(this%nodes%x(this%nodes%count)-this%nodes%x(this%nodes%count-1))) !As boundary dh/dx is the min between multk and (0.5·hi-1+(zi-1-zi))/(xi-1-xi)
 	nnodes = this%nodes%count
 	if (this%nodes%htemp(this%nodes%count)==0.0_dpd) then
 		ksal= 0.0_dpd
-		!ksal= this%layers%material(1)%ksat*multksal
 	else
 		ktemp(1:this%layers%count) = this%layers%material(:)%ksat
 		ktemp(this%layers%count+1) = 1.0_dpd
 		htemp = this%layers%get_inc_h_from0_sca(this%nodes%htemp(this%nodes%count))
 		ksal = dot_product(ktemp,htemp)/this%nodes%htemp(this%nodes%count)*multksal
 	end if
-
+	!tex:
+	!	$\left[ {{M_{boundi,j}}} \right] = \left[ {\begin{array}{*{20}{c}}
+	!0&0&0\\
+	!0& \ddots & \vdots \\
+	!0& \cdots &{k_{eff}^{k,n + 1}}
+	!\end{array}} \right]$
 	mx = 0.0_dpd
 	call mx%set(nnodes,nnodes,ksal)
 
@@ -494,8 +536,6 @@
 	use com_mod_fem_shapefunctions,only:shape1d,dphi1d
 	use com_mod_fem_shapefunctions,only:jacobian1d
 
-
-
 	class(ty_sat_calc),intent(in)::this
 	class(ty_mx),intent(inout)::mx
 	integer::nnodes
@@ -513,7 +553,6 @@
 	nendelem		= this%elements%idnode(nelem,numnodclass)
 
 	xne = this%nodes%x(nstartelem : nendelem)
-	!dshapefunresult = dshape1d(1.0_dpd,this%elements%chi(nelem,:)) !Derivatives at the end of the element
 	dphifunresult = dphi1d(1.0_dpd,xne) !Derivatives at the end of the element
 
 	mx = 0.0_dpd
@@ -522,70 +561,14 @@
 		call mx%set(nelem+1,nstartelem+i-1,ksal*this%nodes%htemp(numnodclass)*dphifunresult(i))
 	end do
 
-	!nnodes = this%nodes%count
-	!ksal = this%layers%material(1)%ksat*this%parameters%multksal
-	!
-	!mx = 0.0_dpd
-	!call mx%set(nnodes,nnodes,ksal)
-
 	end subroutine s_aux_buildcoefbound_multk
 
-
-
 	end subroutine s_sat_calc_build_linearsystem
-
-
-	!!---------------------------------------------------------------------------------------------------------------------
-	!!  UPDATE LOAD
-	!!---------------------------------------------------------------------------------------------------------------------
-	!!> @author Iván Campos-Guereta Díez
-	!!> @brief
-	!!> Update load vector from the values in nvmod_qent
-	!!> @param[inout] mx
-	!!---------------------------------------------------------------------------------------------------------------------
-	!
-	!subroutine s_sat_calc_update_load(this,mesh)
-	!use sat_mod_ty_mesh,only:ty_sat_mesh
-	!
-	!class(ty_sat_calc),intent(inout)::this
-	!type(ty_sat_mesh),intent(in)::mesh
-	!
-	!if(this%nodes%nc==0) then
-	!	this%nodes%qent = f_q_hor_infiltr(this%nodes%x,mesh)
-	!else
-	!	!CHECKTHIS (To implement when nc>0)
-	!	STOP('not yet implemented (load with class number>0)')
-	!end if
-	!
-	!contains
-	!
-	!function f_q_hor_infiltr(x,msh) result(rout)
-	!!returns waterflow at boundary at time t
-	!use sat_mod_ty_mesh,only:ty_sat_mesh
-	!
-	!real(kind=dps),intent(in)::x(:)
-	!real(kind=dpd)::rout(size(x))
-	!type(ty_sat_mesh),intent(in)::msh
-	!
-	!integer nv,i
-	!
-	!rout = msh%vmod_qent(msh%vmod_count) !equal to last node
-	!do nv=1, msh%vmod_count-1
-	!	!linear interpolation of qesp between vertical modules nodes
-	!	do i=1, size(x)
-	!		if (msh%vmod_x(nv)<=x(i).and.msh%vmod_x(nv+1)>=x(i)) rout(i) = msh%vmod_qent(nv)+(msh%vmod_qent(nv+1)-msh%vmod_qent(nv))*(x(i)-msh%vmod_x(nv))/(msh%vmod_x(nv+1)-msh%vmod_x(nv))
-	!	end do
-	!end do
-	!
-	!end function f_q_hor_infiltr
-	!
-	!end subroutine s_sat_calc_update_load
 
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Update value of hnew from the solution
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_calc_update_hnew_from_solution(this)
@@ -594,22 +577,14 @@
 	!DEC$ endif
 	class(ty_sat_calc),intent(inout)::this
 
-	!this%solution = max(0.0_dps,this%solution)
-	!this%nodes%hnew = max(0.0_dpd,this%nodes%htemp + this%parameters%crelax*(this%solution-this%nodes%htemp))
-
-	!this%nodes%hnew = this%nodes%htemp + this%parameters%crelax*(this%solution-this%nodes%htemp) !CHECK: With this I can obtain negative values.
-	this%nodes%hnew = max(0.0_dpd,this%nodes%htemp + 0.25*this%parameters%crelax*(this%solution-this%nodes%htemp)) !Check this 0.25 is artificially included to increase relaxation.
-
-	!this%nodes%hnew = max(0.0_dpd,this%nodes%htemp + this%parameters%crelax*min(1E-3_dpd,(this%solution-this%nodes%htemp)))
+	this%nodes%hnew = max(0.0_dpd,this%nodes%htemp + 0.25*this%parameters%crelax*(this%solution-this%nodes%htemp))
 
 	end subroutine s_sat_calc_update_hnew_from_solution
-
 
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Estimate htemp for the new iteration
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_calc_estimate_htemp_for_new_iteration(this)
@@ -621,19 +596,6 @@
 	integer::i
 
 	this%nodes%htemp = this%nodes%hnew
-	!this%nodes%htemp = (1-0.5)*this%nodes%htemp + 0.5*this%nodes%hnew
-
-	!where(this%nodes%htemp==0.0_dpd)
-	!	this%nodes%htemp = this%nodes%hnew
-	!end where
-	!
-	!do i=1,3
-	!	where (this%nodes%htemp.ne.0.0_dpd)
-	!	this%nodes%htemp=this%nodes%hold+this%layers%get_water_inc_med(this%nodes%hold,this%nodes%hnew)/this%layers%get_water_inc_med(this%nodes%hold,this%nodes%htemp)*(this%nodes%hnew-this%nodes%hold)
-	!	end where
-	!end do
-
-
 
 	end subroutine s_sat_calc_estimate_htemp_for_new_iteration
 
@@ -649,7 +611,6 @@
 	!> - n%results_qhor = k1·h1·dhnew/dx
 	!> - n%results_dqhordx = get_derivatives(n%results_qhor_all)
 	!> - n%results_dqhordx_from_incvoldt = (h1·ksat1/(kmed·hnew))·n%results_dqhordx_from_incvoldt_all (it is the ponderated by permeability)
-	!> @param[in] this Parent sat%contraints.
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_calc_results_in_nodes(this)
@@ -667,7 +628,7 @@
 	integer:: i
 
 	nodescom => this%nodes
-	select type(nodescom) !Check (this is to whatch values in debugger
+	select type(nodescom)
 	type is (ty_sat_nodes)
 		nodes => nodescom
 	end select
@@ -680,12 +641,12 @@
 
 	nodes%results_qent		= nodes%qent
 	nodes%results_incvoldt	= this%nrel*this%layers%get_water_inc_med(nodes%hold,nodes%hnew)*(nodes%hnew-nodes%hold)/this%time%dt
-	!nodes%results_qhor = f_get_derivatives(nodes%x,nodes%hnew)
-	!do i=1, nodes%count
-	!nodes%results_qhor(i)		= dot_product(ksatlayers,this%layers%get_hvector(nodes%hnew(i)))*nodes%results_qhor(i)
-	!end do
-	nodes%results_qhor_all		= -matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),ksatlayers)*f_get_derivatives(nodes%x,nodes%hnew+nodes%z) !kmed·hnew·dhnew/dx (	CHECK, it is not hnew but hnew+z)
+	nodes%results_qhor_all		= -matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),ksatlayers)*f_get_derivatives(nodes%x,nodes%hnew+nodes%z) !kmed·hnew·dhnew/dx
 	nodes%results_dqhordx_all = f_get_derivatives(nodes%x,nodes%results_qhor_all)
+	
+	!Calculate the pressure drom in each node due to waterflow qsal and waterflow leaving each layer.
+	!inch(i,l) = qsal·hl/kl+1/2·ql/(hl·kl)·(hl^2)  | ql = -kl·hl·dh/dx
+	nodes%results_inchnew = nodes%results_qinf*matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),1.0_dpd/ksatlayers)-1.0_dpd/2.0_dpd*matmul(this%layers%get_inc_h_from0_vec(nodes%hnew)**2.0_dpd,ksatlayers/ksatlayers)*f_get_derivatives(nodes%x,nodes%hnew+nodes%z) 
 
 	nodes%results_qhor				= -matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),ksatlayers1)*f_get_derivatives(nodes%x,nodes%hnew+nodes%z) !Only for layer 1
 	nodes%results_dqhordx			= f_get_derivatives(nodes%x,nodes%results_qhor)
@@ -697,20 +658,13 @@
 		nodes%results_dqhordx_from_incvoldt = matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),ksatlayers1)/matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),ksatlayers)*nodes%results_dqhordx_from_incvoldt_all
 	end where
 
-	!where (nodes%results_qhor_all==0.0_dpd)
-	!	nodes%results_dqhordx_from_incvoldt = nodes%results_dqhordx_from_incvoldt_all
-	!else where
-	!	nodes%results_dqhordx_from_incvoldt = nodes%results_qhor/nodes%results_qhor_all*nodes%results_dqhordx_from_incvoldt_all
-	!end where
-
 	end subroutine s_sat_calc_results_in_nodes
 
 
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside ty_sat_model. Perform one iteration
-	!> @param[inout] mx
+	!> Subroutine to calculate results in elements
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_calc_results_in_elements(this)
@@ -723,7 +677,6 @@
 	use com_mod_ty_nodes,only:ty_com_nodes
 	use sat_mod_ty_nodes,only:ty_sat_nodes
 	use com_mod_fem_shapefunctions,only:dphi1d
-	!use com_mod_fem_shapefunctions,only:dshape1d
 	class(ty_sat_calc),intent(inout),target::this
 	class(ty_com_elements),pointer::elemcom
 	class(ty_sat_elements),pointer::elem
@@ -755,6 +708,9 @@
 	do e=1,this%elements%count
 		!Vertical flow entering element: Int(qv·dx)
 		elem%results_qent(e)			=intelement_rel_1don(f_qent_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_qsat(e)			=intelement_rel_1don(f_qsat_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_qinf(e)			=intelement_rel_1don(f_qinf_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_inchnew(e)			=intelement_rel_1don(f_inchnew_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 		elem%results_incvoldt(e)	=intelement_rel_1don(f_incvoldt_chi,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 		elem%results_dqhordx(e)		=intelement_rel_1don(f_dqhordx_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 		elem%results_dqhordx_from_incvoldt(e)				=intelement_rel_1don(f_dqhordx_from_incvoldt_chi			,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
@@ -791,20 +747,6 @@
 		elem%k0(e)	= sum(f_k_chi((/-1.0_dpd/)))
 		elem%k1(e)	= sum(f_k_chi((/1.0_dpd/)))
 		elem%k(e)	=intelement_rel_1don(f_k_chi,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
-		!!Horizontal flow entering and leaving element: Int[d/dx(k·h·d(h+z)/dx)·dx]=k·h·d(h+z)/dx|x0-x1
-		!!Check this please(still not getting good water balance):
-		!dhzdx1=dot_product(dshape1d(1.0_dpd),this%nodes%hnew(elem%idnode(e,:))+this%nodes%z(elem%idnode(e,:)))
-		!dhzdx0=dot_product(dshape1d(-1.0_dpd),this%nodes%hnew(elem%idnode(e,:))+this%nodes%z(elem%idnode(e,:)))
-		!!elem%results_incqhor(e)	= elem%material(e)%ksat*min(this%layers%height(1),this%nodes%hnew(elem%idnode(e,2)))*dhzdx1-&
-		!!& elem%material(e)%ksat*min(this%layers%height(1),this%nodes%hnew(elem%idnode(e,1)))*dhzdx0
-		!elem%results_incqhor(e)	= elem%material(e)%ksat*this%nodes%hnew(elem%idnode(e,2))*dhzdx1-&
-		!& elem%material(e)%ksat*this%nodes%hnew(elem%idnode(e,1))*dhzdx0
-		!
-		!!elem%results_incqhor	=intelement_rel_1don(inc_hor_flow_element,this%nodes%x(elem%idnode(e,:)), this%parameters%quadratureorder)
-		!!Int[theta_mean·Dh/Dt·dx]
-		!elem%results_incvoldt(e)		= intelement_rel_1don(inc_volume_in_element,this%nodes%x(elem%idnode(e,:)), this%parameters%quadratureorder)
-		!!write(*,*) elem%results_incvoldt(e)
-		!tempelem = elem
 	end do
 
 
@@ -819,6 +761,36 @@
 	!Int(qent·phi)
 	f_qent_chi = interp_on_element(chi,nodes%qent(elem%idnode(e,:)))
 	end function f_qent_chi
+		!----- qsat
+	function f_qsat_chi(chi)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+
+	real(kind=dps),intent(in)::chi(:)
+	real(kind=dps)::f_qsat_chi(size(chi))
+
+	!Int(qent·phi)
+	f_qsat_chi = interp_on_element(chi,nodes%results_qsat(elem%idnode(e,:)))
+	end function f_qsat_chi
+	!----- qinf
+	function f_qinf_chi(chi)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+
+	real(kind=dps),intent(in)::chi(:)
+	real(kind=dps)::f_qinf_chi(size(chi))
+
+	!Int(qent·phi)
+	f_qinf_chi = interp_on_element(chi,nodes%results_qinf(elem%idnode(e,:)))
+	end function f_qinf_chi
+	!----- inchnew
+	function f_inchnew_chi(chi)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+
+	real(kind=dps),intent(in)::chi(:)
+	real(kind=dps)::f_inchnew_chi(size(chi))
+
+	!Int(qent·phi)
+	f_inchnew_chi = interp_on_element(chi,nodes%results_inchnew(elem%idnode(e,:)))
+	end function f_inchnew_chi
 	!----- h
 	function f_h_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element
@@ -905,12 +877,7 @@
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_dqhordx_chi(size(chi))
-	!real(kind=dpd)::head(size(chi),this%layers%count+1)
 
-	!head = this%layers%get_inc_h_from0(interp_on_element(chi,this%nodes%hnew(this%elements%idnode(e,1) : this%elements%idnode(e,2))))
-	!Int(qent·phi)
-
-	!f_dqhordx_chi = -sum(matmul(head,ksat))/sum(head)*f_dhzdx_chi(chi)*f_dhdx_chi(chi)
 	f_dqhordx_chi = interp_on_element(chi,nodes%results_dqhordx(elem%idnode(e,:)))
 
 	end function f_dqhordx_chi
@@ -931,8 +898,6 @@
 
 	real(kind=dps),intent(in)::chi(:)
 	real(kind=dps)::f_dqhordx_from_incvoldt_all_chi(size(chi))
-	!CHECK: dqhordxThis in case of beeing obtained directly from nodes (but need nodes to be calculated previously)
-	!	f_dqhordx_from_incvoldt_all_chi = interp_on_element(chi,nodes%results_dqhordx_from_incvoldt_all(elem%idnode(e,:)))
 	f_dqhordx_from_incvoldt_all_chi = f_qent_chi(chi)-f_incvoldt_chi(chi)
 	end function f_dqhordx_from_incvoldt_all_chi
 
@@ -976,7 +941,7 @@
 		if (sum(head(i,:))<1E-10_dpd) then
 			f_k_chi(i) = ksat(1)
 		else
-			f_k_chi(i) = dot_product(head(i,:),ksat)/sum(head(i,:)) !CHECK: Put abs to not getting bad things in the boundary or equal 0?
+			f_k_chi(i) = dot_product(head(i,:),ksat)/sum(head(i,:))
 		end if
 	end do
 	end function f_k_chi

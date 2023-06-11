@@ -1,22 +1,23 @@
 	!********************************************************************************************************************
-	!        MODULE: CLASS OF COLLECTION OF CONSTRAINTS CALCULATIONS FOR SATURATED MODEL
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
-	! PROJECT       : FLOW1D HORIZONTAL SATURATED MODEL LIBRARIES
-	! MODULE        : mod_sat_ty_layers
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! TITLE         : SAT_MOD_TY_CONSTRAINTS: DERIVED TYPE TO DEFINE PROPERTIES AND METHODS ON THE CONSTRAINTS IN WF1DSAT MODEL
+	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
+	! MODULE        : COM_MOD_TY_CALC
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type to define properties and methods on the constraints in wf1dsat model
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class of collection of layers in horizontal saturated model
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module sat_mod_ty_constraints
@@ -39,6 +40,8 @@
 		type(ty_com_pointer_real),allocatable			::hsatold(:)	!<hsatold		| points to hold	(idnode)
 
 		type(ty_com_pointer_real),allocatable			::qent(:) !<Inflow into water-table | point to constructor in 1DSAT | point to unsat(iu)%constratints%qver(is) in 15DSATUNSAT.
+		type(ty_com_pointer_real),allocatable			::qsat(:) !<Inflow on the top of hsat
+		type(ty_com_pointer_real),allocatable			::qinf(:) !<Outflow on the bottom of the layer
 
 		type(ty_com_pointer_real),allocatable			::dqhordx(:)				!< Increment of qh respect to x | points to this%dqhordx_mean(1:nu) (so mean value has to be updated)
 		type(ty_com_pointer_real),allocatable			::nrel(:)						!< nrel= non-wetting porosity/porosity | points to mesh%vmod_nrel(1:nu) in 1DSAT | points to  unsat(iu)%constratints%nrel(is) in 15DSATUNSAT
@@ -52,6 +55,9 @@
 
 		real(kind=dpd),allocatable			::hsat_mean(:)				!<	hsat mean between idnode0 and idnode 1 associated to iu				| updated with: sat(is)%model%put_results_in_constraints()
 		real(kind=dpd),allocatable			::qent_mean(:)				!<	qent mean between idnode0 and idnode 1 associated to iu				|	updated with: sat(is)%model%put_results_in_constraints()
+		real(kind=dpd),allocatable			::qsat_mean(:)				!<	qsat mean between idnode0 and idnode 1 associated to iu	
+		real(kind=dpd),allocatable			::qinf_mean(:)				!<	qinf mean between idnode0 and idnode 1 associated to iu	
+		real(kind=dpd),allocatable			::inchnew_mean(:)				!<	qinf mean between idnode0 and idnode 1 associated to iu	
 		real(kind=dpd),allocatable			::incvoldt_mean(:)		!<	incvoldt mean between idnode0 and idnode 1 associated to iu		| updated with: sat(is)%model%put_results_in_constraints()
 		real(kind=dpd),allocatable			::dqhordx_mean(:)			!<	dqhordx mean between idnode0 and idnode 1 associated to iu		| updated with: sat(is)%model%put_results_in_constraints()
 		real(kind=dpd),allocatable			::dqhordx_all_mean(:)	!<	dqhordx_al mean between idnode0 and idnode 1 associated to iu | updated with: sat(is)%model%put_results_in_constraints()
@@ -92,8 +98,8 @@
 	if(.not.allocated(this% hsattemp))allocate(this% hsattemp (nvmod))
 	if(.not.allocated(this% hsatold))	allocate(this% hsatold (nvmod))
 	if(.not.allocated(this% qent))		allocate(this% qent (nvmod))
-	!if(.not.allocated(this% qenttemp)) allocate(this% qenttemp (nvmod))
-	!if(.not.allocated(this% qentold))	allocate(this% qentold (nvmod))
+	if(.not.allocated(this% qsat))		allocate(this% qsat (nvmod))
+	if(.not.allocated(this% qinf))		allocate(this% qinf (nvmod))
 	if(.not.allocated(this% dqhordx))	allocate(this% dqhordx (nvmod))
 	if(.not.allocated(this% nrel))		allocate(this% nrel (nvmod))
 	if(.not.allocated(this% intep_matrix))			allocate(this% intep_matrix (nvmod,nnodes))
@@ -106,6 +112,9 @@
 
 	if(.not.allocated(this% hsat_mean))			allocate(this% hsat_mean (nvmod))
 	if(.not.allocated(this% qent_mean))			allocate(this% qent_mean (nvmod))
+	if(.not.allocated(this% qsat_mean))			allocate(this% qsat_mean (nvmod))
+	if(.not.allocated(this% qinf_mean))			allocate(this% qinf_mean (nvmod))
+	if(.not.allocated(this% inchnew_mean))			allocate(this% inchnew_mean (nvmod))
 	if(.not.allocated(this% incvoldt_mean))	allocate(this% incvoldt_mean (nvmod))
 	if(.not.allocated(this% dqhordx_mean))	allocate(this% dqhordx_mean (nvmod))
 	if(.not.allocated(this% dqhordx_all_mean))	allocate(this% dqhordx_all_mean (nvmod))
@@ -135,8 +144,8 @@
 	if(allocated(this% hsattemp))	deallocate(this% hsattemp)
 	if(allocated(this% hsatold))	deallocate(this% hsatold )
 	if(allocated(this% qent))			deallocate(this% qent)
-	!if(allocated(this% qenttemp))	deallocate(this% qenttemp)
-	!if(allocated(this% qentold))	deallocate(this% qentold)
+	if(allocated(this% qsat))			deallocate(this% qsat)
+	if(allocated(this% qinf))			deallocate(this% qinf)
 	if(allocated(this% dqhordx))	deallocate(this% dqhordx)
 	if(allocated(this% nrel))			deallocate(this% nrel)
 	if(allocated(this% intep_matrix))	deallocate(this% intep_matrix)
@@ -149,6 +158,8 @@
 
 	if(allocated(this% hsat_mean))			deallocate(this% hsat_mean )
 	if(allocated(this% qent_mean))			deallocate(this% qent_mean )
+	if(allocated(this% qsat_mean))			deallocate(this% qsat_mean )
+	if(allocated(this% qinf_mean))			deallocate(this% qinf_mean )
 	if(allocated(this% incvoldt_mean))	deallocate(this% incvoldt_mean )
 	if(allocated(this% dqhordx_mean))	deallocate(this% dqhordx_mean )
 	if(allocated(this% dqhordx_all_mean))	deallocate(this% dqhordx_all_mean )
@@ -169,7 +180,7 @@
 	!> @param[inout] nrel
 	!---------------------------------------------------------------------------------------------------------------------
 
-	subroutine s_sat_constraints_construct(this,idnode,nodesarg,qent,nrel)
+	subroutine s_sat_constraints_construct(this,idnode,nodesarg,qent,nrel,qsat,qinf)
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT :: s_sat_constraints_construct
 	!DEC$ endif
@@ -179,7 +190,7 @@
 	class(ty_sat_constraints),intent(inout),target::this
 	integer,intent(inout),target::idnode(:)
 	class(ty_com_nodes),intent(inout),target::nodesarg
-	real(kind=dpd),intent(inout),target,optional::qent(:)
+	real(kind=dpd),intent(inout),target,optional::qent(:),qsat(:),qinf(:)
 	real(kind=dpd),intent(inout),target,optional::nrel(:)
 
 	class(ty_com_nodes),pointer::nodescom
@@ -195,7 +206,6 @@
 	this%count = size(idnode)
 	if(.not.allocated(this%idnode)) allocate(this%idnode(this%count))
 
-
 	do i=1,this%count
 		this%idnode(i)%p	=> idnode(i)
 		this%x(i)%p		=> nodes%x(this%idnode(i)%p)
@@ -207,15 +217,18 @@
 		if(present(qent)) then
 			this%qent(i)%p		=> qent(i)
 		end if
+		if(present(qsat)) then
+			this%qsat(i)%p		=> qsat(i)
+		end if
+		if(present(qinf)) then
+			this%qinf(i)%p		=> qinf(i)
+		end if
 
 		if(present(nrel)) then
 			this%nrel(i)%p		=> nrel(i)
 		end if
 
-
 		this%dqhordx(i)%p		=> nodes%results_dqhordx_from_incvoldt(this%idnode(i)%p) !Take results_dqhordx_from_incvol because expect that calc is more precise than results_dqhordx
-		!this%dqhordx(i)%p		=> this%dqhordx_mean(i)	 !Take results_dqhordx_from_incvol because expect that calc is more precise than results_dqhordx
-
 
 	end do
 
@@ -239,6 +252,8 @@
 
 	this%hsat_mean = 0.0_dpd
 	this%qent_mean = 0.0_dpd
+	this%qsat_mean = 0.0_dpd
+	this%qinf_mean = 0.0_dpd
 	this%incvoldt_mean = 0.0_dpd
 	this%dqhordx_mean = 0.0_dpd
 	this%dqhordx_all_mean = 0.0_dpd
@@ -247,13 +262,10 @@
 
 	end subroutine s_sat_constraints_construct
 
-
-
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_nodes. Stablish soil shape (coord z) from slope.
-	!> Modify this subroutine to define other soil shape.
+	!> Construct the interpolation matrix needed to pass the waterflow nodes where WF1DUNSAT are located to all WF1DSAT nodes
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_sat_constraints_construct_interpmatrix(this,nodes)

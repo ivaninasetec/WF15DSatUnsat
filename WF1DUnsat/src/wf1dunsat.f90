@@ -1,22 +1,42 @@
-	!------------------------------------------------------------------------------
-	!        FLOW1DUNSAT
-	!------------------------------------------------------------------------------
-	! TITLE         : FLOW1DUNSAT: One dimensional flow in variably saturated media
-	! PROJECT       : An 1.5D simulation for a variably saturated multilayer system
-	! MODULE        : FLOW1DUNSAT
-	! URL           : ...
+	!********************************************************************************************************************
+	! WF1DUNSAT
+	!********************************************************************************************************************
+	! TITLE         : WF1DUNSAT Model to calculate waterflow on a column, with variable top boundary
+	! PROJECT       : WF1DUNSATDLL
+	! MODULE        : -
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
 	! AFFILIATION   : The University of Nottingham
-	! DATE          : 23th of October of 2019
-	! REVISION      : 0.0
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	!> <B>Main program to calculate the variably saturated waterflow on a column with an inflow or defined piezometric
+	!> pressure at the top over time and fixed piezometric level at the bottom</B>
+	!>
+	!> The program with one parameter equal to fileinput path: WF1DUNSAT.exe  xxxx
+	!> 
+	!> In the same path than the input:
+	!> xxxx.wfuinp: Input textfile containing information of parameters (after heading BLOCK A), materials (after heading BLOCK B),  
+	!> layers (after heading BLOCK C), mesh (after heading BLOCK D)
+	!> 
+	!> xxxx.wfbound: Input textfile containing the information about boundary values in time (table: t(T),h(L), or t(T),q(L3·T-1)
+	!> 
+	!> As a result, five output *.csv files are generated: 
+	!>
+	!> xxxx.outnodu.csv: Values at the nodes at each defined print time
+	!> 
+	!> xxxx.outelmu.csv: Values at the elements at each defined print time
+	!
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!
-	! DESCRIPTION:
-	!> This is the main program to simulate one dimensional variably saturated
-	!> materials.
-	!------------------------------------------------------------------------------
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
+	!********************************************************************************************************************
 
-	program unsat_flow1d
+	program	wf1dunsat
 	use unsat_mod_ty_model,only:ty_unsat_model
 	use unsat_mod_ty_elements,only:ty_unsat_elements
 	use com_mod_ty_elements,only:ty_com_elements
@@ -26,7 +46,7 @@
 
 	!---- 00 ---- Create instances (unsat, elemcom, elem), of classes (ty_unsat_model, ty_com_elements, ty_sat_elements)
 	logical,parameter						::IS_NOT_TIME_DEPENDANT=.false.,IS_TIME_DEPENDANT=.true.
-	integer,parameter						::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2, CONSIDER_ALL=3
+	integer,parameter						::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDER_HOLD=2,CONSIDER_ALL=3
 	!character*400,parameter			::FILEINPUT						='INPUTS\unsat_inputs.txt'
 	!character*400,parameter			::FILEBOUNDARY				='INPUTS\flow1d_bound_h.txt'
 	!character*400,parameter			::FILEOUTPUT_NODES		='OUTPUTS\unsat_outputs_nodes.csv'
@@ -36,6 +56,7 @@
 	character*400::fileboundary						
 	character*400::FILEOUTPUT_NODES			
 	character*400::FILEOUTPUT_ELEMENTS	
+	character*400::FILEOUTPUT_STATS	
 
 	type(ty_unsat_model),target				::unsat
 	class(ty_com_elements),pointer		::elemcom
@@ -45,7 +66,16 @@
 	logical					::isconverged=.false.,isconvergedall=.true.
 	integer					::iterconverg, npos, nargs
 
+	!For statistics:
+	real(kind=8)	  ::cputimeinit=0.0_8,cputimeend=0.0_8,systimeinit=0.0_8,systimeend=0.0_8,totaldt=0.0_8,meandt=0.0_8,maxdt=0.0_8,mindt=1.0E10_8
+	integer(8)			::itertotal=0,itersteps=0,timemilisec=0,countrate=1000
+	
+	
 	!---- 01 ---- Read file inputs
+	call CPU_TIME(cputimeinit)
+	call SYSTEM_CLOCK(timemilisec,countrate)
+	systimeinit=real(timemilisec,8)/real(countrate,8)
+	
 	nargs = COMMAND_ARGUMENT_COUNT()
 	if (nargs==0) then 
 		WRITE(*,*) 'Pease include input file as the first argument argument'
@@ -59,7 +89,8 @@
 	
 	fileboundary				=trim(namefile)//'.wfbound'
 	FILEOUTPUT_NODES		=trim(namefile)//'.outnodu'
-	FILEOUTPUT_ELEMENTS	=trim(namefile)//'.outelmu'	
+	FILEOUTPUT_ELEMENTS	=trim(namefile)//'.outelmu'
+	FILEOUTPUT_STATS	  =trim(namefile)//'.outstat'	
 	
 	call unsat%readfileinput(FILEINPUT,fileboundary)
 
@@ -82,7 +113,6 @@
 
 	!---- 05 ---- Update all interface values for initial conditions
 	call unsat%constraints%update_all(unsat%calc,unsat%calc%time%dt)
-	!call unsat%constraints%update_all(unsat%calc,unsat%calc%time%dt,1.0_dpd)
 
 	!---- 06 ---- Update wc_old, wc_temp, wc_new (water content)
 	call unsat%calc%update_th_from_h(CONSIDER_ALL)
@@ -113,7 +143,7 @@
 
 		! ---- 09.04 ---- Update Newman boundary conditions at top and apply
 		if (unsat%calc%layers%topboundbyq) then
-			qtop =  unsat%calc%boundary%get_qbound_file(unsat%time%t) !Check if qtop has to be multiplied by 2.
+			qtop =  unsat%calc%boundary%get_qbound_file(unsat%time%t)
 			unsat%calc%colbound(unsat%calc%nodes%count)= qtop !Put qtop on colbound vector.
 		end if
 
@@ -123,12 +153,13 @@
 		! ---- 09.06 ---- Initialize isconverged to false
 		isconverged = .false.
 
+		call unsat%calc%update_th_from_h(CONSIDER_HOLD)
 		! ---- 09.07 ---- CONVERGENCE: do while not(isconverged or dt<dtmin and max iteration reached))
 		CONVERGENCE:do while(.not.(isconverged .or. (unsat%time%dt<=unsat%calc%parameters%dtmin .and. iterconverg==(unsat%calc%parameters%it_max-1))))
 			! ---- 09.07.01 ---- Increase iteration counter
 			iterconverg = iterconverg+1
 
-			! ---- 09.07.02 ---- Update wc_temp from h_temp (CHECK)
+			! ---- 09.07.02 ---- Update wc_temp from h_temp
 			call unsat%calc%update_th_from_h(CONSIDER_HNEW)
 
 			! ---- 09.07.03 ---- Call subroutine iterate
@@ -140,12 +171,15 @@
 			! ---- 09.07.03.06 ----	Calculate error epsh
 			! ---- 09.07.03.07 ----	Isconverged = epsh<epsh_tolerance
 			! ---- 09.07.03.08 ----	End subroutine iterate
-			!call unsat%calc%iterate(isconverged,isconvergedall)
+			itertotal=itertotal+1
 			call unsat%calc%iterate(isconverged)
+			
+			call unsat%calc%update_th_from_h(CONSIDER_HNEW)
+			unsat%calc%epsth=maxval(abs(unsat%calc%nodes%thnew-unsat%calc%nodes%thtemp))
+			isconverged = (unsat%calc%epsh<unsat%parameters%epsh_tol).and.(unsat%calc%epsth<unsat%parameters%epsth_tol)
 
 			! ---- 09.07.04 ----	Update th_new values from h_new values
-			call unsat%calc%update_th_from_h(CONSIDER_HNEW)
-
+			if (unsat%parameters%isModifiedPicard) call unsat%calc%update_th_from_h(CONSIDER_HNEW)
 
 			if (iterconverg<unsat%calc%parameters%it_min) isconverged=.false.
 			! ---- 09.07.05 ----	If (not isconverged and max iteration reached)
@@ -162,16 +196,10 @@
 
 		end do CONVERGENCE
 
-		!Iterantion converged or min dtmin reached
-		!For printing purposes (Check) (This is not Ok, reverse the Solution to get a result.
-		!WRITE(*,'("Iter: ",i6," t: ", f10.3," dt: ",E10.3," h(0): ",f10.3," h(l): ",f10.3," Qent: ",E10.3," QSal: ",E10.3)') iterconverg, sat%calc%t, sat%calc%dt, sat%calc%nodes%hnew(1), sat%calc%nodes%hnew(sat%calc%nodes%count), sat%mesh%vmod_qent(1), 0.0
-
 		! ---- 09.08 ---- Get results of timestep
 		call unsat%calc%get_results_elements()
-		!call unsat%calc%get_results_nodes()
 
 		! ---- 09.09 ---- Write outputs	 if print times reached
-		!WRITE(*,'("Iter: ",i6," t: ", f10.3," dt: ",E10.3," h(0): ",E10.3," qent(0): ",E10.3," qincvol(l): ",E10.3," qhor: ",E10.3)') iterconverg, unsat%calc%t, unsat%calc%dt, unsat%calc%nodes%hnew(1), sum(elem%results_qent), sum(elem%results_incvol), sum(elem%results_incqhor)
 		WRITE(*,'("Iter: ",i6," t: ", f10.3," dt: ",E10.3," h(0): ",E10.3," h(end): ",E10.3," h(end/2): ",E10.3," qhor: ",E10.3)') iterconverg, unsat%time%t, unsat%time%dt, unsat%calc%nodes%hnew(1), unsat%calc%nodes%hnew(unsat%calc%nodes%count), unsat%calc%nodes%hnew(int(unsat%calc%nodes%count/2))
 		IF (unsat%time%checkprint) call unsat%print_timestep(31,32,1) !Check if we are in printstep and print
 
@@ -180,11 +208,26 @@
 
 		! ---- 09.11 ---- Set old values from new values
 		call unsat%calc%set_old() !All new values passes now to old, and slopeold=(hnew-hold)/(t-told), told=t, dtold=dt, hold=hnew
+		!Log statistics
+		itersteps=itersteps+1
+		totaldt=totaldt+unsat%time%dt
+		mindt=min(mindt,unsat%time%dt)
+		maxdt=max(maxdt,unsat%time%dt)
 	end do TIMESTEPPING
+	meandt=totaldt/real(itersteps,8)
 
 	! ---- 10 ---- Close output files	and deallocate all
+	!Log statistics
+	call CPU_TIME(cputimeend)
+	call SYSTEM_CLOCK(timemilisec,countrate)
+	systimeend=real(timemilisec,8)/real(countrate,8)
 	close(31)
 	close(32)
 
+	!PRINT STATS:
+	open (33,file=FILEOUTPUT_STATS,status='unknown')
+	write(33,'("itertotal,nsteps,cputime_s,systime_s,mintimestep,meantimestep,maxtimestep")')
+	write(33,'(i6,",",i6,",",F10.3,",",F10.3,",",E10.3,",",E10.3,",",E10.3)') itertotal,itersteps,cputimeend-cputimeinit,systimeend-systimeinit,mindt,meandt,maxdt
+	close(33)
 
-999	end program unsat_flow1d
+999	end program wf1dunsat

@@ -1,0 +1,607 @@
+	!********************************************************************************************************************
+	! TITLE         : MOD_FUN_HYDRAULIC_BC: HYDRAULIC FUNCTIONS	USING BROOKS AND COREY (1964)
+	! PROJECT       : WF1DCOMDLL Library for common functions and derived types
+	! MODULE        : -
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Hydraulic functions	using brooks and corey (1964)
+	!>    f_hyd_S_h_bc:   Returns the specific saturation from pressure head                                            
+	!>    f_hyd_th_h_bc:  Returns water content from pressure head                                                      
+	!>    f_hyd_kr_h_bc:  Returns relative permeability from pressure head                                              
+	!>    f_hyd_k_h_bc:   Returns permeability from pressure head                                                       
+	!>    f_hyd_cap_h_bc: Returns water capacity from pressure head
+	!>
+	!> @author
+	!> Iván Campos-Guereta Díez
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
+	!********************************************************************************************************************
+
+	!!********************************************************************************************************************
+	!! F: f_hyd_S_H_PW_SCA(material,h)
+	!!--------------------------------------------------------------------------------------------------------------------
+	!! Function that returns specific saturation (scalar) from pressure head (scalar pressure), with simplified power
+	!! function:
+	!!		Se=(1+(-a·h))^n)^(-m) for h<0 | Se=1 for h>=0
+	!!********************************************************************************************************************
+
+	pure function f_hyd_s_h_bc_sca(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_s_h_bc_sca" :: f_hyd_s_h_bc_sca
+	!DEC$ endif
+
+	!return the specific saturation from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout
+
+	if (h<-material%a) then
+		rout = (h/(-material%a))**(-material%n)
+	else
+		rout =  1.0_dps
+	end if
+
+	end function f_hyd_s_h_bc_sca
+
+	!********************************************************************************************************************
+	! F: f_hyd_S_H_PW_SCA(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns specific saturation (scalar) from pressure head (scalar pressure), with simplified power
+	! function:
+	!		Se=(1+(-a·h))^n)^(-m) for h<0 | Se=1 for h>=0
+	!********************************************************************************************************************
+
+	pure function f_hyd_incs_h1_to_h2_bc_sca(material,h1,h2)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_incs_h1_to_h2_bc_sca" :: f_hyd_incs_h1_to_h2_bc_sca
+	!DEC$ endif
+
+	real(kind=dps),intent(in)::h1,h2
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::f_hyd_incs_h1_to_h2_bc_sca
+	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
+
+	a = real(material%a,16)
+	!In Brooks and Corey the difference need to be checked from a distance psibc over the watertable as util that height the soil is saturated.
+	hb1 = real(h1,16)+material%a
+	hb2 = real(h2,16)+material%a
+	n= real(material%n,16)
+	m= real(material%m,16)
+
+	if (hb1<-material%a) then
+		rout1 = (hb1/(-material%a))**(-material%n) 
+	else
+		rout1 =  1.0_16
+	end if
+
+	if (hb2<-material%a) then
+		rout2 = (hb2/(-material%a))**(-material%n)
+	else
+		rout2 =  1.0_16
+	end if
+
+	rout = rout2-rout1
+
+	f_hyd_incs_h1_to_h2_bc_sca = real(rout,dpd)
+
+	end function f_hyd_incs_h1_to_h2_bc_sca
+
+
+	!********************************************************************************************************************
+	! F: f_hyd_S_h_VG_vec(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns specific saturation (vector) from pressure head (vector pressure), with Van Genuchten
+	!	expressions:
+	!		Se=(1+(-a·h))^n)^(-m) for h<0 | Se=1 for h>=0
+	!********************************************************************************************************************
+
+	pure function f_hyd_s_h_bc_vec(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_s_h_bc_vec" :: f_hyd_s_h_bc_vec
+	!DEC$ endif
+
+	!return the specific saturation from pressure head(vector)
+
+	real(kind=dpd),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material(:)
+	real(kind=dpd)::rout(size(h))
+
+	withsuction:where (h<-material%a)
+		rout = (h/(-material%a))**(-material%n)
+	elsewhere
+		rout =  1.0_dps
+	end where withsuction
+
+	end function f_hyd_s_h_bc_vec
+
+	!-------
+
+	pure function f_hyd_s_h_bc_vec2(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_s_h_bc_vec2" :: f_hyd_s_h_bc_vec2
+	!DEC$ endif
+
+	!return the specific saturation from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout(size(h))
+
+	withsuction:where (h<-material%a)
+		rout = (h/(-material%a))**(-material%n)
+	elsewhere
+		rout =  1.0_dps
+	end where withsuction
+
+	end function f_hyd_s_h_bc_vec2
+
+	!********************************************************************************************************************
+	! F: f_hyd_th_h_VG_sca(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns water content (scalar) from pressure head (vector pressure), with Van Genuchten
+	! expressions:
+	!		th = thres+(thsat-thres)*Se
+	!********************************************************************************************************************
+
+	pure function f_hyd_th_h_bc_sca(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_th_h_bc_sca" :: f_hyd_th_h_bc_sca
+	!DEC$ endif
+
+	!returns the moisture content from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout
+
+	rout = material%thres+(material%thsat-material%thres)*f_hyd_s_h_bc_sca(material,h)
+
+	end function f_hyd_th_h_bc_sca
+
+
+	!********************************************************************************************************************
+	! F: f_hyd_th_h_VG_vec(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns water content (scalar) from pressure head (vector pressure), with Van Genuchten
+	! expressions:
+	!		th = thres+(thsat-thres)*Se
+	!********************************************************************************************************************
+
+	pure function f_hyd_th_h_bc_vec(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_th_h_bc_vec" :: f_hyd_th_h_bc_vec
+	!DEC$ endif
+
+	!returns the moisture content from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material(:)
+	real(kind=dpd)::rout(size(h))
+
+	rout = material%thres+(material%thsat-material%thres)*f_hyd_s_h_bc_vec(material,h)
+
+	end function f_hyd_th_h_bc_vec
+
+	!------------
+
+	pure function f_hyd_th_h_bc_vec2(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_th_h_bc_vec2" :: f_hyd_th_h_bc_vec2
+	!DEC$ endif
+
+	!returns the moisture content from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout(size(h))
+
+	rout = material%thres+(material%thsat-material%thres)*f_hyd_s_h_bc_vec2(material,h)
+
+	end function f_hyd_th_h_bc_vec2
+
+	!********************************************************************************************************************
+	! F: f_hyd_kr_h_VG_sca(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns relative permeability (scalar) from pressure head (vector pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		kr= Se^l·(1-(1-Se^(1/m))^m)^2 | Kr=1 for h>=0
+	!********************************************************************************************************************
+
+	pure function f_hyd_kr_h_bc_sca(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_kr_h_bc_sca" :: f_hyd_kr_h_bc_sca
+	!DEC$ endif
+
+	!returns relative permeability from pressure head(vector)
+
+	real(kind=dps),intent(in)::h
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout,se
+
+	if (h<-material%a) then
+		se = f_hyd_s_h_bc_sca(material,h)
+		rout = se**(2.0_dpd+material%l+2.0_dpd/material%n)
+	else
+		rout =  1.0_dpd
+	end if
+
+	end function f_hyd_kr_h_bc_sca
+
+
+	!********************************************************************************************************************
+	! F: f_hyd_kr_h_VG_vec(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns relative permeability (vector) from pressure head (vector pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		kr= Se^l·(1-(1-Se^(1/m))^m)^2 | Kr=1 for h>=0
+	!********************************************************************************************************************
+
+	pure function f_hyd_kr_h_bc_vec(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_kr_h_bc_vec" :: f_hyd_kr_h_bc_vec
+	!DEC$ endif
+
+	!returns relative permeability from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material(:)
+	real(kind=dpd)::rout(size(h)),se(size(h))
+
+	withsuction:where (h<-material%a)
+		se = f_hyd_s_h_bc_vec(material,h)
+		rout = se**(2.0_dpd+material%l+2.0_dpd/material%n)
+	elsewhere
+		rout =  1.0_dps
+	end where withsuction
+
+	end function f_hyd_kr_h_bc_vec
+
+	!--------------
+
+	pure function f_hyd_kr_h_bc_vec2(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_kr_h_bc_vec2" :: f_hyd_kr_h_bc_vec2
+	!DEC$ endif
+
+	!returns relative permeability from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout(size(h)),se(size(h))
+
+	withsuction:where (h<-material%a)
+		se = f_hyd_s_h_bc_vec2(material,h)
+		rout = se**(2.0_dpd+material%l+2.0_dpd/material%n)
+	elsewhere
+		rout =  1.0_dps
+	end where withsuction
+
+	end function f_hyd_kr_h_bc_vec2
+
+	!********************************************************************************************************************
+	! F: f_hyd_k_h_VG_sca(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns permeability (vector) from pressure head (vector pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		k= ksat·kr
+	!********************************************************************************************************************
+
+	pure function f_hyd_k_h_bc_sca(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_k_h_bc_sca" :: f_hyd_k_h_bc_sca
+	!DEC$ endif
+
+	!returns permeability from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout
+
+	rout = material%ksat*f_hyd_kr_h_bc_sca(material,h)
+
+	end function f_hyd_k_h_bc_sca
+
+
+	!********************************************************************************************************************
+	! F: f_hyd_k_h_VG_vec(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns permeability (vector) from pressure head (vector pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		k= ksat·kr
+	!********************************************************************************************************************
+
+	pure function f_hyd_k_h_bc_vec(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_k_h_bc_vec" :: f_hyd_k_h_bc_vec
+	!DEC$ endif
+
+	!returns permeability from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material(:)
+	real(kind=dpd)::rout(size(h))
+
+	rout = material%ksat*f_hyd_kr_h_bc_vec(material,h)
+
+	end function f_hyd_k_h_bc_vec
+
+	!-----------
+
+	pure function f_hyd_k_h_bc_vec2(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_k_h_bc_vec2" :: f_hyd_k_h_bc_vec2
+	!DEC$ endif
+
+	!returns permeability from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout(size(h))
+
+	rout = material%ksat*f_hyd_kr_h_bc_vec2(material,h)
+
+	end function f_hyd_k_h_bc_vec2
+
+	!********************************************************************************************************************
+	! F: f_hyd_cap_h_VG_sca(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns water capacity (scalar) from pressure head (scalar pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		Cap = -(thsat-thres)·m·n·(-a·h)^n·(1+(-h·a)^n)^(-1-m)/h (Problems when very near to saturation)
+	!		Cap = -(thsat-thres)·m·n·a^n·(-h)^(n-1)·(1+(-h·a)^n)^(-1-m) (Avoid problems with n>1)
+	!********************************************************************************************************************
+
+	pure function f_hyd_cap_h_bc_sca(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_cap_h_bc_sca" :: f_hyd_cap_h_bc_sca
+	!DEC$ endif
+
+	!returns water capacity from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout
+
+	if (h<-material%a) then
+		rout =((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
+	else
+		rout =  0.0_dps
+	end if
+
+
+	end function f_hyd_cap_h_bc_sca
+
+
+	!********************************************************************************************************************
+	! F: f_hyd_cap_h_VG_sca(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns water capacity (vector) from pressure head (vector pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		Cap = -(thsat-thres)·m·n·(-a·h)^n·(1+(-h·a)^n)^(-1-m)/h (Problems when very near to saturation)
+	!		Cap = -(thsat-thres)·m·n·a^n·(-h)^(n-1)·(1+(-h·a)^n)^(-1-m) (Avoid problems with n>1)
+	!********************************************************************************************************************
+
+	pure function f_hyd_cap_h_bc_vec(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_cap_h_bc_vec" :: f_hyd_cap_h_bc_vec
+	!DEC$ endif
+
+	!returns water capacity from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material(:)
+	real(kind=dpd)::rout(size(h))
+
+	withsuction:where (h<-material%a)
+		rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
+	elsewhere
+		rout =  0.0_dps
+	end where withsuction
+
+	end function f_hyd_cap_h_bc_vec
+
+	!-------
+
+	pure function f_hyd_cap_h_bc_vec2(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_cap_h_bc_vec2" :: f_hyd_cap_h_bc_vec2
+	!DEC$ endif
+
+	!returns water capacity from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout(size(h))
+
+	withsuction:where (h<-material%a)
+		rout = ((material%thres-material%thsat)*material%n*(h/(-material%a))**(-material%n))/h
+	elsewhere
+		rout =  0.0_dps
+	end where withsuction
+
+	end function f_hyd_cap_h_bc_vec2
+
+	!********************************************************************************************************************
+	! F: f_hyd_dkrcap_h_VG_sca(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns derivative of relative permeability over h
+	!	Mualem-Van Genuchten expressions:
+	!		dkr/dh = m·n·x^[-1-(1+l)·m]·{l·x^m+(2+l-l·x)·y^(m-1)}·[1-(y/x)^m]·a^n·(-h)^(n-1)
+	!   x= 1+(-a·h)^n
+	!   y= x-1
+	!********************************************************************************************************************
+
+	pure function f_hyd_dkr_h_bc_sca(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dkr_h_bc_sca" :: f_hyd_dkr_h_bc_sca
+	!DEC$ endif
+
+	!returns water capacity from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout,x,y
+
+	if (h<-material%a) then
+		x = 1.0_dpd+(-material%a*h)**material%n
+		y = x-1.0_dpd
+		rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h		
+	else
+		rout =  0.0_dps
+	end if
+
+
+	end function f_hyd_dkr_h_bc_sca
+
+	!********************************************************************************************************************
+	! F: f_hyd_dkrcap_h_VG_vec(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns derivative of relative permeability over h (vector)
+	!	Mualem-Van Genuchten expressions:
+	!		dkr/dh = m·n·x^[-1-(1+l)·m]·{l·x^m+(2+l-l·x)·y^(m-1)}·[1-(y/x)^m]·a^n·(-h)^(n-1)
+	!   x= 1+(-a·h)^n
+	!   y= x-1
+	!********************************************************************************************************************
+
+	pure function f_hyd_dkr_h_bc_vec(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dkr_h_bc_vec" :: f_hyd_dkr_h_bc_vec
+	!DEC$ endif
+
+	!returns water capacity from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material(:)
+	real(kind=dpd)::rout(size(h)),x(size(h)),y(size(h))
+
+	withsuction:where (h<-material%a)
+		x = 1+(-material%a*h)**material%n
+		y = x-1
+		rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h
+	elsewhere
+		rout =  0.0_dps
+	end where withsuction
+
+	end function f_hyd_dkr_h_bc_vec
+
+	!------------------
+
+	pure function f_hyd_dkr_h_bc_vec2(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dkr_h_bc_vec2" :: f_hyd_dkr_h_bc_vec2
+	!DEC$ endif
+
+	!returns water capacity from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout(size(h)),x(size(h)),y(size(h))
+
+	withsuction:where (h<-material%a)
+		x = 1+(-material%a*h)**material%n
+		y = x-1
+		rout = -((2.0_dpd+(2.0_dpd+material%l)*material%n)*((h/(-material%a))**(-material%n))**(2.0_dpd+material%l+2.0_dpd/material%n))/h
+	elsewhere
+		rout =  0.0_dps
+	end where withsuction
+
+	end function f_hyd_dkr_h_bc_vec2
+
+	!********************************************************************************************************************
+	! F: f_hyd_dk_h_VG_sca(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns permeability (vector) from pressure head (vector pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		k= ksat·kr
+	!********************************************************************************************************************
+
+	pure function f_hyd_dk_h_bc_sca(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dk_h_bc_sca" :: f_hyd_dk_h_bc_sca
+	!DEC$ endif
+
+	!returns permeability from pressure head(scalar)
+
+	real(kind=dps),intent(in)::h
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout
+
+	rout = material%ksat*f_hyd_dkr_h_bc_sca(material,h)
+
+	end function f_hyd_dk_h_bc_sca
+
+
+	!********************************************************************************************************************
+	! F: f_hyd_dk_h_VG_vec(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Function that returns derivative of permeability (vector) respect h from pressure head (vector pressure), with
+	!	Mualem-Van Genuchten expressions:
+	!		k= ksat·kr
+	!********************************************************************************************************************
+
+	pure function f_hyd_dk_h_bc_vec(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dk_h_bc_vec" :: f_hyd_dk_h_bc_vec
+	!DEC$ endif
+
+	!returns permeability from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material(:)
+	real(kind=dpd)::rout(size(h))
+
+	rout = material%ksat*f_hyd_dkr_h_bc_vec(material,h)
+
+	end function f_hyd_dk_h_bc_vec
+
+	!-------------
+
+	pure function f_hyd_dk_h_bc_vec2(material,h) result(rout)
+	!DEC$ if defined(_DLL)
+	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_hyd_dk_h_bc_vec2" :: f_hyd_dk_h_bc_vec2
+	!DEC$ endif
+
+	!returns permeability from pressure head(vector)
+
+	real(kind=dps),intent(in)::h(:)
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout(size(h))
+
+	rout = material%ksat*f_hyd_dkr_h_bc_vec2(material,h)
+
+	end function f_hyd_dk_h_bc_vec2
+	
+	
+	!********************************************************************************************************************
+	! F: f_hyd_Cmax_bc(material,h)
+	!--------------------------------------------------------------------------------------------------------------------
+	! Return the maximum value of the water capacity, to apply on the L-method
+	!********************************************************************************************************************
+
+	pure function f_hyd_Cmax_bc(material) result(rout)
+
+	type(ty_com_material),intent(in)::material
+	real(kind=dpd)::rout,lambda,psib,alpha,thetar,thetas
+	lambda=material%n
+	psib=-material%a
+	thetar=material%thres
+	thetas=material%thsat
+
+	!tex:
+	!$${C_{max}} = \frac{{\left( {\theta r - \theta s} \right)\lambda }}{{-\psi_{bc}}}$$
+	
+	rout = ((thetar - thetas)*lambda)/psib
+
+	end function f_hyd_Cmax_bc
+
+
+	!end module com_mod_hyd_bc

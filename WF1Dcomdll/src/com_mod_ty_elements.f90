@@ -1,22 +1,24 @@
 	!********************************************************************************************************************
-	!        CLASS FOR THE COLLECTION OF ELEMENTS IN THE COMMON LIBRARY
-	!********************************************************************************************************************
-	! TITLE         : 1.5D MULTILAYER FLOW
+	! TITLE         : COM_MOD_TY_ELEMENTS: DERIVED TYPE THAT DEFINES COMMON PROPERTIES AND METHODS OF ELEMENTS
 	! PROJECT       : FLOW1D COMMON MODEL LIBRARIES
-	! MODULE        : MOD_COM_TY_LAYER
-	! URL           : ...
-	! AFFILIATION   : ...
-	! DATE          : ...
-	! REVISION      : ... V 0.0
-	! LICENSE				: This software is copyrighted 2019(C)
+	! MODULE        : COM_MOD_TY_ELEMENTS
+	! URL           : https://github.com/ivaninasetec/WF15DSatUnsat
+	! AFFILIATION   : The University of Nottingham
+	! DATE          : 13/2/2022
+	! REVISION      : 1.0
+	! LICENSE       : This software is copyrighted 2022(C)
+	!
+	! DESCRIPTION:
+	!> Derived type to define the common properties and methods of elements that can be used by both WF1DSAT and
+	!> WF1DUNSAT.
+	!>
 	!> @author
 	!> Iván Campos-Guereta Díez
-	!  MSc Civil Engineering by Polytechnic University of Madrid                                                     *
-	!  PhD Student by University of Nottingham                                                                       *
-	!  eMBA by International Institute San Telmo in Seville                                                          *
-	!  ivan.camposguereta@nottingham.ac.uk
-	! DESCRIPTION:
-	!> Class for horizontal saturated layer. Extend common class of layers.
+	!> MSc Civil Engineering by <a href="http://www.upm.es/">Polytechnic University of Madrid</a>
+	!> PhD Student by <a href="https://www.nottingham.ac.uk/">The university of Nottingham</a>
+	!> eMBA by <a href="https://www.santelmo.org/en">San Telmo Bussiness School</a>
+	!> ivan.camposguereta@nottingham.ac.uk
+	!> Working partner of <a href="https://www.inasetec.es">INASETEC</a>
 	!********************************************************************************************************************
 
 	module com_mod_ty_elements
@@ -48,13 +50,11 @@
 	contains
 	procedure,public:: allocateall	 => s_com_elements_allocateall
 	procedure,public:: deallocateall => s_com_elements_deallocateall
-	!procedure,public:: chi_from_nod => f_chi_from_nod
 	procedure,public:: chi_from_x => f_com_element_chi_from_x
 	procedure,public:: h_from_x => f_com_element_h_from_x
 	procedure,public:: dh_from_x => f_com_element_dh_from_x
 	procedure,public:: id_from_x => f_com_element_dh_from_x
 	procedure,public:: id_from_x_sca => f_com_elements_idelement_from_x_sca
-	!procedure,public:: h_on_nodes => f_h_on_nodes
 	procedure,public:: update_materials_to_nodes	 => s_com_elements_update_materias_to_nodes
 
 
@@ -290,44 +290,11 @@
 		case default
 		htemp = nodes%hnew(idnodeini:idnodeend)
 	end select
-
-
-	!shapeonnodestemp = dshape1d(this%chi_from_x(idelem,x),this%chi(idelem,:))
 	dphionnodestemp = dphi1d(this%chi_from_x(idelem,x),nodes%x(idnodeini:idnodeend))
 
 	f_com_element_dh_from_x = dot_product(htemp,dphionnodestemp)
 
 	end function f_com_element_dh_from_x
-
-	!!---------------------------------------------------------------------------------------------------------------------
-	!!> @author Iván Campos-Guereta Díez
-	!!> @brief
-	!!> Procedure inside the class ty_com_elements. Return value of id of element given x (opt 0: hnew(default), 1: htemp, 2:hold)
-	!!> Update: xini,xend,idnode,chi,lenght
-	!!> @param[in] idelem
-	!!> @param[in] x
-	!!---------------------------------------------------------------------------------------------------------------------
-	!
-	!function f_com_elements_idelement_from_x(this,x) result(idelement) !default hnew, 1 hold, 2 htemp
-	!
-	!class(ty_com_elements),intent(inout)::this
-	!
-	!real(kind=dps),intent(in)::x
-	!real(kind=dps)::idelement
-	!real(kind=dps)::chi
-	!
-	!integer::e
-	!
-	!idelement = 1
-	!do e=1,this%count
-	!	if(((x>=this%xini(e)).and.(x<=this%xend(e))).or.((x<=this%xini(e)).and.(x>=this%xend(e)))) then
-	!		idelement = e
-	!		exit
-	!	end if
-	!end do
-	!
-	!end function f_com_elements_idelement_from_x
-
 
 	!---------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
@@ -361,7 +328,6 @@
 	!DEC$ ATTRIBUTES DLLEXPORT, ALIAS:"f_com_elements_idelement_from_x_sca" :: f_com_elements_idelement_from_x_sca
 	!DEC$ endif
 
-
 	class(ty_com_elements),intent(in)::this
 	real(kind=dpd),intent(in)::x
 	integer::f_com_elements_idelement_from_x_sca
@@ -377,7 +343,7 @@
 	!---------------------------------------------------------------------------------------------------------------------
 	!> @author Iván Campos-Guereta Díez
 	!> @brief
-	!> Procedure inside the class ty_sat_nodes. Deallocate all vectors and instance of calc.
+	!> Procedure inside the class ty_sat_nodes. Update material properties at the nodes
 	!---------------------------------------------------------------------------------------------------------------------
 
 	subroutine s_com_elements_update_materias_to_nodes(this,nodes)
@@ -420,8 +386,5 @@
 	end do
 
 	end subroutine s_com_elements_update_materias_to_nodes
-
-
-
 
 	end module com_mod_ty_elements
