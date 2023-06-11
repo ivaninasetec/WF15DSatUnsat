@@ -432,7 +432,8 @@
 	integer::iu,is
 	
 	if(this%time%tprint == this%parameters%tinit) then
-		write(findexconstraint,'(A)') 'idconstraint,t,iteration,iu,is,v_idelem_hsat,v_hnew,v_thnew,v_hsat,v_qvtb,v_qvt,v_qvb,v_incvoldt,v_Qs_layer,v_Qs_all,nrel,h_width,h_hsat_mean, h_qent_mean,h_incvoldt_mean,h_dqhordx_mean,h_dqhordx_all_mean	'
+				write(findexconstraint,'(A)') 'idconstraint,t,iteration,iu,is,v_idelem_hsat,v_hnew,v_thnew,v_hsat,v_qvtb,v_qvt,v_qvb,v_incvoldt,v_Qs_layer,v_Qs_all,nrel,h_width,h_hsat_mean, h_qent_mean,h_incvoldt_mean,h_dqhordx_mean,h_dqhordx_all_mean,inchnew_mean	'
+				!write(findexconstraint,'(A)') 'idconstraint,t,iteration,iu,is,v_idelem_hsat,v_hnew,v_thnew,v_hsat,v_qvtb,v_qvt,v_qvb,v_incvoldt,v_Qs_layer,v_Qs_all,nrel,h_width,h_hsat_mean, h_qent_mean,h_incvoldt_mean,h_dqhordx_mean,h_dqhordx_all_mean'
 	end if	
 	
 	do iu=1,size(this%constraints%unsat)
@@ -440,11 +441,12 @@
 			const_u => this%constraints%unsat(iu)%constraints
 			const_s => this%constraints%sat(is)%constraints
 			this%constraints%idprint = this%constraints%idprint+1
-			!														idconstraint										t						,iteration						,iu			,is			,v_idelem_hsat		,v_hnew,					,v_thnew				,v_hsat							,v_qvtb						,v_qvt						,v_qvb						,v_incvoldt						,v_qnewmann							,v_qnewmann_all						,nrel								,h_width							,h_hsat_mean						, h_qent_mean						,h_incvoldt_mean						,h_dqhordx_mean						,h_dqhordx_all_mean																	'
-			write	(	findexconstraint, '(I10,",",											E15.6E3,","		,I10,","							,I2,","	,I2,","	,E15.6E3,","			,E15.6E3,","						,E15.6E3,","					,E15.6E3,","					,E15.6E3,","				,E15.6E3,","				,E15.6E3,","				,E15.6E3,","						,E15.6E3,","							,E15.6E3,","								,E15.6E3,","					,E15.6E3,","						,E15.6E3,","							,E15.6E3,","							,E15.6E3,","									,E15.6E3,","								,E15.6E3)')&
-				!&													this%time%t	,this%time%iter_total	,iu			,is			,const_u%idelem_hsat(is)												,const_u%hnew(is)		,const_u%thnew(is)	,const_u%hsat(is)		,const_u%qver(is)	,const_u%qver(is)	,const_u%qinf(is)	,const_u%incvoldt(is)	,const_u%qnewmann(is)%p ,const_u%qnewmann_all(is)	,const_s%nrel(iu)%p	,const_s%width(iu)		,const_s%hsat_mean(iu)	,const_s%qent_mean(iu)	,const_s%incvoldt_mean(iu)	,const_s%dqhordx_mean(iu)	,const_s%dqhordx_all_mean(iu)	
-				&													this%constraints%idprint,	this%time%t	,this%time%iter_total	,iu			,is			,const_u%idelem_hsat(is),const_u%hnew(is)%p,const_u%thnew(is)%p	,const_u%hsat(is)		,const_u%qver(is)	,const_u%qsat(is)	,const_u%qinf(is)	,const_u%incvoldt(is)	,const_u%qnewmann(is)%P ,const_u%qnewmann_all(is)	,const_s%nrel(iu)%p	,const_s%width(iu)		,const_s%hsat_mean(iu)	,const_s%qent_mean(iu)	,const_s%incvoldt_mean(iu)	,const_s%dqhordx_mean(iu)	,const_s%dqhordx_all_mean(iu)	
-        end do
+			!														idconstraint										t						,iteration						,iu			,is			,v_idelem_hsat					,v_hnew,						,v_thnew							,v_hsat							,v_qvtb						,v_qvt						,v_qvb						,v_incvoldt						,v_qnewmann							,v_qnewmann_all						,nrel								,h_width							,h_hsat_mean						, h_qent_mean						,h_incvoldt_mean						,h_dqhordx_mean						,h_dqhordx_all_mean				,h_dqhordx_all_mean				
+			write	(	findexconstraint, '(I10,",",											E15.6E3,","		,I10,","							,I2,","	,I2,","	,E15.6E3,","				,E15.6E3,","						,E15.6E3,","					,E15.6E3,","				,E15.6E3,","			,E15.6E3,","			,E15.6E3,","			,E15.6E3,","					,E15.6E3,","						,E15.6E3,","							,E15.6E3,","				,E15.6E3,","					,E15.6E3,","						,E15.6E3,","						,E15.6E3,","								,E15.6E3,","							,E15.6E3,","									,E15.6E3)')&
+				&													this%constraints%idprint,	this%time%t				,this%time%iter_total	,iu			,is			,const_u%idelem_hsat(is),const_u%hnew(is)%p	,const_u%thnew(is)%p	,const_u%hsat(is)		,const_u%qver(is)	,const_u%qsat(is)	,const_u%qinf(is)	,const_u%incvoldt(is)	,const_u%qnewmann(is)%P ,const_u%qnewmann_all(is)	,const_s%nrel(iu)%p	,const_s%width(iu)		,const_s%hsat_mean(iu)	,const_s%qent_mean(iu)	,const_s%incvoldt_mean(iu)	,const_s%dqhordx_mean(iu)	,const_s%dqhordx_all_mean(iu)	, const_s%inchnew_mean(iu)
+			!write	(	findexconstraint, '(I10,",",											E15.6E3,","		,I10,","							,I2,","	,I2,","	,E15.6E3,","				,E15.6E3,","						,E15.6E3,","					,E15.6E3,","				,E15.6E3,","			,E15.6E3,","			,E15.6E3,","			,E15.6E3,","					,E15.6E3,","						,E15.6E3,","							,E15.6E3,","				,E15.6E3,","					,E15.6E3,","						,E15.6E3,","						,E15.6E3,","								,E15.6E3,","							,E15.6E3)')&
+			!	&													this%constraints%idprint,	this%time%t				,this%time%iter_total	,iu			,is			,const_u%idelem_hsat(is),const_u%hnew(is)%p	,const_u%thnew(is)%p	,const_u%hsat(is)		,const_u%qver(is)	,const_u%qsat(is)	,const_u%qinf(is)	,const_u%incvoldt(is)	,const_u%qnewmann(is)%P ,const_u%qnewmann_all(is)	,const_s%nrel(iu)%p	,const_s%width(iu)		,const_s%hsat_mean(iu)	,const_s%qent_mean(iu)	,const_s%incvoldt_mean(iu)	,const_s%dqhordx_mean(iu)	,const_s%dqhordx_all_mean(iu)
+		end do
 	end do
 	
 	

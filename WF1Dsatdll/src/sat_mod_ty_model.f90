@@ -182,16 +182,33 @@
 	!DEC$ if defined(_DLL)
 	!DEC$ ATTRIBUTES DLLEXPORT :: s_sat_model_put_qent_from_constraint
 	!DEC$ endif
+	use sat_mod_ty_nodes,only:ty_sat_nodes
+	use com_mod_ty_nodes,only:ty_com_nodes
 
 	class(ty_sat_model),intent(inout),target::this
-	real(kind=dpd)::qent(size(this%constraints%idnode))
+	real(kind=dpd)::qent(size(this%constraints%idnode)),qsat(size(this%constraints%idnode)),qinf(size(this%constraints%idnode))
 
 	integer::i
+	class(ty_com_nodes),pointer::nodescom
+	class(ty_sat_nodes),pointer::nodes
+	
+	nodescom=>this%calc%nodes
+	select type(nodescom)
+	type is(ty_sat_nodes)
+		nodes =>nodescom
+	end select
 
 	do i=1,size(this%constraints%idnode)
 		qent(i) = this%constraints%qent(i)%p
+		qsat(i) = this%constraints%qsat(i)%p
+		qinf(i) = this%constraints%qinf(i)%p
 	end do
 
+	nodes%qent = matmul(this%constraints%intep_matrix,qent)
+	nodes%results_qent = this%calc%nodes%qent
+	nodes%results_qsat = matmul(this%constraints%intep_matrix,qsat)
+	nodes%results_qinf = matmul(this%constraints%intep_matrix,qinf)
+	
 	this%calc%nodes%qent = matmul(this%constraints%intep_matrix,qent)
 
 	end subroutine s_sat_model_put_qent_from_constraint
@@ -255,6 +272,9 @@
 		idelem1 = this%constraints%idelem1(i)
 		this%constraints%hsat_mean(i)= dot_product(elems%hnew(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)
 		this%constraints%qent_mean(i)= dot_product(elems%results_qent(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)
+		this%constraints%qsat_mean(i)= dot_product(elems%results_qsat(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)
+		this%constraints%qinf_mean(i)= dot_product(elems%results_qinf(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)
+		this%constraints%inchnew_mean(i)= dot_product(elems%results_inchnew(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)
 		this%constraints%incvoldt_mean(i)= dot_product(elems%results_incvoldt(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)
 		this%constraints%dqhordx_mean(i)= dot_product(elems%results_dqhordx_from_incvoldt(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)
 		this%constraints%dqhordx_all_mean(i)= dot_product(elems%results_dqhordx_from_incvoldt_all(idelem0:idelem1),elems%lenght(idelem0:idelem1))/this%constraints%width(i)

@@ -128,6 +128,9 @@
 	if(.not.allocated(this%perm))			allocate(this%perm(nnc)) !If perm is not allocated then it is not used.
 
 	if(.not.allocated(elem%results_qent))		allocate(elem%results_qent(this%elements%count))
+	if(.not.allocated(elem%results_qsat))		allocate(elem%results_qsat(this%elements%count))
+	if(.not.allocated(elem%results_qinf))		allocate(elem%results_qinf(this%elements%count))
+	if(.not.allocated(elem%results_inchnew))		allocate(elem%results_inchnew(this%elements%count))
 	if(.not.allocated(elem%results_incvoldt)) allocate(elem%results_incvoldt(this%elements%count))
 	if(.not.allocated(elem%results_dqhordx))allocate(elem%results_dqhordx(this%elements%count))
 	if(.not.allocated(elem%results_dqhordx_from_incvoldt))allocate(elem%results_dqhordx_from_incvoldt(this%elements%count))
@@ -161,6 +164,9 @@
 	if(.not.allocated(elem%k))		allocate(elem%k(this%elements%count))
 
 	elem%results_qent=0.0_dpd
+	elem%results_qsat=0.0_dpd
+	elem%results_qinf=0.0_dpd
+	elem%results_inchnew=0.0_dpd	
 	elem%results_incvoldt=0.0_dpd
 	elem%results_dqhordx=0.0_dpd
 	elem%results_dqhordx_from_incvoldt=0.0_dpd
@@ -168,6 +174,9 @@
 	elem%results_dqhordx_from_incvoldt_all=0.0_dpd
 
 	if(.not.allocated(nodes%results_qent))		allocate(nodes%results_qent(nodes%count))
+	if(.not.allocated(nodes%results_qsat))		allocate(nodes%results_qsat(nodes%count))
+	if(.not.allocated(nodes%results_qinf))		allocate(nodes%results_qinf(nodes%count))
+	if(.not.allocated(nodes%results_inchnew))		allocate(nodes%results_inchnew(nodes%count))
 	if(.not.allocated(nodes%results_incvoldt))	allocate(nodes%results_incvoldt(nodes%count))
 	if(.not.allocated(nodes%results_qhor))		allocate(nodes%results_qhor(nodes%count))
 	if(.not.allocated(nodes%results_dqhordx))	allocate(nodes%results_dqhordx(nodes%count))
@@ -176,6 +185,10 @@
 	if(.not.allocated(nodes%results_dqhordx_from_incvoldt))	allocate(nodes%results_dqhordx_from_incvoldt(nodes%count))
 	if(.not.allocated(nodes%results_dqhordx_from_incvoldt_all))	allocate(nodes%results_dqhordx_from_incvoldt_all(nodes%count))
 	nodes%results_qent								=0.0_dpd
+	nodes%results_qsat								=0.0_dpd
+	nodes%results_qinf								=0.0_dpd
+	nodes%results_inchnew							=0.0_dpd
+	nodes%results_incvoldt						=0.0_dpd
 	nodes%results_incvoldt							=0.0_dpd
 	nodes%results_qhor								=0.0_dpd
 	nodes%results_dqhordx							=0.0_dpd
@@ -630,6 +643,10 @@
 	nodes%results_incvoldt	= this%nrel*this%layers%get_water_inc_med(nodes%hold,nodes%hnew)*(nodes%hnew-nodes%hold)/this%time%dt
 	nodes%results_qhor_all		= -matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),ksatlayers)*f_get_derivatives(nodes%x,nodes%hnew+nodes%z) !kmed·hnew·dhnew/dx
 	nodes%results_dqhordx_all = f_get_derivatives(nodes%x,nodes%results_qhor_all)
+	
+	!Calculate the pressure drom in each node due to waterflow qsal and waterflow leaving each layer.
+	!inch(i,l) = qsal·hl/kl+1/2·ql/(hl·kl)·(hl^2)  | ql = -kl·hl·dh/dx
+	nodes%results_inchnew = nodes%results_qinf*matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),1.0_dpd/ksatlayers)-1.0_dpd/2.0_dpd*matmul(this%layers%get_inc_h_from0_vec(nodes%hnew)**2.0_dpd,ksatlayers/ksatlayers)*f_get_derivatives(nodes%x,nodes%hnew+nodes%z) 
 
 	nodes%results_qhor				= -matmul(this%layers%get_inc_h_from0_vec(nodes%hnew),ksatlayers1)*f_get_derivatives(nodes%x,nodes%hnew+nodes%z) !Only for layer 1
 	nodes%results_dqhordx			= f_get_derivatives(nodes%x,nodes%results_qhor)
@@ -691,6 +708,9 @@
 	do e=1,this%elements%count
 		!Vertical flow entering element: Int(qv·dx)
 		elem%results_qent(e)			=intelement_rel_1don(f_qent_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_qsat(e)			=intelement_rel_1don(f_qsat_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_qinf(e)			=intelement_rel_1don(f_qinf_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
+		elem%results_inchnew(e)			=intelement_rel_1don(f_inchnew_chi		,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 		elem%results_incvoldt(e)	=intelement_rel_1don(f_incvoldt_chi,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 		elem%results_dqhordx(e)		=intelement_rel_1don(f_dqhordx_chi	,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
 		elem%results_dqhordx_from_incvoldt(e)				=intelement_rel_1don(f_dqhordx_from_incvoldt_chi			,this%nodes%x(elem%idnode(e,:))	, QUADRATURE_ORDER)/elem%lenght(e)
@@ -741,6 +761,36 @@
 	!Int(qent·phi)
 	f_qent_chi = interp_on_element(chi,nodes%qent(elem%idnode(e,:)))
 	end function f_qent_chi
+		!----- qsat
+	function f_qsat_chi(chi)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+
+	real(kind=dps),intent(in)::chi(:)
+	real(kind=dps)::f_qsat_chi(size(chi))
+
+	!Int(qent·phi)
+	f_qsat_chi = interp_on_element(chi,nodes%results_qsat(elem%idnode(e,:)))
+	end function f_qsat_chi
+	!----- qinf
+	function f_qinf_chi(chi)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+
+	real(kind=dps),intent(in)::chi(:)
+	real(kind=dps)::f_qinf_chi(size(chi))
+
+	!Int(qent·phi)
+	f_qinf_chi = interp_on_element(chi,nodes%results_qinf(elem%idnode(e,:)))
+	end function f_qinf_chi
+	!----- inchnew
+	function f_inchnew_chi(chi)
+	use com_mod_fem_shapefunctions,only:interp_on_element
+
+	real(kind=dps),intent(in)::chi(:)
+	real(kind=dps)::f_inchnew_chi(size(chi))
+
+	!Int(qent·phi)
+	f_inchnew_chi = interp_on_element(chi,nodes%results_inchnew(elem%idnode(e,:)))
+	end function f_inchnew_chi
 	!----- h
 	function f_h_chi(chi)
 	use com_mod_fem_shapefunctions,only:interp_on_element

@@ -30,6 +30,9 @@
 	
 	type,extends(ty_com_elements),public::ty_sat_elements	!< CLASS: Definition of the layer in saturated model
 	real(kind=dps),allocatable::results_qent(:)
+	real(kind=dps),allocatable::results_qsat(:)
+	real(kind=dps),allocatable::results_qinf(:)
+	real(kind=dps),allocatable::results_inchnew(:)
 	real(kind=dps),allocatable::results_incvoldt(:)		!dV/dt in element
 	real(kind=dps),allocatable::results_dqhordx(:) !dqhor/dx in 1st layer in element
 	real(kind=dps),allocatable::results_dqhordx_from_incvoldt(:) !dqhor/dx=qent-dV/dt in 1st layer 

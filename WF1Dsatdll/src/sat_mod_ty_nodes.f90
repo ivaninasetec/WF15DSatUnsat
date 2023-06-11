@@ -30,6 +30,9 @@
 
 	type,extends(ty_com_nodes),public::ty_sat_nodes	!< CLASS: Definition of the layer in saturated model
 		real(kind=dpd),allocatable::results_qent(:)
+		real(kind=dpd),allocatable::results_qsat(:)
+		real(kind=dpd),allocatable::results_qinf(:)
+		real(kind=dpd),allocatable::results_inchnew(:) !drop in pressure due to waterflow
 		real(kind=dpd),allocatable::results_incvoldt(:)
 		real(kind=dpd),allocatable::results_qhor(:)
 		real(kind=dpd),allocatable::results_dqhordx(:)
