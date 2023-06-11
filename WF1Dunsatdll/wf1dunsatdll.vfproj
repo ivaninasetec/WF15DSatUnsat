@@ -34,7 +34,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="Release|x64" ConfigurationType="typeDynamicLibrary">
+		<Configuration Name="Release|x64" OutputDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)" IntermediateDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)\temp" ConfigurationType="typeDynamicLibrary">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Parallelization="true" OpenMP="OpenMPParallelCode" F2003Semantics="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
 				<Tool Name="VFLinkerTool" AdditionalOptions="/IGNORE:4217" SuppressStartupBanner="true" SubSystem="subSystemWindows" LinkDLL="true"/>
 				<Tool Name="VFResourceCompilerTool"/>
