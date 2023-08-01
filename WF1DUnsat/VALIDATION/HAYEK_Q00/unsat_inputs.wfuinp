@@ -6,7 +6,6 @@
 !(epsh_tol) Tolerancia en h | (epsth_tol) Tolerancia en th
 1.0E-4						 1.0E-4
 !Minimum iterations | (itinc_dt) Iteration to increase dt  | (itdec_dt) Iterations to decrease dt | (maxit) Max iterations for time step (if surpassed restart timestep and decrease dt)
-1	50					100					150
 !(crelax) Relaxation coefficient (updates of values in each iterations equal to: (1-crelax)·hn+(crelax)·hn+1
 1.0
 !(IsMassLump) ¿Use mass lumping in mass matrix? | (IsModifiedPicard) ¿Use Modified Picard?
@@ -39,7 +38,6 @@
 !
 !TIME PARAMETERS:
 !(tinit) Initial time | (dtinit) dt at first step | (tmax) t at end of simulation | (dtmin) Min value for dt | (dtmax) Max value for dt 
-0.0			1.0E-5			    48			     1.0E-20					  0.013
 !(Cdtinc) Factor to increase time | (Cdtdec) Factor to decrease time
 1.2							       0.8
 !(dtprintinc) time increment to print results
@@ -82,7 +80,6 @@
 .TRUE.
 !****** BLOCK D: MESH **************************************
 !(nelem) Number of elements per layer
-25	25	25	25
 !(nn) Nodes per element | (nc) Class of nodes
 2						 0
 

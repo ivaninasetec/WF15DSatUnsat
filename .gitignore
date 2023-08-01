@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 *.out*
+*.u2d
 DATA/
 EXCLUDE/
 DOCUMENTATION/
@@ -366,3 +367,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/WF1Dcomdll/wf1dcomdll.u2d
