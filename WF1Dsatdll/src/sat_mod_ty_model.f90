@@ -208,8 +208,6 @@
 	nodes%results_qent = this%calc%nodes%qent
 	nodes%results_qsat = matmul(this%constraints%intep_matrix,qsat)
 	nodes%results_qinf = matmul(this%constraints%intep_matrix,qinf)
-	
-	this%calc%nodes%qent = matmul(this%constraints%intep_matrix,qent)
 
 	end subroutine s_sat_model_put_qent_from_constraint
 
