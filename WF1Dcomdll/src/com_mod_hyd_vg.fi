@@ -70,25 +70,25 @@
 	real(kind=dps),intent(in)::h1,h2
 	type(ty_com_material),intent(in)::material
 	real(kind=dpd)::f_hyd_incs_h1_to_h2_vg_sca
-	real(kind=16)::a,hb1,hb2,n,m,rout,rout1,rout2
+	real(kind=dpd)::a,hb1,hb2,n,m,rout,rout1,rout2
 
-	a = real(material%a,16)
-	hb1 = real(h1,16)
-	hb2 = real(h2,16)
-	n= real(material%n,16)
-	m= real(material%m,16)
+	a = real(material%a,dpd)
+	hb1 = real(h1,dpd)
+	hb2 = real(h2,dpd)
+	n= real(material%n,dpd)
+	m= real(material%m,dpd)
 
 	!In this case we are considering the value of saturation at hb1
-	if (hb1<0.0_16) then
-		rout1 = (1.0_16+(-a*hb1)**n)**(-m)
+	if (hb1<0.0_dpd) then
+		rout1 = (1.0_dpd+(-a*hb1)**n)**(-m)
 	else
-		rout1 =  1.0_16
+		rout1 =  1.0_dpd
 	end if
 
-	if (hb2<0.0_16) then
-		rout2 = (1.0_16+(-a*hb2)**n)**(-m)
+	if (hb2<0.0_dpd) then
+		rout2 = (1.0_dpd+(-a*hb2)**n)**(-m)
 	else
-		rout2 =  1.0_16
+		rout2 =  1.0_dpd
 	end if
 
 	rout = rout2-rout1
@@ -230,7 +230,7 @@
 
 	if (h<0.0_dps) then
 		se = f_hyd_s_h_vg_sca(material,h)
-		rout = (se**material%l)*(1.0_dpd-(1.0_dpd-se**(1.0_dpd/material%m))**material%m)**2
+		rout = MAX(1.0E-10_dpd,min(1.0_dpd,(se**material%l)*(1.0_dpd-(1.0_dpd-se**(1.0_dpd/material%m))**material%m)**2))
 	else
 		rout =  1.0_dpd
 	end if
@@ -258,7 +258,7 @@
 
 	withsuction:where (h<0.0_dps)
 		se = f_hyd_s_h_vg_vec(material,h)
-		rout = (se**material%l)*(1.0_dpd-(1.0_dpd-se**(1.0_dpd/material%m))**material%m)**2
+		rout = MAX(1.0E-10_dpd,min(1.0_dpd,(se**material%l)*(1.0_dpd-(1.0_dpd-se**(1.0_dpd/material%m))**material%m)**2))
 	elsewhere
 		rout =  1.0_dps
 	end where withsuction
@@ -280,7 +280,7 @@
 
 	withsuction:where (h<0.0_dps)
 		se = f_hyd_s_h_vg_vec2(material,h)
-		rout = (se**material%l)*(1.0_dpd-(1.0_dpd-se**(1.0_dpd/material%m))**material%m)**2
+		rout = MAX(1.0E-10_dpd,min(1.0_dpd,(se**material%l)*(1.0_dpd-(1.0_dpd-se**(1.0_dpd/material%m))**material%m)**2))
 	elsewhere
 		rout =  1.0_dps
 	end where withsuction
@@ -371,8 +371,8 @@
 	real(kind=dpd)::rout
 
 	if (h<0.0_dps) then
-		rout = (material%thsat-material%thres)*material%m*material%n*(material%a**material%n)*(-h)**(material%n-1)&
-			&*(1.0_dpd+(-material%a*h)**material%n)**(-1.0_dpd-material%m)
+		rout = MAX(0.0_dpd,(material%thsat-material%thres)*material%m*material%n*(material%a**material%n)*(-h)**(material%n-1)&
+			&*(1.0_dpd+(-material%a*h)**material%n)**(-1.0_dpd-material%m))
 	else
 		rout =  0.0_dps
 	end if
@@ -402,8 +402,8 @@
 	real(kind=dpd)::rout(size(h))
 
 	withsuction:where (h<0.0_dps)
-		rout = (material%thsat-material%thres)*material%m*material%n*(material%a**material%n)*(-h)**(material%n-1)&
-			&*(1.0_dpd+(-material%a*h)**material%n)**(-1.0_dpd-material%m)
+		rout = max(0.0_dpd, (material%thsat-material%thres)*material%m*material%n*(material%a**material%n)*(-h)**(material%n-1)&
+			&*(1.0_dpd+(-material%a*h)**material%n)**(-1.0_dpd-material%m))
 	elsewhere
 		rout =  0.0_dps
 	end where withsuction
@@ -424,8 +424,8 @@
 	real(kind=dpd)::rout(size(h))
 
 	withsuction:where (h<0.0_dps)
-		rout = (material%thsat-material%thres)*material%m*material%n*(material%a**material%n)*(-h)**(material%n-1)&
-			&*(1.0_dpd+(-material%a*h)**material%n)**(-1.0_dpd-material%m)
+		rout = max(0.0_dpd,(material%thsat-material%thres)*material%m*material%n*(material%a**material%n)*(-h)**(material%n-1)&
+			&*(1.0_dpd+(-material%a*h)**material%n)**(-1.0_dpd-material%m))
 	elsewhere
 		rout =  0.0_dps
 	end where withsuction

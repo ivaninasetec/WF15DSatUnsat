@@ -75,7 +75,7 @@
 	integer::iterconverg,itermodel,iterunsat,itersat,iternrel,iterconvergmax
 	logical::isfirsthsatloop=.false.
 	logical,allocatable::ishsatover0(:),isfirsthsat(:)
-	integer::nunsat,nsat,iu,is, npos, nargs
+	integer::nunsat,nsat,iu,is, npos, nargs, is2
 	real(kind=dpd),pointer::t
 	logical::isconvergedall,ismaxitreached
 
@@ -235,11 +235,37 @@
 			if (.not.isconverged .and. iterconverg==model%parameters%it_max) ismaxitreached = .true.
 			iterconvergmax=max(iterconverg,iterconvergmax)
 		end do WFUNSAT1
+		
+		!!---- 09.05a ---- wf1dsat: update watertables when they overlap
+		!if (nsat>1) then
+		!do is=nsat-1,1,-1
+		!	do is2=nsat,is+1,-1
+		!		where (model%sat(is2)%calc%nodes%hnew>1e-10_dpd) !only >0.0 to account that the watertable appears.
+		!			where ((model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z-model%sat(is2)%calc%nodes%z)>1e-10_dpd) !check if the watertable is over the upper layer to do this.
+		!			model%sat(is)%calc%nodes%hnew= min(model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z, model%sat(is2)%calc%nodes%hnew+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z
+		!			model%sat(is)%calc%nodes%hnew = max(0.0_dpd,model%sat(is)%calc%nodes%hnew)
+		!			end where
+		!		end where
+		!		!if (maxval(model%sat(is)%calc%nodes%hnew)==0.0_dpd) then
+		!		!	ishsatover0(is)=.false.
+		!		!	isfirsthsat(is)=.false.
+		!		!else if (isfirsthsat(is)==.false.) then
+		!		!	ishsatover0(is)=.true.
+		!		!	isfirsthsat(is)=.true.
+		!		!else
+		!		!	ishsatover0(is)=.true.
+		!		!	isfirsthsat(is)=.false.
+		!		!end if
+		!	end do
+		!end do
+		!end if
+				
 
 		!---- 09.04 ---- estimate hnew for new timestep
 		do is=1,nsat
 			call model%sat(is)%calc%estimate_hnew_for_new_timestep()
 		end do
+				
 
 		!---- 09.05 ---- check if WF1DSAT is activated (a water-table appears)
 		!---- 09.06 ---- if first time activated-> set initial conditions to 0 in WF1DSAT
@@ -273,7 +299,7 @@
 		!---- 09.06.02 ----  SAT_CONVERGENCE: do while not converge or dtminor itmax not reached
 		!(CAN BE DONE IN PARALLEL)
 		itersat=0
-		do is=1,nsat
+		do is=nsat,1,-1
 			if(ishsatover0(is)) then
 				isconverged = .false.
 				iterconverg = 0
@@ -281,6 +307,21 @@
 					model%time%iter_total = model%time%iter_total + 1
 					iterconverg = iterconverg+1
 					itertotal=itertotal+1
+					
+					!NEW: Update with upper layer
+					if (is>1) then
+						do is2=nsat,is+1,-1
+							where (model%sat(is2)%calc%nodes%hnew>1.0E-10_dpd) !Only >0.0 to account that the watertable appears.
+								where ((model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z-model%sat(is2)%calc%nodes%z)>1.0E-10_dpd) !check if the watertable is over the upper layer to do this.
+									model%sat(is)%calc%nodes%hnew= MIN(model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z, model%sat(is2)%calc%nodes%hnew+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z
+									model%sat(is)%calc%nodes%hnew = MAX(0.0_dpd,model%sat(is)%calc%nodes%hnew)
+								end where
+							end where
+						end do
+					end if
+					
+					
+					
 					call model%sat(is)%calc%iterate(isconverged)
 					if(.not.isconverged .and. iterconverg==model%parameters%it_max) exit
 				end do
