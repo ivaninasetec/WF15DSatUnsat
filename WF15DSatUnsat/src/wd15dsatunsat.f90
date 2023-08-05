@@ -308,17 +308,17 @@
 					iterconverg = iterconverg+1
 					itertotal=itertotal+1
 					
-					!NEW: Update with upper layer
-					if (is>1) then
-						do is2=nsat,is+1,-1
-							where (model%sat(is2)%calc%nodes%hnew>1.0E-10_dpd) !Only >0.0 to account that the watertable appears.
-								where ((model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z-model%sat(is2)%calc%nodes%z)>1.0E-10_dpd) !check if the watertable is over the upper layer to do this.
-									model%sat(is)%calc%nodes%hnew= MIN(model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z, model%sat(is2)%calc%nodes%hnew+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z
-									model%sat(is)%calc%nodes%hnew = MAX(0.0_dpd,model%sat(is)%calc%nodes%hnew)
-								end where
-							end where
-						end do
-					end if
+					!!NEW: Update with upper layer
+					!if (is>1) then
+					!	do is2=nsat,is+1,-1
+					!		where (model%sat(is2)%calc%nodes%hnew>1.0E-10_dpd) !Only >0.0 to account that the watertable appears.
+					!			where ((model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z-model%sat(is2)%calc%nodes%z)>1.0E-10_dpd) !check if the watertable is over the upper layer to do this.
+					!				model%sat(is)%calc%nodes%hnew= MIN(model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z, model%sat(is2)%calc%nodes%hnew+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z
+					!				model%sat(is)%calc%nodes%hnew = MAX(0.0_dpd,model%sat(is)%calc%nodes%hnew)
+					!			end where
+					!		end where
+					!	end do
+					!end if
 					
 					
 					
