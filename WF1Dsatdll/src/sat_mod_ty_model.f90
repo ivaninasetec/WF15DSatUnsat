@@ -108,6 +108,7 @@
 	call this%calc%construct()
 
 	call this%constraints%allocateall(size(this%mesh%vmod_idnod),this%mesh%nnodclassh_count)
+	!call this%constraints%construct(this%mesh%vmod_idnod,this%calc%nodes,this%mesh%vmod_qent,this%mesh%vmod_nrel)
 	call this%constraints%construct(this%mesh%vmod_idnod,this%calc%nodes,this%mesh%vmod_qent,this%mesh%vmod_nrel)
 
 	end subroutine s_sat_model_construct
@@ -200,8 +201,12 @@
 
 	do i=1,size(this%constraints%idnode)
 		qent(i) = this%constraints%qent(i)%p
-		qsat(i) = this%constraints%qsat(i)%p
-		qinf(i) = this%constraints%qinf(i)%p
+		if (associated(this%constraints%qsat(i)%p)) then
+			qsat(i) = this%constraints%qsat(i)%p
+		end if
+		if (associated(this%constraints%qinf(i)%p)) then
+			qinf(i) = this%constraints%qinf(i)%p
+		end if
 	end do
 
 	nodes%qent = matmul(this%constraints%intep_matrix,qent)

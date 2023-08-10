@@ -334,7 +334,7 @@
 	integer,parameter::CONSIDER_HNEW=0,CONSIDER_HTEMP=1,CONSIDERHOLD=2,CONSIDER_ALL=3
 
 	this%nodes%hnew = this%nodes%htemp + this%parameters%crelax*(this%solution-this%nodes%htemp)
-	call this%update_th_from_h(CONSIDER_HTEMP)
+	call this%update_th_from_h(CONSIDER_HNEW)
 
 	end subroutine s_unsat_calc_update_hnew_from_solution
 
@@ -683,6 +683,7 @@
 
 			this%mx = this%mxmass1/this%time%dt+this%mxstiff
 			this%rhs=	this%mxmass1*nodes%htemp/this%time%dt-this%mxmass2*(nodes%thtemp-nodes%thold)/this%time%dt-this%mxstiff*nodes%x+this%mxsink*this%colsink+this%colbound
+			!this%rhs=	this%mxmass1*nodes%htemp/this%time%dt-this%mxmass2*(nodes%thnew-nodes%thold)/this%time%dt-this%mxstiff*nodes%x+this%mxsink*this%colsink+this%colbound
 
 
 		ELSE

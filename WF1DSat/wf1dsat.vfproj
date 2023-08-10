@@ -24,7 +24,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="Debug|x64">
+		<Configuration Name="Debug|x64" OutputDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)" IntermediateDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)temp">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Parallelization="true" PreprocessorDefinitions="DEBUG" ErrorLimit="200" WarnDeclarations="true" WarnUndeclaredExternals="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" WarnInterfaces="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebugDLL" UseMkl="mklParallel"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
@@ -32,9 +32,9 @@
 				<Tool Name="VFCustomBuildTool"/>
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
-				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="REM copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;REM copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;xcopy &quot;$(SolutionDir)\bin\$(Configuration)\$(Platform)\wf1dcomdll\wf1dcomdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;xcopy &quot;$(SolutionDir)\bin\$(Configuration)\$(Platform)\wf1dsatdll\wf1dsatdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;xcopy &quot;$(SolutionDir)WF15DSatUnsat\INCLUDE\$(Platform)\$(Configuration)\*.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="Release|x64">
+		<Configuration Name="Release|x64" OutputDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)" IntermediateDirectory="$(SolutionDir)\bin\$(ConfigurationName)\$(PlatformName)\$(TargetName)\temp">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Parallelization="true" HeapArrays="0" OpenMP="OpenMPParallelCode" F2003Semantics="true" WarnDeclarations="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" RuntimeLibrary="rtMultiThreadedDLL" UseMkl="mklParallel"/>
 				<Tool Name="VFLinkerTool" SuppressStartupBanner="true" SubSystem="subSystemConsole" OptimizeReferences="optReferences"/>
 				<Tool Name="VFResourceCompilerTool"/>
@@ -42,7 +42,7 @@
 				<Tool Name="VFCustomBuildTool"/>
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
-				<Tool Name="VFPostBuildEventTool" CommandLine="copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&#xA;copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)"/>
+				<Tool Name="VFPostBuildEventTool" CommandLine="REM copy &quot;$(SolutionDir)\WF1Dcomdll\$(Platform)\$(Configuration)\wf1dcomdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;REM copy &quot;$(SolutionDir)\WF1Dsatdll\$(Platform)\$(Configuration)\wf1dsatdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;xcopy &quot;$(SolutionDir)\bin\$(Configuration)\$(Platform)\wf1dcomdll\wf1dcomdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;xcopy &quot;$(SolutionDir)\bin\$(Configuration)\$(Platform)\wf1dsatdll\wf1dsatdll.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I&#xA;xcopy &quot;$(SolutionDir)WF15DSatUnsat\INCLUDE\$(Platform)\$(Configuration)\*.*&quot; &quot;$(TargetDir)&quot;  /F /R /Y /I"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="ReleaseAVX512Parallel|Win32">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" UseProcessorExtensions="codeExclusivelyAVX2" Parallelization="true" PrefetchInsertionOpt="prefetchAggressive" HeapArrays="0" InterproceduralOptimizations="ipoMultiFile" MtuneConstruct="mcArchBWL" OpenMP="OpenMPParallelCode" F2003Semantics="true" WarnDeclarations="true" WarnUnusedVariables="true" WarnUncalled="true" WarnShape="true" FloatingPointExceptionHandling="fpe0" FloatingPointModel="precise" ExtendSinglePrecisionConstants="true" FloatingPointSpeculation="fpSpeculationSafe" UseMkl="mklParallel"/>

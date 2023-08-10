@@ -219,9 +219,13 @@
 		end if
 		if(present(qsat)) then
 			this%qsat(i)%p		=> qsat(i)
+		else
+			this%qsat(i)%p => null()
 		end if
 		if(present(qinf)) then
 			this%qinf(i)%p		=> qinf(i)
+		else
+			this%qinf(i)%p => null()
 		end if
 
 		if(present(nrel)) then

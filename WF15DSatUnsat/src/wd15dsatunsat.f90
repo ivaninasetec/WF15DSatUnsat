@@ -46,6 +46,8 @@
 
 	program WF15DSATUNSAT
 	use model_mod_ty_model,only:ty_model
+	use com_mod_ty_nodes,only:ty_com_nodes
+	use sat_mod_ty_nodes,only:ty_sat_nodes
 
 	implicit none
 	include 'inc_precision.fi'
@@ -70,14 +72,16 @@
 	character*100::debugmsg_txt=''
 	character*1::printchar = ' '
 
-	real(kind=dpd)::htop,qtop,epshsat,inchsat,maxhsat=0.0_dpd,maxhsatold=0.0_dpd,maxhsattemp=0.0_dpd,epshsathunsat,epsqsatunsat
-	logical::isconverged=.false.
+	real(kind=dpd)::htop,qtop,epshsat,inchsat,maxhsat=0.0_dpd,maxhsatold=0.0_dpd,maxhsattemp=0.0_dpd,epshsathunsat,epsqsatunsat,qdif,qdifprevius, qhorsup, xqhorsup
+	logical::isconverged=.false., ishsatoverlapnextlayer=.false.
 	integer::iterconverg,itermodel,iterunsat,itersat,iternrel,iterconvergmax
 	logical::isfirsthsatloop=.false.
 	logical,allocatable::ishsatover0(:),isfirsthsat(:)
-	integer::nunsat,nsat,iu,is, npos, nargs, is2
+	integer::nunsat,nsat,iu,is, npos, nargs, is2,inod
 	real(kind=dpd),pointer::t
 	logical::isconvergedall,ismaxitreached
+	class(ty_com_nodes),pointer::nodescominf,nodescomsup
+	class(ty_sat_nodes),pointer::nodesinf,nodessup
 
 	!For statistics:
 	real(kind=8)	  ::cputimeinit=0.0_8,cputimeend=0.0_8,systimeinit=0.0_8,systimeend=0.0_8,totaldt=0.0_8,meandt=0.0_8,maxdt=0.0_8,mindt=1.0E10_8
@@ -110,8 +114,9 @@
 
 	call model%readfileinput(fileinput,fileboundary)
 
-	!---- 02 ---- construct all instances
+	!---- 02 ---- allocate all and construct all instances
 	call model%construct()
+	
 	!---- 03 ---- open output files
 	open (31,file=fileoutput_nodes_v,     status='unknown')
 	open (32,file=fileoutput_elements_v,  status='unknown')
@@ -131,6 +136,12 @@
 	iterunsat = 0
 	itersat = 0
 	itermodel = 0
+	
+	!Add z of the layer to each layer
+	do is=1,nsat
+		model%sat(is)%calc%nodes%z= model%sat(is)%calc%nodes%z-model%sat(is)%layers%width*model%sat(is)%layers%slope(1)-sum(model%sat(is)%layers%height)
+	end do
+	
 
 	!---- 04 ---- Set initial conditions to WF1DUNSAT
 	do iu=1,nunsat
@@ -150,14 +161,14 @@
 		call model%sat(is)%calc%get_results_nodes()
 	end do
 
-	!Update results...
+	!---- 06 ---- Set initial conditions to WF1DUNSAT
 	do iu=1,nunsat
 		call model%unsat(iu)%calc%get_results_elements()
 		call model%unsat(iu)%calc%get_results_nodes()
 		call model%unsat(iu)%constraints%update_all(model%unsat(iu)%calc,model%time%dt)
 	end do
 
-	!---- 06 ---- build WF1DUNSAT linear systems arrays that don’t change on time
+	!---- 07 ---- build WF1DUNSAT linear systems arrays that don’t change on time
 	do iu=1,nunsat
 		call model%unsat(iu)%calc%build_linearsystem(IS_NOT_TIME_DEPENDANT,CONSIDER_HTEMP)
 	end do
@@ -236,14 +247,15 @@
 			iterconvergmax=max(iterconverg,iterconvergmax)
 		end do WFUNSAT1
 		
-		!!---- 09.05a ---- wf1dsat: update watertables when they overlap
+		!!!!---- 09.05a ---- wf1dsat: update watertables when they overlap
 		!if (nsat>1) then
 		!do is=nsat-1,1,-1
 		!	do is2=nsat,is+1,-1
 		!		where (model%sat(is2)%calc%nodes%hnew>1e-10_dpd) !only >0.0 to account that the watertable appears.
 		!			where ((model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z-model%sat(is2)%calc%nodes%z)>1e-10_dpd) !check if the watertable is over the upper layer to do this.
 		!			model%sat(is)%calc%nodes%hnew= min(model%sat(is)%calc%nodes%hnew+model%sat(is)%calc%nodes%z, model%sat(is2)%calc%nodes%hnew+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z
-		!			model%sat(is)%calc%nodes%hnew = max(0.0_dpd,model%sat(is)%calc%nodes%hnew)
+		!			model%sat(is)%calc%nodes%hold= min(model%sat(is)%calc%nodes%hold+model%sat(is)%calc%nodes%z, model%sat(is2)%calc%nodes%hold+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z
+		!			!model%sat(is)%calc%nodes%hnew = max(0.0_dpd,model%sat(is)%calc%nodes%hnew)
 		!			end where
 		!		end where
 		!		!if (maxval(model%sat(is)%calc%nodes%hnew)==0.0_dpd) then
@@ -259,8 +271,30 @@
 		!	end do
 		!end do
 		!end if
+		
+		!!!!---- 09.05a ---- wf1dsat: update watertables when they overlap (with max) (the maximum 
+		!if (nsat>1) then
+		!do is=nsat,2,-1
+		!	do is2=is-1,1,-1
+		!		model%sat(is)%calc%nodes%hnew= max(0.0_dpd,model%sat(is)%calc%nodes%hnew,(model%sat(is2)%calc%nodes%hnew+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z)
+		!		model%sat(is)%calc%nodes%hold= max(0.0_dpd,model%sat(is)%calc%nodes%hold,(model%sat(is2)%calc%nodes%hold+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z)
+		!	end do
+		!end do
+		!end if
+		
+		!!!!---- 09.05a ---- wf1dsat: update watertables when they overlap (with min) (do not converge with this)
+		!if (nsat>1) then
+		!do is=1,nsat-1
+		!	do is2=is+1,nsat
+		!		model%sat(is)%calc%nodes%hnew= min(model%sat(is)%calc%nodes%hnew,(model%sat(is2)%calc%nodes%hnew+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z)
+		!		model%sat(is)%calc%nodes%hold= min(model%sat(is)%calc%nodes%hold,(model%sat(is2)%calc%nodes%hold+model%sat(is2)%calc%nodes%z)-model%sat(is)%calc%nodes%z)
+		!	end do
+		!end do
+		!end if
+		!
+		
 				
-
+		!---- 09.04 RUN WF1DSAT
 		!---- 09.04 ---- estimate hnew for new timestep
 		do is=1,nsat
 			call model%sat(is)%calc%estimate_hnew_for_new_timestep()
@@ -289,25 +323,96 @@
 			end if
 		end do
 
-		!---- 09.06 ---- run WF1DSAT: With qvtb_sat and nrel from WF1DUNSAT
-		!---- 09.06.01 ----  put nrel and qvtb from constraints to nodes
+		!---- 09.07 ---- run WF1DSAT: With qvtb_sat and nrel from WF1DUNSAT
+		!---- 09.07.01 ----  put nrel and qvtb from constraints to nodes
 		do is=1,nsat
 			call model%sat(is)%set_qent_from_constraint_to_nodes() 
 			call model%sat(is)%set_nrel_from_constraint_to_nodes()
 		end do
 
-		!---- 09.06.02 ----  SAT_CONVERGENCE: do while not converge or dtminor itmax not reached
+		!---- 09.07.02 ----  SAT_CONVERGENCE: do while not converge or dtminor itmax not reached
 		!(CAN BE DONE IN PARALLEL)
 		itersat=0
 		do is=nsat,1,-1
 			if(ishsatover0(is)) then
 				isconverged = .false.
 				iterconverg = 0
+				
+				!!NEW: Update qent from upper layer
+				!	if (is<nsat) then
+				!		nodescominf => model%sat(is)%calc%nodes
+				!		nodescomsup => model%sat(is+1)%calc%nodes
+				!		select type(nodescominf)
+				!		type is (ty_sat_nodes)
+				!			nodesinf => nodescominf
+				!		end select
+				!		select type(nodescomsup)
+				!		type is (ty_sat_nodes)
+				!			nodessup => nodescomsup
+				!		end select
+				!		
+				!		
+				!		call model%sat(is)%calc%get_results_elements()
+				!		call model%sat(is)%calc%get_results_nodes()
+				!		qdifprevius =0.0_dpd
+				!		do inod=2,nodesinf%count
+				!		if ((nodessup%hnew(is)+nodesinf%z(is)-nodessup%z(is))>0.0_dpd) then !only in nodes where hnew reach the upper layer
+				!			!Substracting the difference of waterflow calculated in the upper layer with the one calclated in this layer.
+				!			qdif = ((sum(nodessup%results_qhor_all(1:inod))-(sum(nodesinf%results_qhor_all(1:inod))-sum(nodesinf%results_qhor(1:inod)))))/sum(nodesinf%x(1:inod))
+				!			nodesinf%qent(inod) = nodesinf%qent(inod) - (qdif-qdifprevius)
+				!			qdifprevius = qdif
+				!			
+				!		end if
+				!		end do
+				!	end if
+					
+				!NEW: (Other approach)
+				if (is<nsat) then
+    
+					nodescominf => model%sat(is)%calc%nodes
+					nodescomsup => model%sat(is+1)%calc%nodes
+					select type(nodescominf)
+					type is (ty_sat_nodes)
+						nodesinf => nodescominf
+					end select
+					select type(nodescomsup)
+					type is (ty_sat_nodes)
+						nodessup => nodescomsup
+					end select
+    
+    
+					call model%sat(is)%calc%get_results_elements()
+					call model%sat(is)%calc%get_results_nodes()
+    
+					qhorsup =0.0_dpd
+					xqhorsup = 0.0_dpd
+    
+					ishsatoverlapnextlayer = maxval(nodesinf%hnew+nodesinf%z-nodessup%z)>0.0_dpd
+    
+					if (ishsatoverlapnextlayer) then
+						do inod=1,nodesinf%count
+							if ((nodesinf%hnew(inod)+nodesinf%z(inod)-nodessup%z(inod))>0.0_dpd) then
+								qhorsup = max(qhorsup,nodessup%results_qhor_all(inod))
+								xqhorsup = max(xqhorsup,nodessup%x(inod))
+							end if	
+						end do				
+					
+						!qhorsup = maxval(nodessup%results_qhor_all((nodesinf%hnew+nodesinf%z-nodessup%z)>0.0_dpd))
+						!xqhorsup = maxval(nodessup%x((nodesinf%hnew+nodesinf%z-nodessup%z)>0.0_dpd))
+						if (qhorsup>0.0_dpd .and. xqhorsup>0.0_dpd ) then
+							where (nodesinf%x<=xqhorsup)
+								nodesinf%qent = nodesinf%qent-qhorsup/xqhorsup
+							end where
+						end if
+					end if
+    
+				end if
+				
 				do while(.not.(isconverged .or. (model%time%dt<=model%parameters%dtmin .and. iterconverg==(model%parameters%it_max-1))))
 					model%time%iter_total = model%time%iter_total + 1
 					iterconverg = iterconverg+1
 					itertotal=itertotal+1
-					
+
 					!!NEW: Update with upper layer
 					!if (is>1) then
 					!	do is2=nsat,is+1,-1
@@ -318,13 +423,13 @@
 					!			end where
 					!		end where
 					!	end do
-					!end if
-					
-					
+					!end if				
 					
 					call model%sat(is)%calc%iterate(isconverged)
 					if(.not.isconverged .and. iterconverg==model%parameters%it_max) exit
-				end do
+					end do
+					call model%sat(is)%calc%get_results_elements()
+					call model%sat(is)%calc%get_results_nodes()
 				itersat = max(iterconverg,itersat)
 				if (.not.isconverged) isconvergedall=.false.
 				if (.not.isconverged .and. iterconverg==model%parameters%it_max) ismaxitreached = .true.

@@ -31,7 +31,7 @@
 !	14    csr        FGMRES   ilut
 !	15    banded     gauss	  none
 !	16    banded     gauss	  jacobi
-14
+1
 !(courant) Coefficient of courant: 2.0 (Use a very high value to avoid limiting stepsize by courant condition)
 1000.0
 !(multksal) Multiplication factor for the permeability at the seepage surface
